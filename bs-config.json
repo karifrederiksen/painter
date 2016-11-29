@@ -1,0 +1,7 @@
+{
+    "injectChanges": true,
+    "port": 8000,
+    "files": ["./src/index.html", "./src/build/app.js", "./src/build/styles.css"],
+    "https": false,
+    "server":  { "baseDir": "./src" }
+}

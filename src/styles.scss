@@ -1,0 +1,76 @@
+﻿$fontStack: Helvetica, sans-seriff;
+
+
+// Colors
+// Bg
+$bg_primary_color: #766;
+$bg_primary_color_highlight: #888;
+$bg_border_color: #222;
+
+
+
+
+body {
+    font: 100% $fontStack;
+    background-color: #808080;
+}
+
+span {
+    font: 100% $fontStack;
+}
+
+svg {
+    position: absolute;
+}
+
+canvas {
+    position: absolute;
+}
+
+.svg-content-responsive {
+    position: absolute;
+}
+
+rect.toolBar {
+    @extend .svg-content-responsive;
+    fill: $bg_primary_color;
+    stroke: $bg_border_color;
+    stroke-width: 1px;
+}
+
+rect.toolButton {
+    @extend .svg-content-responsive;
+    fill: $bg_primary_color;
+}
+
+rect.toolButton:hover {
+    fill: $bg_primary_color_highlight;
+    stroke: #555;
+    stroke-width: 1px;
+}
+
+rect.toolButtonActive {
+    @extend rect.toolButton:hover;
+    fill: #555;
+    stroke: $bg_border_color;
+}
+
+rect.toolButton:active {
+    @extend rect.toolButtonActive;
+}
+
+
+
+// This is the canvas element to be painted on
+#paintingArea {
+    z-index: 0;
+}
+
+// The SVG containing the UI
+#uiSvg {
+    z-index: 1000;
+}
+
+#toolbox {
+
+}
