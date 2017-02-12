@@ -3,7 +3,7 @@
 
 	This event module broadcasts events immediately, as opposed to storing them for later use.
 */
-module TSPainter.Event {
+module TSPainter.Events {
 
 
 	/*
@@ -25,6 +25,18 @@ module TSPainter.Event {
 		callList.push(callback);
 	}
 
+
+	/*
+		Remove a callback from the callback list for a specific event
+	*/
+	export function unsubscribe(id: ID, callback: Callback) {
+		const idx = _callbacks[id].indexOf(callback);
+		if (idx >= 0) {
+			_callbacks[id].splice(idx, 1);
+		}
+	}
+
+
 	/*
 		Send an event to all registered callbacks
 	*/
@@ -38,17 +50,27 @@ module TSPainter.Event {
 			}
 		}
 		else {
-			// Useful for detecting unused event IDs
-			console.warn("Event " + id + " does not have any callbacks associated with it.");
+			// Useful for debugging
+			const keys = Object.keys(ID);
+			console.warn([
+				"Event ",  id, " \"", keys[(keys.length / 2) + id], "\"", " does not have any callbacks associated with it."
+			].join(""));
 		}
-
 	}
 
 
 	export enum ID {
-		MOUSE_DOWN,
-		MOUSE_UP,
-		MOUSE_MOVE,
-		MOUSE_DRAG
+		None,
+
+		// Pointer events
+		PointerDown,
+		PointerUp,
+		PointerMove,
+		PointerDrag,
+
+		// Other inputs (Keybinds, buttons, etc.)
+		ButtonToolBrush,
+		ButtonToolEraser,
+		ButtonToolBlur,
 	}
 }

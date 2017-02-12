@@ -1,88 +1,89 @@
-﻿module TSPainter {
+﻿///<reference path="Generics/DisplayObject.ts"/>
 
-	export class Toolbar {
-		protected _buttonContainer: WrappedSVG;
-		protected _background: WrappedSVGRect;
-		protected _buttons: WrappedSVGRect[] = [];
+module TSPainter.UI {
+
+	export class Toolbar extends DisplayObject {
+		protected _container: DisplayObjectContainer;
+		protected _buttons: Button[] = [];
 		protected _activeButton = -1;
 
-		constructor(parent: SVGElement) {
-			this._buttonContainer = new WrappedSVG(parent);
-			const container = this._buttonContainer;
-			const buttons = this._buttons;
-			this._background = new WrappedSVGRect(container);
+		constructor(parent: DisplayObjectContainer, xPos: number, yPos: number) {
+			super(xPos, yPos);
+            this.interactable = true;
+            this.description = "Toolbar";
+			this._container   = new DisplayObjectContainer(new WrappedSVG());
+			const buttons     = this._buttons;
+			const container   = this._container;
+			parent.addChild(container);
+			container.addChild(this);
 
-			// Dummy buttons
-			buttons.push(new WrappedSVGRect(container));
-			buttons.push(new WrappedSVGRect(container));
-			buttons.push(new WrappedSVGRect(container));
-			buttons.push(new WrappedSVGRect(container));
-			buttons.push(new WrappedSVGRect(container));
-			buttons.push(new WrappedSVGRect(container));
-			buttons.push(new WrappedSVGRect(container));
-			buttons.push(new WrappedSVGRect(container));
-			buttons.push(new WrappedSVGRect(container));
+			// Looks
+			const buttIds: number[][] = [
+				[Events.ID.ButtonToolBrush, Tools.Brush], 
+				[Events.ID.ButtonToolEraser, Tools.Eraser], 
+				[Events.ID.ButtonToolBlur, Tools.Blur],
+			];
+			const buttCount = buttIds.length; // Number of buttons
+			const xPad = 3;     // Y padding
+			const yPad = 2;     // X padding
+			const size = 28;    // Width and height. I want to separate them eventually.
+			const r = 4;        // Corner radius
+			const sw = 1;       // Stroke width
+			const tPad = 10;    // Padding on top
 
-			const x = 3;     // Y padding
-			const y = 2;     // X padding
-			const size = 28; // Width and height. I want to separate them eventually.
-			const r = 4;     // Corner radius
-			const sw = 1;    // Stroke width
-
-			container.setX(10).setY(100);
-
-
+			container.x = 10;
+			container.y = 100;
+			this.width = xPad * 2 + size;
+			this.height = tPad + (yPad + size) * buttCount + yPad;
+			container.width = this.width + sw * 2;
+			container.height = this.height + sw * 2;
+			
 			// Set attributes for the background svg
-			this._background
-				.setArea(sw, sw, x * 2 + size, (y + size) * buttons.length + y)
-				.setR(r)
-				.addCSSClass("toolBar");
-
+			this.svgElement
+				.addCSSClass("toolBar")
+				.setArea(sw, sw, xPad * 2 + size, tPad + (yPad + size) * buttCount + yPad)
+				.setR(r);
 
 			// Set attributes for all buttons
-			for (let i = 0, ilen = buttons.length; i < ilen; i++) {
-				buttons[i]
-					.setArea(sw + x, sw + y + (y + size) * i, size, size)
-					.setR(r)
-					.addCSSClass("toolButton")
-					.setOnClickCallback(this._buttonCallback);
-			}
+			let button: ToolButton;
+			for (let i = 0; i < buttCount; i++) {
+				button = new ToolButton(buttIds[i][0], buttIds[i][1]);
+				button.x = sw + xPad;
+				button.y = tPad + sw + yPad + (yPad + size) * i;
+				button.width = size;
+				button.height = size;
+				button.r = r;
+				buttons.push(button);
 
-			// Set an arbitrary number to be active
-			this.activateButton(0);
-		}
-
-		public get x() { return Number(this._buttonContainer.getX()); }
-		public get y() { return Number(this._buttonContainer.getY()); }
-
-		public set x(x: number) { this._buttonContainer.setX(x); }
-		public set y(y: number) { this._buttonContainer.setY(y); }
-
-
-		protected _buttonCallback = (button: WrappedSVG, ev: MouseEvent) => {
-			this.clicked(button);
-		}
-
-
-		public clicked(button: WrappedSVG) {
-			const buttons = this._buttons;
-			for (let i = 0, ilen = buttons.length; i < ilen; i++) {
-				if (buttons[i] === button && i !== this._activeButton) {
-					this.activateButton(i);
-				}
+				// add to svg container and this
+				container.addChild(button);
+				this._children.push(button);
 			}
 		}
 
-		public activateButton(buttonIdx: number) {
-			const previous = this._activeButton;
-			this._buttons[buttonIdx].addCSSClass("toolButtonActive");
-			this._buttons[buttonIdx].removeCSSClass("toolButton");
 
-			if (previous >= 0) {
-				this._buttons[previous].removeCSSClass("toolButtonActive");
-				this._buttons[previous].addCSSClass("toolButton");
+
+		protected _clickPos = new Vec2();
+		protected _clickHandler(x: number, y: number, pressure: number) {
+			if (super._clickHandler(x, y, pressure) === true) {
+				this._clickPos.x = null;
 			}
-			this._activeButton = buttonIdx;
+			else {
+				this._clickPos.xy(x, y);
+			}
+			return true;
+		}
+
+		
+		protected _dragHandler(x: number, y: number, pressure: number) {
+			const flag = super._dragHandler(x, y, pressure);
+			if (flag === false && this._clickPos.x !== null) {
+				const moveX = x - this._clickPos.x;
+				const moveY = y - this._clickPos.y;
+				this._container.x += moveX;
+				this._container.y += moveY;
+			}
+			return true;
 		}
 	}
 }

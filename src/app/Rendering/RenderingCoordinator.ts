@@ -1,4 +1,4 @@
-﻿module TSPainter {
+﻿module TSPainter.Rendering {
 	/*
 		This object ensures that rendering only has 1 animation frame request active at once.
 	*/

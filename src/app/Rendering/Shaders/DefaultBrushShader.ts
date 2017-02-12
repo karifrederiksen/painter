@@ -3,7 +3,7 @@
 	The shader for generating the standard brush texture
 
 */
-module TSPainter {
+module TSPainter.Rendering {
 
 	const SHADER_BRUSH_VERT = [
 		"precision highp float;",

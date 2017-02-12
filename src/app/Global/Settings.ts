@@ -37,7 +37,8 @@ module TSPainter.Settings {
 		Get the current value of a setting
 	*/
 	export function getValue(id: number) {
-		return _settings[id].value;
+		checkForIdNone(id);
+		return _settings[id] != null ? _settings[id].value : null;
 	}
 
 
@@ -45,12 +46,25 @@ module TSPainter.Settings {
 		Subscribe to a setting with a callback
 	*/
 	export function subscribe(id: number, callback: Callback) {
+		checkForIdNone(id);
 		let setting = _settings[id];
 		if (setting == null) {
 			setting = new Setting(id, null);
 			_settings[id] = setting;
 		}
 		setting.callbacks.push(callback);
+	}
+
+
+	/*
+		Remove a callback from the callback list for a specific event
+	*/
+	export function unsubscribe(id: ID, callback: Callback) {
+		checkForIdNone(id);
+		const idx = _settings[id].callbacks.indexOf(callback);
+		if (idx >= 0) {
+			_settings[id].callbacks.splice(idx, 1);
+		}
 	}
 
 
@@ -67,22 +81,37 @@ module TSPainter.Settings {
 
 
 	/*
+		For debugging
+	*/
+	function checkForIdNone(id: ID) {
+		if (id === ID.None) {
+			console.warn("Settings.ID.None used");
+		}
+	}
+
+	/*
 		Define the names of all settings
 	*/
 	export enum ID {
+		None,
+
 		// display
 		CanvasWidth,
 		CanvasHeight,
 		Gamma,
 
+		// tool change
+		ToolId,
+
 		// brush
+		BrushTextureSize,
 		BrushSize,
 		BrushSoftness,
-		BrushPointSpacing,
+		BrushSpacing,
+		BrushDensity,
 		BrushHue,
 		BrushSaturation,
 		BrushValue,
-		BrushAlpha,
 
 		// rendering
 		RenderingMaxDrawPoints,

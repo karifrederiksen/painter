@@ -12,7 +12,7 @@ $bg_border_color: #222;
 
 body {
     font: 100% $fontStack;
-    background-color: #808080;
+    background-color: #777;
 }
 
 span {
@@ -27,19 +27,13 @@ canvas {
     position: absolute;
 }
 
-.svg-content-responsive {
-    position: absolute;
-}
-
 rect.toolBar {
-    @extend .svg-content-responsive;
     fill: $bg_primary_color;
     stroke: $bg_border_color;
     stroke-width: 1px;
 }
 
 rect.toolButton {
-    @extend .svg-content-responsive;
     fill: $bg_primary_color;
 }
 
@@ -50,14 +44,14 @@ rect.toolButton:hover {
 }
 
 rect.toolButtonActive {
-    @extend rect.toolButton:hover;
     fill: #555;
+    stroke-width: 1px;
     stroke: $bg_border_color;
 }
 
-rect.toolButton:active {
+/*rect.toolButton:active {
     @extend rect.toolButtonActive;
-}
+}*/
 
 
 
@@ -69,8 +63,4 @@ rect.toolButton:active {
 // The SVG containing the UI
 #uiSvg {
     z-index: 1000;
-}
-
-#toolbox {
-
 }

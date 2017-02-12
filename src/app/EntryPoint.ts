@@ -9,36 +9,48 @@
 module TSPainter {
 	// Settings for the app. These should be stored in cookies.
 	export const DEFAULT_SETTINGS = {
+		None: undefined,
+
 		// Display
 		CanvasWidth: 1000,
 		CanvasHeight: 1000,
 		Gamma: 2.2,
 
+		// Tool
+		ToolId: 0,
+
 		// Brush
-		BrushSize: 12,
-		BrushPointSpacing: .01,
-		BrushSoftness: 0.1,
-		BrushHue: .8,
-		BrushSaturation: 1,
-		BrushValue: 0,
-		BrushAlpha: .99,
+		BrushTextureSize: 1000,
+		BrushSize:       120,
+		BrushSoftness:   0.2,
+		BrushSpacing:    0.05,
+		BrushDensity:    0.5,
+		// Brush Color
+		BrushHue:        0.8,
+		BrushSaturation: 0.9,
+		BrushValue:      0.8,
 
 		// Rendering
 		RenderingMaxDrawPoints: 10000,
-		RenderingBlendMode: BlendMode.Normal
+		RenderingBlendMode: Rendering.BlendMode.Normal
 	}
 
 	
-	export let dotsPerFrame = 10;
+	export const dotsPerFrame = 100;
+
+
+	// Starting point of the application
+	export function main() {
+		initSettingsValues();
+		start();
+		animate();
+	}
 
 	/*
 		Sets the settings values from DEFAULT_SETTINGS
 	*/
-	function initSettings() {
-		const keys = Object.keys(DEFAULT_SETTINGS);
-		let key;
-		
-		for (let i = 0, ilen = keys.length; i < ilen; i++) {
+	function initSettingsValues() {
+		for (let i = 0, ilen = Object.keys(DEFAULT_SETTINGS).length; i < ilen; i++) {
 			Settings.setValue(i, DEFAULT_SETTINGS[Settings.ID[i]]);
 		}
 	}
@@ -46,65 +58,78 @@ module TSPainter {
 
 	let rng: RNG;
 	let canvas: HTMLCanvasElement;
-	let renderingContext: CanvRenderingContext;
+	let renderingContext: Rendering.CanvRenderingContext;
 	let inputCapture: InputCapture;
-	let interpolator: Interpolator;
-	let renderingCoordinator: RenderingCoordinator;
-	let svgContainer: SVGElement;
-	let toolbar: Toolbar;
+	let interpolator: Rendering.Interpolator;
+	let renderingCoordinator: Rendering.RenderingCoordinator;
+	let textureGenerator: Rendering.TextureGenerator;
+	let brush: App.Brush;
+	let containerSvg: UI.DisplayObjectContainer;
+	let toolbar: UI.Toolbar;
 
-	function init() {
+	function start() {
 		rng = new RNG(1)
 		canvas = getCanvasById("paintingArea");
 		canvas.width = Settings.getValue(Settings.ID.CanvasWidth);
 		canvas.height = Settings.getValue(Settings.ID.CanvasHeight);
-		renderingContext = new CanvRenderingContext(canvas);
+		renderingContext = new Rendering.CanvRenderingContext(canvas);
 		inputCapture = new InputCapture(canvas);
-		interpolator = new Interpolator(
+
+		const bTexSize = Settings.getValue(Settings.ID.BrushTextureSize);
+		brush = new App.Brush(new Rendering.Texture(renderingContext.renderer, bTexSize, bTexSize));
+		textureGenerator = new Rendering.TextureGenerator(renderingContext.renderer, renderingContext.renderer.shaders.brushShader);
+		textureGenerator.generate(brush.getTexture());
+
+		interpolator = new Rendering.Interpolator(
 			Settings.getValue(Settings.ID.RenderingMaxDrawPoints),
-			Settings.getValue(Settings.ID.BrushPointSpacing) * renderingContext.brushTexture.width / 100
+			brush.getSpacingPx()
 		);
-		renderingCoordinator = new RenderingCoordinator(_render);
+		renderingCoordinator = new Rendering.RenderingCoordinator(_render);
+		
 
-
-		Settings.subscribe(Settings.ID.BrushPointSpacing, (n: number) => {
-			interpolator.spacingThresholdPx = n * Settings.getValue(Settings.ID.BrushPointSpacing);
+		Settings.subscribe(Settings.ID.BrushSpacing, (n: number) => {
+			brush.setSpacing(n);
+			interpolator.spacingThresholdPx = brush.getSpacingPx();
 		});
 
-		Event.subscribe(Event.ID.MOUSE_MOVE, _onMouseMove);
-		Event.subscribe(Event.ID.MOUSE_DRAG, _onMouseDrag);
-		Event.subscribe(Event.ID.MOUSE_DOWN, _onMouseDown);
-		Event.subscribe(Event.ID.MOUSE_UP, _onMouseUp);
-		
-		console.log();
+		Events.subscribe(Events.ID.PointerMove, _onMouseMove);
+		Events.subscribe(Events.ID.PointerDrag, _onMouseDrag);
+		Events.subscribe(Events.ID.PointerDown, _onMouseDown);
+		Events.subscribe(Events.ID.PointerUp, _onMouseUp);
 
+		Events.subscribe(Events.ID.ButtonToolBrush, () => useTool(Tools.Brush));
+		Events.subscribe(Events.ID.ButtonToolEraser, () => useTool(Tools.Eraser));
+		Events.subscribe(Events.ID.ButtonToolBlur, () => useTool(Tools.Blur));
 
-		_drawPoint = new DrawPoint();
+		_drawPoint = new Rendering.DrawPoint();
 		_color = new ColorConverter();
 
 
 		// setup UI
-		svgContainer = getSvgById("uiSvg");
-		svgContainer.setAttribute("width", canvas.width.toString());
-		svgContainer.setAttribute("height", canvas.height.toString());
-		toolbar = new Toolbar(svgContainer);
+		const wSvg = new UI.WrappedSVG(getSvgById("uiSvg"))
+			.setWidth(canvas.width)
+			.setHeight(canvas.height);
+		containerSvg = new UI.DisplayObjectContainer(wSvg);
+		containerSvg.description = "UI Scene";
+		toolbar = new UI.Toolbar(containerSvg, 0, 0); 
+		useTool(Settings.getValue(Settings.ID.ToolId));
 	}
 
 
-	let n_ani = 0;
+	let frameCount = 0;
 	function animate() {
 		generateRandomPoints(interpolator.drawPoints, rng, dotsPerFrame);
 		_render();
-		if (n_ani < 200) {
+		if (frameCount < 2) {
 			requestAnimationFrame(() => animate());
-			n_ani++;
+			frameCount++;
 		}
 		else {
 
 		}
 	}
 
-	let _drawPoint: DrawPoint;
+	let _drawPoint: Rendering.DrawPoint;
 	let _color: ColorConverter;
 	function _updateDrawPoint(data: InputData) {
 		_drawPoint.x = data.x;
@@ -112,26 +137,29 @@ module TSPainter {
 		_drawPoint.scale = data.pressure;
 		_drawPoint.size = Settings.getValue(Settings.ID.BrushSize);
 		_drawPoint.rotation = 0;
-
-		generateColor(_color, rng);
-		_drawPoint.setColor(_color.rgba);
+		_drawPoint.setColor(brush.getColorRgba());
 	}
 
 	const _onMouseMove = (data: InputData) => { }
 
 	const _onMouseDrag = (data: InputData) => {
 		_updateDrawPoint(data);
-		interpolator.interpolate(_drawPoint);
+		if (containerSvg.drag(data.x, data.y, data.pressure) === false) {
+			interpolator.interpolate(_drawPoint);
+		}
 		render();
 	}
 
 	const _onMouseDown = (data: InputData) => {
 		_updateDrawPoint(data);
-		interpolator.setInitialPoint(_drawPoint);
+		if (containerSvg.click(data.x, data.y, data.pressure, true) === false) {
+			interpolator.setInitialPoint(_drawPoint);
+		}
 		render();
 	}
 
 	const _onMouseUp = (data: InputData) => {
+		containerSvg.release(data.x, data.y);
 		render();
 	}
 
@@ -139,33 +167,24 @@ module TSPainter {
 		renderingCoordinator.requestRender();
 	}
 
+
+	// rendering callback
 	const _render = () => {
 		if (interpolator.drawPoints.count() > 0) {
-			renderingContext.renderDrawPoints(interpolator.drawPoints);
+			renderingContext.renderDrawPoints(interpolator.drawPoints, brush.getTexture());
 		}
 	}
 
 
-	// Starting point of the application
-	export function main() {
-		initSettings();
-		init();
-		animate();
-	}
-
-
-	export function toCanvasCoordinates(coords: Vec2) {
-
-	}
-
-
-	function generateRandomPoints(drawPoints: DrawPointQueue, rng: RNG, n: number) {
+	function generateRandomPoints(drawPoints: Rendering.DrawPointQueue, rng: RNG, n: number) {
 		
 		const color = new ColorConverter();
-        const colorHsva = color.hsva;
 
-		let x, y, rotation, size;
-		let drawPoint: DrawPoint;
+		let x, 
+			y, 
+			rotation, 
+			size = 100;
+		let drawPoint: Rendering.DrawPoint;
 
         for (let i = 0; i < n; i++) {
 			x = rng.next() * 1000;
@@ -173,7 +192,6 @@ module TSPainter {
 			
 			generateColor(color, rng);
 			
-            size = 10;
             rotation = rng.next() * Math.PI;
 
 			drawPoint = drawPoints.newPoint();
@@ -186,7 +204,7 @@ module TSPainter {
 	}
 
 
-	const colortest = 1;
+	let colortest = 0;
 	function generateColor(color: ColorConverter, rng: RNG) {
 		const hsva = color.hsva;
 		switch (colortest) {
@@ -200,15 +218,13 @@ module TSPainter {
 				hsva.h = (Date.now() % 1000) / 1000;
 				hsva.s = .7;
 				hsva.v = 1;
-				hsva.a = Settings.getValue(Settings.ID.BrushAlpha);
-				hsva.a = hsva.a * .1 + expostep(hsva.a) * .9;
+				hsva.a = Settings.getValue(Settings.ID.BrushDensity);
 				break;
 			case 2:
 				hsva.h = Settings.getValue(Settings.ID.BrushHue);
 				hsva.s = Settings.getValue(Settings.ID.BrushSaturation);
 				hsva.v = Settings.getValue(Settings.ID.BrushValue);
-				hsva.a = Settings.getValue(Settings.ID.BrushAlpha);
-				hsva.a = hsva.a * .1 + expostep(hsva.a) * .9;
+				hsva.a = Settings.getValue(Settings.ID.BrushDensity);
 				break;
 			default:
 				hsva.h = 0;
@@ -220,6 +236,20 @@ module TSPainter {
 		}
 		hsva.pow(Settings.getValue(Settings.ID.Gamma));
 		color.toRgba();
+	}
+
+
+	function useTool(tool: Tools) {
+		switch(tool) {
+			case Tools.Eraser:
+				renderingContext.blendMode = Rendering.BlendMode.Erase;
+				break;
+			case Tools.Brush:
+			default:
+				renderingContext.blendMode = Rendering.BlendMode.Normal;
+				break;
+		}
+		Settings.setValue(Settings.ID.ToolId, tool);
 	}
 }
 

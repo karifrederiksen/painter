@@ -1,6 +1,6 @@
 ﻿/// <reference path="Shader.ts"/>
 
-module TSPainter {
+module TSPainter.Rendering {
 	const SHADER_DRAWPOINT_VERT = [
 		"precision highp float;",
 
@@ -49,6 +49,7 @@ module TSPainter {
         "	gl_FragColor = vec4(vColor * a);",
 		"}",
     ].join("\n");
+
 
 
 	export class DrawPointShader extends Shader {

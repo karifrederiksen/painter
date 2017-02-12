@@ -1,4 +1,17 @@
-﻿module TSPainter {
+﻿module TSPainter.Rendering {
+
+	export type ShaderDataTypes = 
+		"b" | 
+		// integers
+		"i1" | "i2" | "i3" | "i4" |
+		"1i" | "2i" | "3i" | "4i" |
+		// floats
+		"f1" | "f2" | "f3" | "f4" |
+		"1f" | "2f" | "3f" | "4f" |
+		// matrix
+		"mat3" |
+		// texcture
+		"t";
 
 	export class Attribute {
 		public location: number = null;
@@ -18,7 +31,7 @@
 		public location: WebGLUniformLocation = null;
 		
 		constructor(
-			public type: string,
+			public type: ShaderDataTypes,
 			public value: any
 		) { }
 	}

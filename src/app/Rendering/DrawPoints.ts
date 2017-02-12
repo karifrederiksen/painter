@@ -1,4 +1,4 @@
-﻿module TSPainter {
+﻿module TSPainter.Rendering {
 
 	export class DrawPoint extends Vec2 {
 		// size in pixels

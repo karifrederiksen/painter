@@ -1,5 +1,5 @@
-﻿module TSPainter {
-    export class ShaderManager {
+﻿module TSPainter.Rendering {
+    export class ShaderContainer {
         protected readonly _renderer: Renderer;
         public readonly brushShader: DefaultBrushShader;
         public readonly drawPointShader: DrawPointShader;

@@ -1,93 +1,99 @@
-﻿module TSPainter {
-    export class CanvRenderingContext {
-        public readonly _renderer: Renderer;
-        protected readonly _shaderManager: ShaderManager;
-		protected readonly _textureGenerator: TextureGenerator;
+﻿module TSPainter.Rendering {
+	export class CanvRenderingContext {
+		public readonly renderer: Renderer;
+		public readonly layerStack: LayerStack;
 
+		//protected combinedLayers: Sprite;
 
-        public layer: Sprite;
-		public brushTexture: Texture;
+		public layer: Layer;
+		
 		public blendMode: BlendMode;
 
 
-        constructor(canvas: HTMLCanvasElement) {
-            this._renderer = new Renderer(canvas, {
-                alpha: true,
-                depth: false,
-                stencil: false,
-                antialias: false,
-                premultipliedAlpha: true,
-                preserveDrawingBuffer: true,
-                failIfMajorPerformanceCaveat: false
-            });
+		constructor(canvas: HTMLCanvasElement) {
+			this.renderer = new Renderer(canvas, {
+				alpha: true,
+				depth: false,
+				stencil: false,
+				antialias: false,
+				premultipliedAlpha: true,
+				preserveDrawingBuffer: true,
+				failIfMajorPerformanceCaveat: false
+			});
 
-            this._shaderManager = new ShaderManager(this._renderer);
-            this._textureGenerator = new TextureGenerator(this._renderer, this._shaderManager.brushShader);
+			this.layerStack = new LayerStack(this.renderer);
 
-            this.layer = new Sprite(new Texture(this._renderer, canvas.width, canvas.height));
-            this.brushTexture = new Texture(this._renderer, 1000, 1000);
-			this._textureGenerator.generate(this.brushTexture);
+			this.layerStack.newLayer(0);
+			this.layer = this.layerStack.stack[0];
+			this.layer.texture.width = Settings.getValue(Settings.ID.CanvasWidth);
+			this.layer.texture.height = Settings.getValue(Settings.ID.CanvasHeight);
+			this.layer.texture.updateSize();
+			//this.combinedLayers = new Sprite(new Texture(this.renderer, this.renderer.canvas.width, this.renderer.canvas.height));
 
 			this.blendMode = Settings.getValue(Settings.ID.RenderingBlendMode);
-        }
-
-		// Test function
-		public showBrushTexture() {
-			this._renderToCanvas(this.brushTexture);
 		}
 
 
-        public renderDrawPoints(drawPoints: DrawPointQueue) {
-            const drawPointShader = this._shaderManager.drawPointShader;
-            const renderer = this._renderer;
+		public renderDrawPoints(drawPoints: DrawPointQueue, brushTexture: Texture) {
+			const drawPointShader = this.renderer.shaders.drawPointShader;
+			const renderer = this.renderer;
+			const layer = this.layer;
 
 			// render to output texture
-			renderer.setBlendMode(this.blendMode);
-			drawPointShader.setBrushTexture(this.brushTexture);
+			renderer.blendMode = this.blendMode;
+			drawPointShader.setBrushTexture(brushTexture);
 			drawPoints.addToBatch(drawPointShader.batch); // todo: ElementsBatch
-			renderer.flushShader(drawPointShader, this.layer.texture);
-			renderer.setBlendMode(BlendMode.Normal);
+			renderer.flushShaderToTexture(drawPointShader, layer.texture);
+			renderer.blendMode = BlendMode.Normal;
 
-            // render output texture to canvas
-            const outputShader = this._shaderManager.outputShader;
-            const layer = this.layer;
+			// render output texture to canvas
+			const outputShader = this.renderer.shaders.outputShader;
 
-            layer.addToBatch(outputShader.batch);
-            outputShader.setResolution(layer.texture.width, layer.texture.height);
+			layer.addToBatch(outputShader.batch);
+			outputShader.setResolution(layer.texture.width, layer.texture.height);
 			outputShader.setTexture(layer.texture);
 
 			renderer.setViewport(0, 0, layer.texture.width, layer.texture.height);
 			renderer.useFrameBuffer(null);
 			renderer.clear();
-            renderer.flushShader(outputShader, null);
-        }
+			renderer.flushShaderToTexture(outputShader, null);
+			//this.renderLayers();
+		}
 
 
-        public renderSpriteToTexture(sprite: Sprite, texture: Texture, area: Vec4) {
-            const renderer = this._renderer;
-            renderer.useFrameBuffer(texture.framebuffer);
-            if (area != null) {
-                renderer.setViewport(area.x, area.y, area.width, area.height);
-            }
-            else {
-                renderer.setViewport(0, 0, texture.width, texture.height);
-            }
-            renderer.renderSprite(this._shaderManager.spriteShader, sprite);
-        }
+		/*protected renderLayers() {
+			const renderer = this.renderer;
+			const outputShader = renderer.shaders.outputShader;
+			const combinedLayers = this.combinedLayers;
+
+			// combine layers
+			renderer.blendMode = BlendMode.Normal;
+			renderer.renderSpriteToTexture(this.layer, combinedLayers.texture, null);
+
+			// render to HTMLCanvas
+			combinedLayers.addToBatch(outputShader.batch);
+			outputShader.setResolution(combinedLayers.texture.width, combinedLayers.texture.height);
+			outputShader.setTexture(combinedLayers.texture);
+
+			renderer.setViewport(0, 0, renderer.canvas.width, renderer.canvas.height);
+			renderer.useFrameBuffer(null);
+			renderer.clear();
+			renderer.flushShaderToTexture(outputShader, null);
+		}
 
 
-        // testing
-        public _renderToCanvas(texture: Texture) {
-            const outputShader = this._shaderManager.outputShader;
-            const layer = this.layer;
-            const renderer = this._renderer;
+		// testing
+		public _renderToCanvas(texture: Texture) {
+			const outputShader = this.renderer.shaders.outputShader;
+			const layer = this.layer;
+			const renderer = this.renderer;
 
-            layer.addToBatch(outputShader.batch);
-            outputShader.setResolution(layer.texture.width, layer.texture.height);
-            outputShader.setTexture(texture);
+			layer.addToBatch(outputShader.batch);
+			outputShader.setResolution(layer.texture.width, layer.texture.height);
+			outputShader.setTexture(texture);
 
-            renderer.setViewport(0, 0, layer.texture.width, layer.texture.height);
-            renderer.flushShader(outputShader, null);
-        }
-    }
+			renderer.setViewport(0, 0, layer.texture.width, layer.texture.height);
+			renderer.flushShaderToTexture(outputShader, null);
+		}*/
+	}
 }

@@ -1,4 +1,4 @@
-﻿module TSPainter {
+﻿module TSPainter.Rendering {
 	export class BoundTexture {
 		constructor(
 			// the bound texture

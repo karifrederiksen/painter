@@ -1,90 +1,82 @@
 ﻿/*
-    Used for Texture objects
+	Used for Texture objects
 */
-module TSPainter {
+module TSPainter.Rendering {
 
-    const SHADER_SPRITE_SHADER_VERT = [
-        "precision highp float;",
+	const SHADER_SPRITE_SHADER_VERT = [
+		"precision highp float;",
 
-        "attribute vec2 aPosition;",
-        "attribute vec2 aTextureCoord;",
+		"attribute vec2 aPosition;",
+		"attribute vec2 aTextureCoord;",
 
-        "uniform vec2 uResolution;",
-        "uniform float uScale;",
-        "uniform float uRotation;",
+		"uniform vec2 uResolution;",
+		"uniform float uScale;",
+		"uniform float uRotation;",
 
-        "varying vec2 vTextureCoord;",
+		"varying vec2 vTextureCoord;",
 
-        "void main() {",
-        "	vTextureCoord = aTextureCoord / uResolution;",
-        "   vec2 csCoord = (aPosition / uResolution) * 2.0 - 1.0;",
-        "	gl_Position = vec4(csCoord, 0.0, 1.0);",
-        "}"
-    ].join("\n");
+		"void main() {",
+		"	vTextureCoord = aTextureCoord / uResolution;",
+		"   vec2 csCoord = (aPosition / uResolution) * 2.0 - 1.0;",
+		"	gl_Position = vec4(csCoord, 0.0, 1.0);",
+		"}"
+	].join("\n");
 
-    // Note: function allows us to hardcode the gamma value for better optimization. 
-    // Requires recompiling shader every time gamma is changed.
-    const SHADER_SPRITE_SHADER_FRAG = [
-        "precision highp float;",
+	// Note: function allows us to hardcode the gamma value for better optimization. 
+	// Requires recompiling shader every time gamma is changed.
+	const SHADER_SPRITE_SHADER_FRAG = [
+		"precision highp float;",
 
-        "varying vec2 vTextureCoord;",
+		"varying vec2 vTextureCoord;",
 
-        "uniform sampler2D uTexture;",
+		"uniform sampler2D uTexture;",
 
-        "void main() {",
+		"void main() {",
 		"	vec4 pixel = texture2D(uTexture, vTextureCoord);",
-        //"	pixel = mix(pixel, vec4(0.0, 0.0, 1.0, 1.0), 0.5);",
-        "	gl_FragColor = pixel;",
-        "}"
-    ].join("\n");
+		//"	pixel = mix(pixel, vec4(0.0, 0.0, 1.0, 1.0), 0.5);",
+		"	gl_FragColor = pixel;",
+		"}"
+	].join("\n");
 
 
-    export class SpriteShader extends Shader {
-        protected _texture: Texture = null;
+	export class SpriteShader extends Shader {
+		protected _texture: Texture = null;
 
-        public constructor(renderer: Renderer) {
-            super(renderer, SHADER_SPRITE_SHADER_VERT, SHADER_SPRITE_SHADER_FRAG,
-                {
-                    aPosition: new Attribute(renderer.gl.FLOAT, 2),
-                    aTextureCoord: new Attribute(renderer.gl.FLOAT, 2)
-                },
-                {
-                    uTexture: new Uniform("t", null),
-                    uResolution: new Uniform("2f", new Vec2()),
-                    uScale: new Uniform("1f", 1),
-                    uRotation: new Uniform("1f", 0)
-                },
-                2
-            );
+		public constructor(renderer: Renderer) {
+			super(renderer, SHADER_SPRITE_SHADER_VERT, SHADER_SPRITE_SHADER_FRAG,
+				{
+					aPosition: new Attribute(renderer.gl.FLOAT, 2),
+					aTextureCoord: new Attribute(renderer.gl.FLOAT, 2)
+				},
+				{
+					uTexture: new Uniform("t", null),
+					uResolution: new Uniform("2f", new Vec2()),
+					uScale: new Uniform("1f", 1),
+					uRotation: new Uniform("1f", 0)
+				},
+				2
+			);
 			this.setResolution(renderer.canvas.width, renderer.canvas.height);
-        }
+		}
 
 
-        public render(sprite: Sprite) {
-            sprite.addToBatch(this.batch);
-            this.setTexture(sprite.texture);
-            this.setScale(sprite.scale);
-            this.batch.flush();
-        }
+		public setTexture(texture: Texture) {
+			this.uniforms["uTexture"].value = texture;
+			this._texture = texture;
+		}
+		public getTexture = (): Texture => this._texture;
 
 
-        protected setTexture(texture: Texture) {
-            this.uniforms["uTexture"].value = texture;
-            this._texture = texture;
-        }
-        protected getTexture = (): Texture => this._texture;
-
-
-		protected setScale(scale: number) {
+		public setScale(scale: number) {
 			this.uniforms["uScale"].value = scale;
 		}
-		protected getScale = (): number => this.uniforms["uScale"].value;
+		public getScale = (): number => this.uniforms["uScale"].value;
 
 
-		protected setRotation(rotation: number) {
+		public setRotation(rotation: number) {
 			this.uniforms["uRotation"].value = rotation;
 		}
-		protected getRotation = (): number => this.uniforms["uRotation"].value;
+		public getRotation = (): number => this.uniforms["uRotation"].value;
 
 
 		public setCanvasWidth(width: number) {
@@ -95,8 +87,8 @@ module TSPainter {
 		}
 		public setResolution(width: number, height: number) {
 			const resolution = this.uniforms["uResolution"].value
-            resolution.x = width;
+			resolution.x = width;
 			resolution.y = height;
-        }
-    }
+		}
+	}
 }

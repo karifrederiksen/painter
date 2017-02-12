@@ -15,6 +15,11 @@
 		public rgba = new Vec4();
 		public hsva = new Vec4();
 
+		public setAlpha(a: number) {
+			this.rgba.a = a;
+			this.hsva.a = a;
+		}
+
 		public toHsva() {
 			ColorFuncs.rgba2hsva(this.rgba, this.hsva);
 		}

@@ -1,4 +1,4 @@
-﻿module TSPainter {
+﻿module TSPainter.Rendering {
 
     /*
         Variation of smoothstep

@@ -1,4 +1,4 @@
-﻿module TSPainter {
+﻿module TSPainter.Rendering {
 	export class Interpolator {
 		public drawPoints: DrawPointQueue;
 		public tmpPoint = new DrawPoint();

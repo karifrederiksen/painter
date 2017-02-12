@@ -21,8 +21,8 @@ gulp.task('compile-sass', function () {
 
 // Compile TypeScript
 gulp.task('compile-ts', function(){
-  var tsResult = gulp.src(config.tsFiles).pipe(tsProject());
-  return tsResult.js.pipe(gulp.dest("./"));
+  return gulp.src(config.tsFiles).pipe(tsProject())
+    .js.pipe(gulp.dest("./"));
 });
 
 // Watch for changes
