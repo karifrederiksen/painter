@@ -1,24 +1,23 @@
 {
+    
   "compileOnSave": true,
   "compilerOptions": {
-    "target": "es6",
-    "module": "amd",
-    "sourceMap": true,
-    "preserveConstEnums": true,
-    "removeComments": false,
-    "noImplicitAny": false,
-    "outFile": "src/build/app.js"
+      "target": "es6",
+      "module": "es6",
+      "inlineSourceMap": true,
+      "preserveConstEnums": false,
+      "removeComments": true,
+      "outDir": "dist/js/",
+      "alwaysStrict": true,
+      "charset": "utf-8",
+      "noImplicitAny": true,
+      "noImplicitThis": true,
+      "watch": true
   },
+
   "include": [
-    "src/**/*" 
-  ],
-  "exclude": [
-    ".git",
-    ".vscode",
-    "node_modules",
-    "typings",
-    "gulpfile.js",
-    "package.json",
-    "src/build"
+      "src/**/*.ts",
+      "node_modules/@types/lodash/index.d.ts",
+      "node_modules/immutable/dist/immutable.d.ts"
   ]
 }

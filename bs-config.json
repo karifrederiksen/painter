@@ -1,7 +1,15 @@
 {
     "injectChanges": true,
-    "port": 8000,
-    "files": ["./src/index.html", "./src/build/app.js", "./src/build/styles.css"],
+    "port": 2018,
+    "files": 
+    [ 
+        "./app.min.js", 
+        "./index.html",
+        "./styles.css" 
+    ],
     "https": false,
-    "server":  { "baseDir": "./src" }
+    "server": 
+    { 
+        "baseDir": "./dist" 
+    }
 }

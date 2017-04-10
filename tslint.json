@@ -1,0 +1,27 @@
+{
+	"rules": {
+		"no-unused-expression": true,
+		"no-duplicate-variable": true,
+		"no-unused-variable": true,
+		"no-var-requires": true,
+		"no-unsafe-finally": true,
+		"no-var-keyword": true,
+		"await-promise": true,
+		"curly": true,
+		"class-name": true,
+		"semicolon": ["always"],
+		"triple-equals": [true, "allow-null-check"],
+		"use-isnan": true,
+		"indent": [
+			"true",
+			"tabs"
+		],
+		"quotemark": [
+			"double"
+		],
+		"variable-name": [
+			"allow-leading-underscore",
+			"check-format"
+		]
+	}
+}

@@ -1,0 +1,133 @@
+﻿$fontStack: Helvetica,
+sans-seriff;
+// Colors
+// Bg
+$bg_primary_color: #766;
+$bg_primary_color_highlight: #888;
+$bg_border_color: #222;
+body {
+    font: 100% $fontStack;
+    background-color: #777;
+}
+
+span {
+    font: 100% $fontStack;
+}
+
+.colorPickerUI,
+canvas {
+    cursor: crosshair;
+}
+
+rect.toolBar {
+    fill: $bg_primary_color;
+    stroke: $bg_border_color;
+    stroke-width: 1px;
+}
+
+rect.toolButton {
+    fill: $bg_primary_color;
+}
+
+rect.toolButton:hover {
+    fill: $bg_primary_color_highlight;
+    stroke: #555;
+    stroke-width: 1px;
+}
+
+rect.toolButtonActive {
+    fill: #555;
+    stroke-width: 1px;
+    stroke: $bg_border_color;
+}
+
+
+/*rect.toolButton:active {
+    @extend rect.toolButtonActive;
+}*/
+
+// This is the canvas element to be painted on
+#paintingArea {
+    z-index: 0;
+}
+
+// The SVG containing the UI
+#uiSvg {
+    z-index: 1000;
+}
+
+.hidden {
+    clear: both;
+    visibility: hidden;
+}
+
+// https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Colors/Color_picker_tool
+.colorPickerUI {
+    border: 1px solid #bbb;
+    margin: 4px;
+    position: relative;
+    float: left;
+    display: table;
+}
+
+.slider {
+    border: 1px solid #bbb;
+    margin-left: 4px;
+    margin-right: 4px;
+}
+
+
+.toolButtonArea {
+    border: 0px;
+    margin-left: 9px;
+    margin-bottom: 0px;
+    float: none;
+}
+
+#hueArea {
+    background: -webkit-linear-gradient(left, #F00 0%, #FF0 16.66%, #0F0 33.33%, #0FF 50%, #00F 66.66%, #F0F 83.33%, #F00 100%);
+    float: none;
+    width: 128px;
+    height: 20px;
+}
+#hueAreaSlider {
+    background-color: rgb(255, 255, 255);
+    border: 1px solid #ccc;
+    width: 2px;
+    height: 100%;
+    position: absolute;
+}
+#pickingArea {
+    background: -webkit-linear-gradient(bottom, #000 0%, rgba(0, 0, 0, 0) 100%), -webkit-linear-gradient(left, #FFF 0%, rgba(255, 255, 255, 0) 100%);
+    background-color: rgb(0, 0, 255);
+    float: none;
+    width: 128px;
+    height: 128px;
+}
+#picker {
+    border: 1px solid #999;
+    border-radius: 50%;
+    position: absolute;
+    width: 9px;
+    height: 9px;
+}
+
+.colorDisplay {
+    position: relative;
+    border: 0px;
+    margin-top: 0px;
+    width: 62px;
+    height: 16px;
+}
+
+#colorDisplayPrimary {
+    background-color: rgb(0, 0, 0);
+    float: left;
+    margin-right: 0px;
+}
+
+#colorDisplaySecondary {
+    background-color: rgb(255, 255, 255);
+    float: right;
+    margin-left: 0px;
+}

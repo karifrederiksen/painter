@@ -2,14 +2,33 @@
   "name": "tspainter",
   "version": "0.1.0",
   "scripts": {
-    "dev": "lite-server"
+    "dev": "concurrently \"npm run watch:js\" \"npm run lite\"",
+    "test": "node dist/js/app.min.js",
+    "build": "rollup -c",
+    "watch:js": "rollup -c -w",
+    "lite": "lite-server"
   },
-  "dependencies": {},
   "devDependencies": {
-    "gulp": "^3.9.1",
-    "gulp-sass": "^2.3.2",
-    "gulp-tsc": "^1.2.5",
-    "typescript": "^2.1.4",
-    "lite-server": "^2.2.2"
+    "@types/immutable": "^3.8.7",
+    "@types/node": "^7.0.12",
+    "babel": "^6.23.0",
+    "babel-preset-es2015-rollup": "^3.0.0",
+    "concurrently": "^3.4.0",
+    "immutable": "^3.8.1",
+    "lite-server": "^2.2.2",
+    "rollup": "^0.41.6",
+    "rollup-plugin-babel": "^2.7.1",
+    "rollup-plugin-commonjs": "^8.0.2",
+    "rollup-plugin-node-resolve": "^2.0.0",
+    "rollup-plugin-uglify": "^1.0.1",
+    "rollup-watch": "^3.2.2",
+    "stream": "0.0.2",
+    "tslint": "^5.0.0",
+    "typescript": "^2.2.2"
+  },
+  "dependencies": {
+    "@types/lodash": "^4.14.61",
+    "lodash": "^4.17.4",
+    "typescript": "^2.2.2"
   }
 }
