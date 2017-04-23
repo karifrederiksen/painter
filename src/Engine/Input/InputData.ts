@@ -15,7 +15,7 @@ export const enum InputType {
 	Drag
 }
 
-export class InputPositionData {
+export class PointerData {
 	public constructor(
 		public position: Vec2,
 		public pressure: number,
@@ -42,7 +42,7 @@ export class InputData {
 		public whichKey: number,
 		public type: InputType,
 		public mods: InputMods,
-		public positionData: InputPositionData
+		public positionData: PointerData
 	){
 		Object.freeze(this);
 	}

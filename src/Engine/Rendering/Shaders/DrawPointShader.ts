@@ -77,7 +77,7 @@ export class DrawPointShader extends Shader {
 	}
 	
 
-	constructor(renderer: Renderer, texture: Texture, maxElements: number) {
+	constructor(renderer: Renderer, resolution: Vec2, maxElements: number) {
 		super(renderer, SHADER_DRAWPOINT_VERT, SHADER_DRAWPOINT_FRAG,
 			{
 				aColor: new Attribute(renderer.gl.FLOAT, 4),
@@ -87,11 +87,10 @@ export class DrawPointShader extends Shader {
 				aRotation: new Attribute(renderer.gl.FLOAT, 1),
 			},
 			{
-				uBrushTexture: new Uniform("t", texture),
-				uResolution: new Uniform("2f", null)
+				uBrushTexture: new Uniform("t", null),
+				uResolution: new Uniform("2f", resolution)
 			},
 			maxElements
 		);
-		this.resolution = Vec2.create(renderer.canvas.width, renderer.canvas.height);
 	}
 }

@@ -4,7 +4,8 @@ import { Sprite, addToBatch } from "../Sprite";
 import { Texture } from "../Texture";
 import { Layer } from "./Layer";
 import { LayerStack } from "./LayerStack";
-
+import { Vec2 } from "../../Math/Vec";
+import { generateBackgroundTexture } from "../TextureGenerator";
 
 
 /*
@@ -17,6 +18,7 @@ export class LayersRenderer {
 
 	protected _layersBelow: Sprite;
 	protected _layersAbove: Sprite;
+	protected _background: Sprite;
 
 	public combinedLayers: Sprite;
 
@@ -26,12 +28,13 @@ export class LayersRenderer {
 		this._renderer = renderer;
 		this._layerStack = layerStack;
 
-		const width = renderer.canvas.width;
-		const height = renderer.canvas.height;
+		const size = renderer.getCanvasSize();
 
-		this.combinedLayers = new Sprite(new Texture(renderer, width, height));
-		this._layersBelow = new Sprite(new Texture(renderer, width, height));
-		this._layersAbove = new Sprite(new Texture(renderer, width, height));
+		this.combinedLayers = new Sprite(new Texture(renderer, size));
+		this._layersBelow = new Sprite(new Texture(renderer, size));
+		this._layersAbove = new Sprite(new Texture(renderer, size));
+		this._background = new Sprite(new Texture(renderer, size));
+		generateBackgroundTexture(renderer, this._background.texture);
 	}
 
 
@@ -51,6 +54,7 @@ export class LayersRenderer {
 		const below = this._layersBelow;
 		//renderer.clear(below.texture);
 		renderer.setViewportForSprite(below);
+		this.renderSpriteToTexture(this._background, below.texture);
 		for (let i = 0; i < currentLayerIdx; i++) {
 			console.log("current layer idx", currentLayerIdx);
 			this.renderSpriteToTexture(stack[i], below.texture);

@@ -4,6 +4,7 @@ import { Texture } from "../Rendering/Texture";
 import { Renderer } from "../Rendering/Renderer";
 import { generateBrushTexture } from "../Rendering/TextureGenerator";
 import { Hsv, Hsva, ColorWithAlpha } from "../Math/Color";
+import { Vec2 } from "../Math/Vec";
 import { clamp, expostep } from "../Math/Utils";
 import { isNumberType } from "../Common";
 
@@ -29,7 +30,7 @@ export class Brush {
 		console.assert(renderer != null);
 		this._renderer = renderer;
 		const bTexSize = Settings.brush.textureSize.value.x;
-		this._texture = new Texture(renderer, bTexSize, bTexSize);
+		this._texture = new Texture(renderer, Vec2.create(bTexSize, bTexSize));
 		generateBrushTexture(renderer, this._texture);
 
 		const hsva = Settings.brush.color.value;

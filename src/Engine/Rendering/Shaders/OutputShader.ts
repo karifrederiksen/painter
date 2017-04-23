@@ -81,7 +81,7 @@ export class OutputShader extends Shader {
 	}
 
 
-	constructor(renderer: Renderer, gamma: number, texture: Texture = null) {
+	constructor(renderer: Renderer, resolution: Vec2, gamma: number, texture: Texture = null) {
 		super(renderer, SHADER_OUTPUT_SHADER_VERT, SHADER_OUTPUT_SHADER_FRAG(gamma),
 			{
 				aPosition: new Attribute(renderer.gl.FLOAT, 2),
@@ -89,7 +89,7 @@ export class OutputShader extends Shader {
 			},
 			{
 				uTexture: new Uniform("t", texture),
-				uResolution: new Uniform("2f", Vec2.create())
+				uResolution: new Uniform("2f", resolution)
 			},
 			2
 		);

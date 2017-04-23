@@ -152,7 +152,7 @@ class ColorAreaDoubleBinding {
         this.element = <HTMLDivElement>document.getElementById(elementId);
         this.pickerElement = new ColorAreaPicker(pickerId);
         this.element.addEventListener("pointerdown", this.pointerdown);
-        document.body.addEventListener("pointerup", this.pointerup);
+        window.addEventListener("pointerup", this.pointerup);
         document.body.addEventListener("pointermove", this.pointermove);
     }
 

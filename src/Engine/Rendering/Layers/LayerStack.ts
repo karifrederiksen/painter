@@ -2,6 +2,7 @@
 import { Layer } from "./Layer";
 import { Renderer } from "../Renderer";
 import { Texture } from "../Texture";
+import { Vec2 } from "../../Math/Vec";
 
 /*
 	Contains the layer stack.
@@ -27,7 +28,7 @@ export class LayerStack {
 	*/
 	public newLayer(index: number) {
 		console.assert(index >= 0);
-		const texture = new Texture(this._renderer, this._renderer.canvas.width, this._renderer.canvas.height);
+		const texture = new Texture(this._renderer, this._renderer.getCanvasSize());
 		const layer = new Layer(texture, this._nextLayerId++);
 		this.stack.splice(index, 0, layer);
 	}

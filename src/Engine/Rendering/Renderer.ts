@@ -44,6 +44,10 @@ export class Renderer {
 	}
 
 
+	public getCanvasSize() { 
+		return Vec2.create(this.canvas.width, this.canvas.height);
+	}
+
 	public useShader(shader: Shader) {
 		console.assert(shader != null, `Shader is ${shader}`);
 		if (this._currentShader !== shader) {

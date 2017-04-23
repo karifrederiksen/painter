@@ -1,5 +1,5 @@
 ﻿import { Events } from "../Global/Events";
-import { InputType, InputData, InputSource, InputPositionData, InputMods } from "./InputData";
+import { InputType, InputData, InputSource, PointerData, InputMods } from "./InputData";
 import { Vec2 } from "../Math/Vec";
 
 export class InputCapture {
@@ -23,16 +23,16 @@ export class InputCapture {
 		const y = ev.clientY - bounds.top;
 
 
-		let positionData: InputPositionData;
+		let positionData: PointerData;
 		if (ev.pointerType !== "mouse") {
-			positionData = new InputPositionData(
+			positionData = new PointerData(
 				Vec2.create(x, y),
 				ev.pressure,
 				Vec2.create(ev.tiltX, ev.tiltY)
 			);
 		}
 		else {
-			positionData = new InputPositionData(
+			positionData = new PointerData(
 				Vec2.create(x, y),
 				1,
 				Vec2.create(0, 0)

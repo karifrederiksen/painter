@@ -10,15 +10,15 @@ export class Texture {
 	public readonly stencilBuffer: WebGLRenderbuffer;
 	public readonly framebuffer: WebGLFramebuffer;
 	public readonly textureWGL: WebGLTexture;		// should be a textureID instead
-	public readonly size: Vec2;
 	public readonly id: number;
+	public size: Vec2;
 
-	constructor(renderer: Renderer, width = 100, height = 100) {
+	constructor(renderer: Renderer, size: Vec2) {
 		console.assert(renderer != null, `Renderer is ${renderer}`);
-		console.assert(width > 0, `Width is 0 or less: ${width}`);
-		console.assert(height > 0, `Height is 0 or less: ${height}`);
+		console.assert(size.x > 0, `Width is 0 or less: ${size.x}`);
+		console.assert(size.y > 0, `Height is 0 or less: ${size.y}`);
 		this._renderer = renderer;
-		this.size = Vec2.create(width, height);
+		this.size = size;
 		this.id = Texture._nextId++;
 
 		const gl = renderer.gl;

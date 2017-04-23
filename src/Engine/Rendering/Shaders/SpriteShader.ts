@@ -75,7 +75,7 @@ export class SpriteShader extends Shader {
 		this.uniforms["uResolution"].value = value;
 	}
 
-	public constructor(renderer: Renderer) {
+	public constructor(renderer: Renderer, resolution: Vec2) {
 		super(renderer, SHADER_SPRITE_SHADER_VERT, SHADER_SPRITE_SHADER_FRAG,
 			{
 				aPosition: new Attribute(renderer.gl.FLOAT, 2),
@@ -83,7 +83,7 @@ export class SpriteShader extends Shader {
 			},
 			{
 				uTexture: new Uniform("t", null),
-				uResolution: new Uniform("2f", Vec2.create(renderer.canvas.width, renderer.canvas.height)),
+				uResolution: new Uniform("2f", resolution),
 				uScale: new Uniform("1f", 1),
 				uRotation: new Uniform("1f", 0)
 			},
