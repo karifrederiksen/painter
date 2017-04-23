@@ -5,7 +5,7 @@ import { SpriteShader } from "./SpriteShader";
 import { OutputShader } from "./OutputShader";
 import { Renderer } from "../Renderer";
 import { Vec2 } from "../../Math/Vec";
-import * as Settings from "../../Global/Settings";
+import { Settings } from "../../Global/Settings";
 
 export class ShaderContainer {
 	public readonly brushShader: DefaultBrushShader;
@@ -15,15 +15,14 @@ export class ShaderContainer {
 
 	constructor(renderer: Renderer) {
 		// init default shaders
-		this.brushShader = new DefaultBrushShader(renderer, Settings.getValue(Settings.ID.BrushSoftness), Settings.getValue(Settings.ID.Gamma) );
-		this.drawPointShader = new DrawPointShader(renderer, null, Settings.getValue(Settings.ID.RenderingMaxDrawPoints));
+		this.brushShader = new DefaultBrushShader(renderer, Settings.brush.softness.value, Settings.rendering.gamma.value);
+		this.drawPointShader = new DrawPointShader(renderer, null, Settings.rendering.maxDrawPoints.value);
 		this.spriteShader = new SpriteShader(renderer);
-		this.outputShader = new OutputShader(renderer, Settings.getValue(Settings.ID.Gamma));
+		this.outputShader = new OutputShader(renderer, Settings.rendering.gamma.value);
 
-		Settings.subscribe(Settings.ID.Gamma, this._onGammaChanged);
-		Settings.subscribe(Settings.ID.BrushSoftness, this._onSoftnessChanged);
-		Settings.subscribe(Settings.ID.CanvasWidth, this._onCanvasWidthChanged);
-		Settings.subscribe(Settings.ID.CanvasHeight, this._onCanvasHeightChanged);
+		Settings.rendering.gamma.subscribe(this._onGammaChanged);
+		Settings.brush.softness.subscribe(this._onSoftnessChanged);
+		Settings.rendering.canvasSize.subscribe(this._onCanvasWidthChanged);
 	}
 	
 
@@ -36,10 +35,6 @@ export class ShaderContainer {
 		this.brushShader.gamma = value;
 	}
 
-	protected _onCanvasWidthChanged = (value: number) => 
-		this.spriteShader.resolution = this.spriteShader.resolution.withX(value);
-
-	protected _onCanvasHeightChanged = (value: number) => 
-		this.spriteShader.resolution = this.spriteShader.resolution.withY(value);
-	
+	protected _onCanvasWidthChanged = (value: Vec2) => 
+		this.spriteShader.resolution = value;
 }

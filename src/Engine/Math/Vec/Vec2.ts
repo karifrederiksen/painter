@@ -1,4 +1,4 @@
-﻿import { IArithmetic } from "IVec";
+﻿import { IArithmetic } from "../IArithmetic";
 
 export class Vec2 implements IArithmetic<Vec2> {
 	public static readonly default = new Vec2(0, 0);
@@ -89,7 +89,7 @@ export class Vec2 implements IArithmetic<Vec2> {
 			);
 	}
 
-	public equal(rhs: Vec2) {
+	public equals(rhs: Vec2) {
 		return this._x === rhs._x 
 			&& this._y === rhs._y;
 	}

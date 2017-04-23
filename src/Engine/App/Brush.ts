@@ -1,73 +1,52 @@
-import * as Events from "../Global/Events";
-import * as Settings from "../Global/Settings";
+import { Events } from "../Global/Events";
+import { Settings } from "../Global/Settings";
 import { Texture } from "../Rendering/Texture";
 import { Renderer } from "../Rendering/Renderer";
-import { TextureGenerator } from "../Rendering/TextureGenerators/TextureGenerator";
+import { generateBrushTexture } from "../Rendering/TextureGenerator";
 import { Hsv, Hsva, ColorWithAlpha } from "../Math/Color";
 import { clamp, expostep } from "../Math/Utils";
-import { isNumberType } from "../Misc/Misc";
+import { isNumberType } from "../Common";
 
 function subscribeToBrushEvents(brush: Brush) {
-	Events.subscribe(Events.ID.BrushHue,        (value: number) => brush.setHue(value) );
-	Events.subscribe(Events.ID.BrushSaturation, (value: number) => brush.setSaturation(value) );
-	Events.subscribe(Events.ID.BrushValue,      (value: number) => brush.setValue(value) );
-	Events.subscribe(Events.ID.BrushDensity,    (value: number) => brush.setDensity(value) );
-	Events.subscribe(Events.ID.BrushSoftness,   (value: number) => brush.setSoftness(value) );
-	Events.subscribe(Events.ID.BrushSpacing,    (value: number) => brush.setSpacing(value) );
-	Events.subscribe(Events.ID.BrushSize,       (value: number) => brush.setSize(value) );
+	Events.brush.color.subscribe(brush.setColor);
+	Events.brush.density.subscribe(brush.setDensity);
+	Events.brush.softness.subscribe(brush.setSoftness);
+	Events.brush.spacing.subscribe(brush.setSpacing);
+	Events.brush.size.subscribe(brush.setSize);
 }
 
 
 export class Brush {
+	protected _renderer: Renderer;
 	protected _texture: Texture;
 	protected _color: Hsva;
-	protected _spacing = Settings.getValue(Settings.ID.BrushSpacing);
-	protected _size = Settings.getValue(Settings.ID.BrushSize);
-	protected _softness = Settings.getValue(Settings.ID.BrushSoftness);
-	protected _textureGenerator: TextureGenerator;
+	protected _spacing = Settings.brush.spacing.value;
+	protected _size = Settings.brush.size.value;
+	protected _softness = Settings.brush.softness.value;
 
 
 	constructor(renderer: Renderer) {
 		console.assert(renderer != null);
-		this._textureGenerator = new TextureGenerator(renderer, renderer.shaders.brushShader);
-		const bTexSize = Settings.getValue(Settings.ID.BrushTextureSize);
+		this._renderer = renderer;
+		const bTexSize = Settings.brush.textureSize.value.x;
 		this._texture = new Texture(renderer, bTexSize, bTexSize);
-		this._textureGenerator.generate(this._texture);
+		generateBrushTexture(renderer, this._texture);
 
+		const hsva = Settings.brush.color.value;
 		this._color = Hsva.create(
-			Settings.getValue(Settings.ID.BrushHue),
-			Settings.getValue(Settings.ID.BrushSaturation),
-			Settings.getValue(Settings.ID.BrushValue),
-			Settings.getValue(Settings.ID.BrushDensity)
+			hsva.h,
+			hsva.s,
+			hsva.v,
+			hsva.a
 		);
-		this.setDensity(Settings.getValue(Settings.ID.BrushDensity));
+		this.setDensity(Settings.brush.density.value);
 		subscribeToBrushEvents(this);
 	}
 
-
-	public setHue(value: number) {
-		console.assert(isNumberType(value) === true);
-		console.assert(value <= 1 && value >= 0);
-		Settings.setValue(Settings.ID.BrushHue, value);
-
-		this._color = this._color.withH(value);
-	}
-
-
-	public setSaturation(value: number) {
-		console.assert(isNumberType(value) === true);
-		console.assert( value <= 1 && value >= 0);
-		Settings.setValue(Settings.ID.BrushSaturation, value);
-
-		this._color = this._color.withS(value);
-	}
-
-	public setValue(value: number) {
-		console.assert(isNumberType(value) === true);
-		console.assert( value <= 1 && value >= 0);
-		Settings.setValue(Settings.ID.BrushValue, value);
-		
-		this._color = this._color.withV(value);
+	public setColor = (color: Hsva) => {
+		console.assert(color.isZeroToOne(), `HSVA color has invalid value: ${color}. Expected all values to be in range [0..1]`)
+        this._color = color;
+		Settings.brush.color.broadcast(color);
 	}
 
 	public setTexture(t: Texture) { 
@@ -75,7 +54,7 @@ export class Brush {
 		this._texture = t; 
 	}
 
-	public setDensity(value: number) {
+	public setDensity = (value: number) => {
 		/* 
 			Rescale alpha so that changes to it look more linear.
 
@@ -89,46 +68,55 @@ export class Brush {
 		*/
 		console.assert(isNumberType(value) === true);
 		console.assert(value <= 1 && value > 0);
-		Settings.setValue(Settings.ID.BrushDensity, value);
+
+		Settings.brush.density.broadcast(value);
 		value = clamp(value, .01, 1);
-		const adjustedValue = value * .1 + expostep(value) * .9;
+		const adjustedValue = value * .5 + expostep(value) * .5;
 		
-		this._color = this._color.WithA(adjustedValue);
-		Settings.setValue(Settings.ID.BrushAlpha, adjustedValue);
+		this._color = this._color.withA(adjustedValue);
+		Settings.brush.color.broadcast(this._color);
 	}
 
-	public setSpacing(value: number) {
+	public setSpacing = (value: number) => {
 		console.assert(isNumberType(value) === true);
 		console.assert(value <= 1 && value > 0);
 		this._spacing = value;
-		Settings.setValue(Settings.ID.BrushSpacing, value);
+		Settings.brush.spacing.broadcast(value);
 	}
 
-	public setSoftness(value: number) {
+	public setSoftness = (value: number) => {
 		console.assert(isNumberType(value) === true);
 		console.assert(value <= 1 && value >= 0);
 
 		// update brush texture
 
-		Settings.setValue(Settings.ID.BrushSoftness, value);
-		this._textureGenerator.generate(this._texture);
+		Settings.brush.softness.broadcast(value);
+		generateBrushTexture(this._renderer, this._texture);
 	}
 
-	public setSize(value: number) {
+	public setSize = (value: number) => {
 		console.assert(isNumberType(value) === true);
 		console.assert(value > 0);
 		this._size = value;
-		Settings.setValue(Settings.ID.BrushSize, value);
+		Settings.brush.size.broadcast(value);
 	}
 
 
-	public getTexture = () => this._texture; 
+	public getTexture() { 
+		return this._texture;
+	}
 
-	public getScale = () => this._texture.size.x / this._size;
+	public getScale() { 
+		return this._texture.size.x / this._size;
+	}
 
-	public getSpacingPx = () => this._spacing * this._size;
+	public getSpacingPx() { 
+		return this._spacing * this._size;
+	}
 
-	public getColorRgba = () => this._color
-		.toRgba()
-		.powScalar(Settings.getValue(Settings.ID.Gamma));
+	public getColorRgba () {
+		return this._color
+			.toRgba()
+			.powScalar(Settings.rendering.gamma.value);
+	}
 }

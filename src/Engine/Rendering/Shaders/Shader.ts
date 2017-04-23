@@ -1,6 +1,7 @@
 ﻿import { Renderer } from "../Renderer";
 import { Texture } from "../Texture";
-import { Batch, ElementsBatch } from "../Batch";
+import { Batch } from "../Batch";
+import { createProgram } from "./WebGLHelper";
 
 export type ShaderDataTypes = 
 	"b" | 
@@ -57,8 +58,7 @@ export class Shader {
 		fragSrc: string,
 		attributes: AttributeMap = {},
 		uniforms: UniformMap = {},
-		maxTriangles: number,   // if elementsArray is set to true, then this is counted as squares instead of triangles
-		elements = false
+		maxTriangles: number   // if elementsArray is set to true, then this is counted as squares instead of triangles
 	) {
 		console.assert(renderer != null, `Renderer is null ${renderer}`);
 		console.assert(vertSrc != null, `VertSrc is ${vertSrc}`);
@@ -69,22 +69,17 @@ export class Shader {
 		console.assert(uniforms != null, `Uniforms is ${uniforms}`);
 		console.assert(maxTriangles != null, `MaxTriangles is ${maxTriangles}`);
 		console.assert(maxTriangles > 0, `MaxTriangles is <=0 : ${maxTriangles}`);
-		console.assert(elements != null, `Elements is ${elements}`);
 
 		this._renderer = renderer;
-		this._program = this._compileProgram(renderer.gl, vertSrc, fragSrc);
+		const program = createProgram(renderer.gl, vertSrc, fragSrc);
+		this._program = program.value;
 		this.attributes = attributes;
 		this.uniforms = uniforms;
 		this.bindAttributeLocations();
 		this.cacheUniformLocations();
 
 
-		if (elements === false) {
-			this.batch = new Batch(renderer, attributes, maxTriangles);
-		}
-		else {
-			this.batch = new ElementsBatch(renderer, attributes, maxTriangles);
-		}
+		this.batch = new Batch(renderer, attributes, maxTriangles);
 	}
 
 
@@ -188,7 +183,7 @@ export class Shader {
 
 	protected _recompileProgram(vertSrc: string, fragSrc: string): boolean {
 		const gl = this._renderer.gl;
-		const newProgram = this._compileProgram(gl, vertSrc, fragSrc);
+		const newProgram = createProgram(gl, vertSrc, fragSrc);
 
 		if (newProgram === null) {
 			console.warn("Failed to recompile program.");
@@ -196,50 +191,7 @@ export class Shader {
 		}
 
 		gl.deleteProgram(this._program);
-		this._program = newProgram;
+		this._program = newProgram.value;
 		return true;
-	}
-
-
-	protected _compileProgram(gl: WebGLRenderingContext, vertSrc: string, fragSrc: string): WebGLProgram {
-		const vert = this._compileShader(gl, vertSrc, gl.VERTEX_SHADER);
-		const frag = this._compileShader(gl, fragSrc, gl.FRAGMENT_SHADER);
-		const program = gl.createProgram();
-		
-		gl.attachShader(program, vert);
-		gl.attachShader(program, frag);
-
-		gl.linkProgram(program);
-
-		gl.deleteShader(vert);
-		gl.deleteShader(frag);
-
-		if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-			console.error("Failed to link program");
-			console.warn("Validate status: ", gl.getProgramParameter(program, gl.VALIDATE_STATUS));
-			console.warn("Error: ", gl.getError());
-			console.warn("ProgramInfoLog: ", gl.getProgramInfoLog(program));
-			gl.deleteProgram(program);
-			throw new Error();
-		}
-
-		return program;
-	}
-
-
-	protected _compileShader(gl: WebGLRenderingContext, src: string, type: number) {
-		const shader = gl.createShader(type);
-		gl.shaderSource(shader, src);
-		gl.compileShader(shader);
-
-		if (gl.getShaderParameter(shader, gl.COMPILE_STATUS) === false) {
-			console.error("Failed to compile shader");
-			console.warn("ShaderInfoLog: ", gl.getShaderInfoLog(shader));
-			console.log(src)
-			gl.deleteShader(shader);
-			throw new Error();
-		}
-
-		return shader;
 	}
 }

@@ -1,31 +1,26 @@
-﻿import * as Events from "../Global/Events";
+﻿import { Events } from "../Global/Events";
 import { InputType, InputData, InputSource, InputPositionData, InputMods } from "./InputData";
-import { Vec2 } from "../Math/Vec2";
+import { Vec2 } from "../Math/Vec";
 
 export class InputCapture {
 	protected readonly _canvas: HTMLCanvasElement;
-	protected _canvasPos: Vec2;
 
 	protected _mouseDown = false;
 
 	constructor(canvas: HTMLCanvasElement) {
 		this._canvas = canvas;
-		this.updateCanvasPosition();
 
 		// TODO: event registration should be moved out of this class I think
 		canvas.addEventListener("pointerdown", this._onPointerDown);
 		document.body.addEventListener("pointermove", this._onPointerMove);
 		document.body.addEventListener("pointerup", this._onPointerUp);
-
-		canvas.addEventListener("resize", () => this.updateCanvasPosition());
-		canvas.addEventListener("reposition", () => this.updateCanvasPosition());
-		window.addEventListener("scroll", () => this.updateCanvasPosition());
 	}
 	
 
 	protected getInputData(ev: PointerEvent, inputType: InputType, src: InputSource): InputData {
-		const x = ev.clientX - this._canvasPos.x;
-		const y = ev.clientY - this._canvasPos.y;
+		const bounds = this._canvas.getBoundingClientRect();
+		const x = ev.clientX - bounds.left;
+		const y = ev.clientY - bounds.top;
 
 
 		let positionData: InputPositionData;
@@ -60,28 +55,22 @@ export class InputCapture {
 	}
 
 
-	protected updateCanvasPosition() {
-		const bounds = this._canvas.getBoundingClientRect();
-		this._canvasPos = Vec2.create(bounds.left, bounds.top);
-	}
-
-
 	protected _onPointerDown = (ev: PointerEvent) => {
 		if (ev.button !== 0) {
 			return;
 		}
 		this._mouseDown = true;
 		const data = this.getInputData(ev, InputType.Down, InputSource.Pointer);
-		Events.broadcast(Events.ID.PointerDown, data);
+		Events.pointer.down.broadcast(data);
 	}
 
 
 	protected _onPointerMove = (ev: PointerEvent) => {
 		const data = this.getInputData(ev, InputType.Move, InputSource.Pointer);
-		Events.broadcast(Events.ID.PointerMove, data);
+		Events.pointer.move.broadcast(data);
 
 		if (this._mouseDown === true) {
-			Events.broadcast(Events.ID.PointerDrag, data);
+			Events.pointer.drag.broadcast(data);
 		}
 	}
 
@@ -89,6 +78,6 @@ export class InputCapture {
 	protected _onPointerUp = (ev: PointerEvent) => {
 		this._mouseDown = false;
 		const data = this.getInputData(ev, InputType.Up, InputSource.Pointer);
-		Events.broadcast(Events.ID.PointerUp, data);
+		Events.pointer.up.broadcast(data);
 	}
 }

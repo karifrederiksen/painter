@@ -1,106 +1,58 @@
-﻿import { Callback } from "../Misc/Misc";
+﻿import { Fun1 } from "../Common";
+import { Vec2 } from "../Math/Vec";
+import { Hsva } from "../Math/Color";
+import { Tools } from "../../Tools";
+import { BlendModeType } from "../Rendering/Consts";
 
-/*
+export class Setting<T> {
+	private _callbacks: Fun1<T, void>[] = [];
+	private _value: T;
 
-*/
-export class Setting {
-	constructor(
-		public id: number,
-		public value: any,
-		public callbacks: Callback[] = []
-	) {}
-}
+	public get value() { return this._value; }
 
-
-/*
-	Object to contain all settings objects
-*/
-const _settings: { [id: number]: Setting } = {};
-
-
-/*
-	Set a new value for a setting and broadcast it to all subscribers
-*/
-export function setValue(id: number, value: any) {
-	let setting = _settings[id];
-	if (setting == null) {
-		setting = new Setting(id, value);
-		_settings[id] = setting;
+	public subscribe(callback: Fun1<T, void>) {
+		const cbs = this._callbacks;
+		if (cbs.every((val) => val !== callback)) {
+			cbs.push(callback);
+		}
 	}
-	else {
-		setting.value = value;
+
+	public unsubscribe(callback: Fun1<T, void>) {
+		const cbs = this._callbacks;
+		const idx = cbs.findIndex((value) => value === callback);
+		if (idx > -1) {
+			cbs.splice(idx, 1);
+		}
 	}
-	broadcast(setting);
-}
 
-
-/*
-	Get the current value of a setting
-*/
-export function getValue(id: number) {
-	return _settings[id] != null ? _settings[id].value : null;
-}
-
-
-/*
-	Subscribe to a setting with a callback
-*/
-export function subscribe(id: number, callback: Callback) {
-	let setting = _settings[id];
-	if (setting == null) {
-		setting = new Setting(id, null);
-		_settings[id] = setting;
-	}
-	setting.callbacks.push(callback);
-}
-
-
-/*
-	Remove a callback from the callback list for a specific event
-*/
-export function unsubscribe(id: ID, callback: Callback) {
-	const idx = _settings[id].callbacks.indexOf(callback);
-	if (idx >= 0) {
-		_settings[id].callbacks.splice(idx, 1);
+	public broadcast(value: T) {
+		const cbs = this._callbacks;
+		for (let func of cbs) {
+			func(value);
+		}
+		this._value = value;
 	}
 }
 
 
-/*
-	Broadcast a value change to all callbacks
-*/
-function broadcast(setting: Setting) {
-	const callbacks = setting.callbacks;
-	const value = setting.value;
-	for (let i = 0, ilen = callbacks.length; i < ilen; i++) {
-		callbacks[i](value);
-	}
+const BrushSettings = {
+	textureSize: new Setting<Vec2>(),
+	size: new Setting<number>(),
+	softness: new Setting<number>(),
+	spacing: new Setting<number>(),
+	density: new Setting<number>(),
+	color: new Setting<Hsva>()
 }
 
-/*
-	Define the names of all settings
-*/
-export enum ID {
-	// display
-	CanvasWidth,
-	CanvasHeight,
-	Gamma,
+const RenderSettings = {
+	canvasSize: new Setting<Vec2>(),
+	gamma: new Setting<number>(),
+	blendMode: new Setting<BlendModeType>(),
+	maxDrawPoints: new Setting<number>()
+}
 
-	// tool change
-	ToolId,
-
-	// brush
-	BrushTextureSize,
-	BrushSize,
-	BrushSoftness,
-	BrushSpacing,
-	BrushDensity,
-	BrushHue,
-	BrushSaturation,
-	BrushValue,
-	BrushAlpha,
-
-	// rendering
-	RenderingMaxDrawPoints,
-	RenderingBlendMode,
+export const Settings = {
+	brush: BrushSettings,
+	rendering: RenderSettings,
+	toolId: new Setting<Tools>()
 }

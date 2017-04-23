@@ -1,9 +1,9 @@
 
-import * as Events from "./Engine/Global/Events";
-import * as Settings from "./Engine/Global/Settings";
+import { Events, Event } from "./Engine/Global/Events";
+import { Settings, Setting } from "./Engine/Global/Settings";
 
 import { Vec2, Vec3 } from "./Engine/Math/Vec";
-import { Hsv, Rgb, Color } from "./Engine/Math/Color";
+import { Hsva, Hsv, Rgb, Color } from "./Engine/Math/Color";
 import { clamp } from "./Engine/Math/Utils";
 
 export interface SliderDoubleBindingArgs {
@@ -44,27 +44,75 @@ export class SliderElement {
 
 export class SliderDoubleBinding {
     protected slider: SliderElement
-    protected eventId: Events.ID;
-    protected settingsId: Settings.ID;
+    protected event: Event<number>;
+    protected setting: Setting<number>;
 
-    constructor(slider: SliderElement, eventId: Events.ID, settingsId: Settings.ID) {
+    constructor(slider: SliderElement, event: Event<number>, setting: Setting<number>) {
         this.slider = slider;
-        this.eventId = eventId;
-        this.settingsId = settingsId;
+        this.event = event;
+        this.setting = setting;
 
-        slider.value = Settings.getValue(settingsId);
+        this.onSettingsChange(setting.value);
 
         slider.input.addEventListener("input", this.onUInput);
-        Settings.subscribe(settingsId, this.onSettingsChange);
+        setting.subscribe(this.onSettingsChange);
     }
     
-    protected onSettingsChange = (val: any) => {
-        this.slider.value = val;
+    protected onSettingsChange = (val: number) => {
+        this.slider.value = parseFloat(val.toString());
     }
 
     protected onUInput = () => {
         const value = this.slider.value;
-        Events.broadcast(this.eventId, value);
+        this.event.broadcast(value);
+    }
+}
+
+type HsvaParts = "h"|"s"|"v"|"a";
+export class SliderDoubleBindingColor {
+    protected slider: SliderElement
+    protected eventId: Event<Hsva>;
+    protected setting: Setting<Hsva>;
+    protected hsvaComponent: HsvaParts;
+
+    constructor(slider: SliderElement, event: Event<Hsva>, setting: Setting<Hsva>, element: HsvaParts) {
+        this.slider = slider;
+        this.eventId = event;
+        this.setting = setting;
+        this.hsvaComponent = element;
+
+        this.onSettingsChange(setting.value);
+
+        slider.input.addEventListener("input", this.onUInput);
+        setting.subscribe(this.onSettingsChange);
+    }
+    
+    protected onSettingsChange = (val: Hsva) => {
+        let a: number;
+        switch(this.hsvaComponent) {
+            case "h": a = val.h; break;
+            case "s": a = val.s; break;
+            case "v": a = val.v; break;
+            case "a": a = val.a; break;
+            default: throw "???";
+
+        }
+        this.slider.value = a;
+    }
+
+    protected onUInput = () => {
+        const value = this.slider.value;
+        const color = Settings.brush.color.value;
+        let newColor: Hsva;
+        switch(this.hsvaComponent) {
+            case "h": newColor = color.withH(value); break;
+            case "s": newColor = color.withS(value); break;
+            case "v": newColor = color.withV(value); break;
+            case "a": newColor = color.withA(value); break;
+            default: throw "???";
+
+        }
+        this.eventId.broadcast(newColor);
     }
 }
 
@@ -133,8 +181,11 @@ class ColorAreaDoubleBinding {
         xpct = clamp(xpct, 0, 1);
         ypct = clamp(ypct, 0, 1);
 
-        Events.broadcast(Events.ID.BrushSaturation, xpct);
-        Events.broadcast(Events.ID.BrushValue, ypct);
+        
+        const oldColor = Settings.brush.color.value;
+        const newColor = Hsva.create(oldColor.h, xpct, ypct, oldColor.a);
+
+        Events.brush.color.broadcast(newColor);
     } 
 
 
@@ -177,7 +228,7 @@ class HueAreaSlider {
         this.element = <HTMLDivElement>document.getElementById(elementId);
         this.sliderElement = <HTMLDivElement>document.getElementById(sliderId);
         this.element.addEventListener("pointerdown", this.pointerdown);
-        document.body.addEventListener("pointerup", this.pointerup);
+        window.addEventListener("pointerup", this.pointerup);
         document.body.addEventListener("pointermove", this.pointermove);
     }
 
@@ -202,7 +253,8 @@ class HueAreaSlider {
         let xpct = x / this.element.clientWidth;
         xpct = clamp(xpct, 0, 1);
 
-        Events.broadcast(Events.ID.BrushHue, xpct);
+        const oldColor = Settings.brush.color.value;
+        Events.brush.color.broadcast(oldColor.withH(xpct));
     }
 
 
@@ -247,68 +299,43 @@ export class ColorSelectionArea {
     protected hueSlider: HueAreaSlider;
     protected colorDisplay: ColorDisplay;
 
-    protected color: Hsv;
-    protected secondaryColor = Hsv.create(0, 0, 1);
+    protected color = Hsv.create(0, 0, 1);
+    protected secondaryColor = this.color;
 
     constructor() {
         this.satValArea = new ColorAreaDoubleBinding("pickingArea", "picker");
         this.hueSlider = new HueAreaSlider("hueArea", "hueAreaSlider");
         this.colorDisplay = new ColorDisplay("colorDisplayPrimary", "colorDisplaySecondary")
 
-        this.colorDisplay.secondaryElem.addEventListener("pointerdown", () => {
-            const tmp = this.color;
-            this.color = this.secondaryColor;
-            this.secondaryColor = tmp;
-            this.colorDisplay.swapColors();
+        this.colorDisplay.secondaryElem.addEventListener("pointerdown", this.swapColors);
 
-            Events.broadcast(Events.ID.BrushHue, this.color.h);
-            Events.broadcast(Events.ID.BrushSaturation, this.color.s);
-            Events.broadcast(Events.ID.BrushValue, this.color.v);
-        });
+        this.handleColor(Settings.brush.color.value);
 
-        this.color = Hsv.create(
-            Settings.getValue(Settings.ID.BrushHue),
-            Settings.getValue(Settings.ID.BrushSaturation),
-            Settings.getValue(Settings.ID.BrushValue)
-        );
-
-        this.satValArea.updateColor(this.color);
-        this.hueSlider.setHue(this.color.h);
-        this.colorDisplay.updateColor(this.getColorRgb());
-
-        Events.subscribe(Events.ID.BrushHue, this.handleHue);
-        Events.subscribe(Events.ID.BrushSaturation, this.handleSaturation);
-        Events.subscribe(Events.ID.BrushValue, this.handleValue);
+        Events.brush.color.subscribe(this.handleColor);
     }
 
-    protected getColorRgb = () =>
-        this.color
+    protected swapColors = () => {
+        const tmp = this.color;
+        this.color = this.secondaryColor;
+        this.secondaryColor = tmp;
+        this.colorDisplay.swapColors();
+
+
+        const oldColor = Settings.brush.color.value;
+        Events.brush.color.broadcast(Hsva.createWithHsv(this.color, oldColor.a));
+    }
+
+    protected handleColor = (value: Hsva) => {
+        console.assert(value.isZeroToOne(), `HSVA color has invalid value: ${value}. Expected all values to be in range [0..1]`)
+        const hsv = value.hsv;
+        const rgb = hsv
             .toRgb()
             .multiplyScalar(255)
             .round();
 
-    protected handleHue = (value: number) => {
-        console.assert(value >= 0);
-        console.assert(value <= 1);
-        this.color = this.color.withH(value);
-        this.satValArea.updateColor(this.color);
-        this.hueSlider.setHue(value);
-        this.colorDisplay.updateColor(this.getColorRgb());
-    }
-
-    protected handleSaturation = (value: number) => {
-        console.assert(value >= 0);
-        console.assert(value <= 1);
-        this.color = this.color.withS(value);
-        this.satValArea.updateColor(this.color);
-        this.colorDisplay.updateColor(this.getColorRgb());
-    }
-
-    protected handleValue = (value: number) => {
-        console.assert(value >= 0);
-        console.assert(value <= 1);
-        this.color = this.color.withV(value);
-        this.satValArea.updateColor(this.color);
-        this.colorDisplay.updateColor(this.getColorRgb());
+        this.color = hsv;
+        this.satValArea.updateColor(hsv);
+        this.hueSlider.setHue(hsv.h);
+        this.colorDisplay.updateColor(rgb);
     }
 }

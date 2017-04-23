@@ -1,6 +1,6 @@
 
 import { Renderer } from "../Renderer";
-import { Sprite } from "../Sprite";
+import { Sprite, addToBatch } from "../Sprite";
 import { Texture } from "../Texture";
 import { Layer } from "./Layer";
 import { LayerStack } from "./LayerStack";
@@ -42,9 +42,7 @@ export class LayersRenderer {
 		}
 		this._currentLayer = currentLayer;
 
-
 		const renderer = this._renderer;
-		const shader = renderer.shaders.spriteShader;
 		const combined = this.combinedLayers;
 		const stack = this._layerStack.stack;
 		const currentLayerIdx = this._layerStack.stack.indexOf(currentLayer);
@@ -55,7 +53,7 @@ export class LayersRenderer {
 		renderer.setViewportForSprite(below);
 		for (let i = 0; i < currentLayerIdx; i++) {
 			console.log("current layer idx", currentLayerIdx);
-			renderer.renderSpriteToTexture(shader, stack[i], below.texture);
+			this.renderSpriteToTexture(stack[i], below.texture);
 		}
 
 
@@ -64,20 +62,38 @@ export class LayersRenderer {
 		//renderer.clear(above.texture);
 		renderer.setViewportForSprite(above);
 		for (let i = currentLayerIdx + 1, ilen = stack.length; i < ilen; i++) {
-			renderer.renderSpriteToTexture(shader, stack[i], above.texture);
+			this.renderSpriteToTexture(stack[i], above.texture);
 		}
 	}
 
 
 	public render() {
 		const renderer = this._renderer;
-		const shader = renderer.shaders.spriteShader;
 		const combined = this.combinedLayers;
 
-		renderer.clear(combined.texture);
+		renderer.clearTexture(combined.texture);
 		renderer.setViewportForSprite(combined);
-		renderer.renderSpriteToTexture(shader, this._layersBelow, combined.texture);
-		renderer.renderSpriteToTexture(shader, this._currentLayer, combined.texture);
-		renderer.renderSpriteToTexture(shader, this._layersAbove, combined.texture);
+		this.renderSpriteToTexture(this._layersBelow, combined.texture);
+		this.renderSpriteToTexture(this._currentLayer, combined.texture);
+		this.renderSpriteToTexture(this._layersAbove, combined.texture);
+	}
+
+	
+	public renderSpriteToTexture(sprite: Sprite, texture: Texture) {
+		console.assert(sprite != null, `Sprite is ${sprite}`);
+		console.assert(sprite.texture != null, `Sprite texture is ${sprite.texture}`);
+
+		const renderer = this._renderer;
+		const shader = renderer.shaders.spriteShader;
+
+		addToBatch(sprite, shader.batch);
+
+		// set unifrms
+		shader.texture = sprite.texture;
+		shader.scale = sprite.scale;
+		shader.rotation = sprite.rotation;
+
+		// render
+		renderer.flushShaderToTexture(shader, texture);
 	}
 }

@@ -1,115 +1,120 @@
 ﻿
 import { DrawPoint } from "./DrawPoints";
 import { Rgb, Rgba } from "../Math/Color";
+import { distance } from "../Math/Utils";
 import { IArithmetic, Vec2 } from "../Math/Vec";
+import { linearInterpolateFunc, InterpFunc } from "../Math/IArithmetic";
 
 
-export type Interpolator = (end: DrawPoint) => DrawPoint[];
+export class InterpolatorResult {
+	constructor(
+		public values: DrawPoint[],
+		public next: (prev: Interpolator) => Interpolator
+	) {
+		Object.freeze(this);
+	}
+	public get hasValues() { return this.values.length > 0; }
+}
+
+export type Interpolator = (end: DrawPoint) => InterpolatorResult;
 export type InterpolatorGenerator = (start: DrawPoint) => Interpolator;
 
 export function interpolatorGenerator(spacingThresholdPx: number): InterpolatorGenerator {
-	return (start: DrawPoint) => {
+	
+	function _createInterpolator(start: DrawPoint): Interpolator {
 		return (end: DrawPoint) => {
-			console.assert(end != null, `End is ${end}`);
-			const results = interpolationFunction2(spacingThresholdPx, start, end);
-			Object.freeze(results);
-			return results;
+			const results = doInterpolation(spacingThresholdPx, start, end);
+			return (results.length > 0)
+				? new InterpolatorResult(results, (prev: Interpolator) => _createInterpolator(results[results.length - 1] ))
+				: new InterpolatorResult(results, (prev: Interpolator) => prev);
 		}
 	}
+
+	return (start: DrawPoint) => _createInterpolator(start);
 }
 
 
 function getPercentagesToAdd(spacing: number, start: DrawPoint, end: DrawPoint) {
+	console.assert(start != null, `Start is ${start}`);
+	console.assert(end != null, `End is ${end}`);
+
 	const arr = new Array<number>();
 
-	const endSpacing = Math.max(spacing * end.scale);
 	const endX = end.position.x;
 	const endY = end.position.y;
-	const totalDist = Vec2.distance(start.position, end.position);
+	const endScale = end.scale;
 
-	let dist = totalDist;
-	let p = .1;
 	let x = start.position.x;
 	let y = start.position.y;
 	let scale = start.scale;
-	let previous = start;
+
+	const endSpacing = Math.max(spacing * endScale);
+	const totalDist = distance(x, y, endX, endY);
+
+	let dist = totalDist;
+	let p = .1;
+	let prevX = x;
+	let prevY = y;
+	let prevScale = scale;
 
 	// Linear interpolation with a twist
 	// The twist being that 'p', the percentage to increment each iteration
 	// changes based on the DrawPoint scale for a smoother transition.
 	while (dist > endSpacing && p > 0) {
-		p = (spacing * start.scale) / dist;
+		p = (spacing * scale) / dist;
 
+		// current values
 		x += p * (endX - x);
 		y += p * (endY - y);
-		scale += p * (end.scale - scale);
+		scale += p * (endScale - scale);
 
-		start = new DrawPoint(
-			Vec2.create(x, y),
-			start.size,
-			scale,
-			undefined,
-			undefined
-		);
-
-		// add
-		if (previous != null && start.notEqual(previous)) {
+		// add if current values are not equal to previous ones
+		if (x !== prevX || y !== prevY || scale !== prevScale) {
 			arr.push(dist / totalDist);
-			previous = start;
+			prevX = x;
+			prevY = y;
+			prevScale = scale;
 		}
-		dist = Vec2.distance(start.position, end.position);
+		dist = distance(x, y, endX, endY);
 	}
 	return arr.reverse();
 }
 
 
-function interpolationFunction2(spacing: number, start: DrawPoint, end: DrawPoint) {
+function doInterpolation(spacing: number, start: DrawPoint, end: DrawPoint) {
 	const percentages = getPercentagesToAdd(
 		spacing, 
 		start, 
-		end);
-	const funcs = getFunctions(start, end);
+		end
+	);
+	const position = arithmeticInterpFunc(
+		start.position,
+		end.position
+	);
+	const color =  arithmeticInterpFunc(
+		start.color.toRgba(),
+		end.color.toRgba()
+	);
+	const scale = numberInterpFunc(
+		start.scale,
+		end.scale
+	);
+	const rotate = numberInterpFunc(
+		start.rotation,
+		end.rotation
+	);
 
-	return percentages.map(p => 
+	const results = percentages.map(p => 
 		new DrawPoint(
-			funcs.position(p),
+			position(p),
 			end.size,
-			funcs.scale(p),
-			funcs.rotation(p),
-			funcs.color(p)
+			scale(p),
+			rotate(p),
+			color(p)
 	));
-}
 
-
-type InterpFunc<T> = (p: number) => T;
-
-interface DrawPointInterpFuncs {
-	position: InterpFunc<Vec2>;
-	scale: InterpFunc<number>;
-	rotation: InterpFunc<number>;
-	color: InterpFunc<Rgba>;
-}
-
-
-function getFunctions(start: DrawPoint, end: DrawPoint): DrawPointInterpFuncs {
-	return {
-		position: arithmeticInterpFunc(
-			start.position,
-			end.position
-		),
-		scale: numberInterpFunc(
-			start.scale,
-			end.scale
-		),
-		rotation: numberInterpFunc(
-			start.rotation,
-			end.rotation
-		),
-		color: arithmeticInterpFunc(
-			start.color.toRgba(),
-			end.color.toRgba()
-		)
-	};
+	Object.freeze(results);
+	return results;
 }
 
 
@@ -124,7 +129,7 @@ function numberInterpFunc(start: number, end: number) {
 function arithmeticInterpFunc<T extends IArithmetic<T>>(start: T, end: T) {
 	const delta = end.subtract(start);
 	if (delta.isDefault()) {
-		return (p: number) => start;
+		return () => start;
 	}
-	return (p: number) => start.add(delta.multiplyScalar(p));
+	return linearInterpolateFunc(start, end);
 }

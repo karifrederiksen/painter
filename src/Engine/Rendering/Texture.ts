@@ -1,17 +1,17 @@
 ﻿
 import { Renderer } from "./Renderer";
-import { Vec2 } from "../Math/Vec2";
+import { Vec2 } from "../Math/Vec";
 
 
 export class Texture {
 	private static _nextId = 0;
 
 	protected readonly _renderer: Renderer;
-	public stencilBuffer: WebGLRenderbuffer;
-	public framebuffer: WebGLFramebuffer;
-	public textureWGL: WebGLTexture;		// should be a textureID instead
-	public size: Vec2;
-	public id: number;
+	public readonly stencilBuffer: WebGLRenderbuffer;
+	public readonly framebuffer: WebGLFramebuffer;
+	public readonly textureWGL: WebGLTexture;		// should be a textureID instead
+	public readonly size: Vec2;
+	public readonly id: number;
 
 	constructor(renderer: Renderer, width = 100, height = 100) {
 		console.assert(renderer != null, `Renderer is ${renderer}`);
@@ -25,7 +25,7 @@ export class Texture {
 		this.textureWGL = gl.createTexture();
 		this.framebuffer = gl.createFramebuffer();
 		this.updateSize();
-		renderer.useFrameBuffer(this);
+		renderer.useTextureFrameBuffer(this);
 		gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.textureWGL, 0);
 	}
 

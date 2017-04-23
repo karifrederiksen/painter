@@ -1,10 +1,13 @@
 ﻿
 
+export module GUID {
+	let _nextId = 0;
 
+	export function next() {
+		return _nextId++;
+	}
+}
 
-
-// Callback definition
-export type Callback = ((obj: any) => any);
 
 // Find a HtmlCanvasElement by its element id. Return null if not found.
 export function getCanvasById(id: string): HTMLCanvasElement {
@@ -49,9 +52,6 @@ export function getCookie(cname: string) {
 	return null;
 }
 
-export function isNumberType(value: any) {
-	return isNaN(value) == false;
-}
 
 
 // bind F12 to stop code execution in chrome

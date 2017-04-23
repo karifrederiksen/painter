@@ -2,7 +2,7 @@
 import { Shader, Attribute, Uniform } from "./Shader";
 import { Texture } from "../Texture";
 import { Renderer } from "../Renderer";
-import { Vec2 } from "../../Math/Vec2";
+import { Vec2 } from "../../Math/Vec";
 
 /*
 

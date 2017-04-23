@@ -1,83 +1,58 @@
 ﻿
-import { Callback } from "../Misc/Misc";
+import { Fun1 } from "../Common";
+import { Hsva } from "../Math/Color";
+import { Tools } from "../../Tools";
+import { InputData } from "../Input/InputData";
+
 /*
 	Global object for handling events. I don't yet know how extensively it will be used.
 
 	This event module broadcasts events immediately, as opposed to storing them for later use.
 */
 
-/*
-	Object contains all the callbacks
-*/
-const _callbacks: { [id: number]: Callback[] } = {};
+export class Event<T> {
+	private _callbacks: Fun1<T, void>[] = [];
 
-
-/*
-	Register a callback to an event id
-*/
-export function subscribe(id: ID, callback: Callback) {
-	let callList = _callbacks[id];
-	if (callList == null) {
-		callList = [];
-		_callbacks[id] = callList;
-	}
-
-	callList.push(callback);
-}
-
-
-/*
-	Remove a callback from the callback list for a specific event
-*/
-export function unsubscribe(id: ID, callback: Callback) {
-	const idx = _callbacks[id].indexOf(callback);
-	if (idx >= 0) {
-		_callbacks[id].splice(idx, 1);
-	}
-}
-
-
-/*
-	Send an event to all registered callbacks
-*/
-export function broadcast(id: ID, arg: any) {
-	const callList = _callbacks[id];
-
-	if (callList != null) {
-		// Call every callback
-		for (let i = 0, ilen = callList.length; i < ilen; i++) {
-			callList[i](arg);
+	public subscribe(callback: Fun1<T, void>) {
+		const cbs = this._callbacks;
+		if (cbs.every((val) => val !== callback)) {
+			cbs.push(callback);
 		}
 	}
-	else {
-		// Useful for debugging
-		const keys = Object.keys(ID);
-		console.warn([
-			"Event ",  id, " \"", keys[(keys.length / 2) + id], "\"", " does not have any callbacks associated with it."
-		].join(""));
+
+	public unsubscribe(callback: Fun1<T, void>) {
+		const cbs = this._callbacks;
+		const idx = cbs.findIndex((value) => value === callback);
+		if (idx > -1) {
+			cbs.splice(idx, 1);
+		}
+	}
+
+	public broadcast(value: T) {
+		const cbs = this._callbacks;
+		for (let func of cbs) {
+			func(value);
+		}
 	}
 }
 
+const BrushEvents = {
+	color: new Event<Hsva>(),
+	density: new Event<number>(),
+	softness: new Event<number>(),
+	spacing: new Event<number>(),
+	size: new Event<number>(),
+};
 
-export enum ID {
-	// Pointer events
-	PointerDown,
-	PointerUp,
-	PointerMove,
-	PointerDrag,
+const Pointer = {
+	down: new Event<InputData>(),
+	up: new Event<InputData>(),
+	move: new Event<InputData>(),
+	drag: new Event<InputData>()
+}
 
-	// Other inputs (Keybinds, buttons, etc.)
-	ButtonToolBrush,
-	ButtonToolEraser,
-	ButtonToolBlur,
-
-	// Brush
-	BrushHue,
-	BrushSaturation,
-	BrushValue,
-	BrushAlpha,
-	BrushDensity,
-	BrushSoftness,
-	BrushSpacing,
-	BrushSize,
+export const Events = {
+	brush: BrushEvents,
+	pointer: Pointer,
+	tool: new Event<Tools>()
 }

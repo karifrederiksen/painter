@@ -1,5 +1,5 @@
 ﻿
-import { IArithmetic } from "IVec";
+import { IArithmetic } from "./IArithmetic";
 
 export interface Color {
 	toRgb(): Rgb;
@@ -41,6 +41,12 @@ export class Hsv implements Color, IArithmetic<Hsv> {
 	}
 	public isDefault() {
 		return this === Hsv.default;
+	}
+
+	public equals(rhs: Hsv) {
+		return this._h === rhs._h
+			&& this._s === rhs._s
+			&& this._v === rhs._v;
 	}
 
 	public withH(n: number) { 
@@ -204,6 +210,12 @@ export class Rgb implements Color, IArithmetic<Rgb>  {
 	}
 	public isDefault() {
 		return this === Rgb.default;
+	}
+
+	public equals(rhs: Rgb) {
+		return this._r === rhs._r
+			&& this._g === rhs._g
+			&& this._b === rhs._b;
 	}
 
 	public withR(n: number) { 
@@ -381,6 +393,11 @@ export class Hsva implements ColorWithAlpha, IArithmetic<Hsva> {
 		return this === Hsva.default;
 	}
 
+	public equals(rhs: Hsva) {
+		return this._hsv.equals(rhs._hsv)
+			&& this._a === rhs._a;
+	}
+
 	public withH(n: number) { 
 		return Hsva.createWithHsv(this._hsv.withH(n), this._a); 
 	}
@@ -390,7 +407,7 @@ export class Hsva implements ColorWithAlpha, IArithmetic<Hsva> {
 	public withV(n: number) { 
 		return Hsva.createWithHsv(this._hsv.withV(n), this._a); 
 	}
-	public WithA(n: number) { 
+	public withA(n: number) { 
 		return Hsva.createWithHsv(this._hsv, n); 
 	}
 
@@ -458,6 +475,16 @@ export class Hsva implements ColorWithAlpha, IArithmetic<Hsva> {
 	public toHsva = () => this;
 
 	public toHex = () => this.toRgba().toHex();
+
+	public isZeroToOne() {
+		function _isZeroToOne(n: number) {
+			return n >= 0 && n <= 1;
+		}
+		return _isZeroToOne(this._hsv.h)
+			&& _isZeroToOne(this._hsv.s)
+			&& _isZeroToOne(this._hsv.v)
+			&& _isZeroToOne(this._a);
+	}
 }
 
 
@@ -496,6 +523,11 @@ export class Rgba implements ColorWithAlpha, IArithmetic<Rgba> {
 	}
 	public isDefault() {
 		return this === Rgba.default;
+	}
+
+	public equals(rhs: Rgba) {
+		return this._rgb.equals(rhs._rgb)
+			&& this._a === rhs._a;
 	}
 
 	public withR(n: number) { 

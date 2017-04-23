@@ -3,7 +3,7 @@ import { Shader, Attribute, Uniform } from "./Shader"
 import { Renderer } from "../Renderer";
 import { Batch } from "../Batch";
 import { Texture } from "../Texture";
-import { Vec2 } from "../../Math/Vec2";
+import { Vec2 } from "../../Math/Vec";
 import { SHADER_DEFINE_PI } from "./Common";
 
 const SHADER_DRAWPOINT_VERT = [
@@ -90,8 +90,7 @@ export class DrawPointShader extends Shader {
 				uBrushTexture: new Uniform("t", texture),
 				uResolution: new Uniform("2f", null)
 			},
-			maxElements,
-			false
+			maxElements
 		);
 		this.resolution = Vec2.create(renderer.canvas.width, renderer.canvas.height);
 	}

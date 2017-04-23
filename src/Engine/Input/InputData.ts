@@ -1,4 +1,4 @@
-﻿import { Vec2 } from "../Math/Vec2";
+﻿import { Vec2 } from "../Math/Vec";
 
 export const enum InputSource {
 	Pointer,

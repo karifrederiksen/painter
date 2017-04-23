@@ -1,12 +1,14 @@
 ﻿
-import { BlendMode } from "./Consts";
+import { BlendModeType } from "./Consts";
 import { Renderer } from "./Renderer";
+import { addToBatch } from "./Sprite"
 import { Layer } from "./Layers/Layer";
 import { LayerStack } from "./Layers/LayerStack";
 import { LayersRenderer } from "./Layers/LayersRenderer";
 import { Texture } from "./Texture";
-import { DrawPoint, addDrawPointToBatch } from "./DrawPoints"
-import * as Settings from "../Global/Settings";
+import { DrawPoint, addDrawPointToBatch } from "./DrawPoints";
+import { Vec4 } from "../Math/Vec";
+import { Settings } from "../Global/Settings";
 
 export class CanvRenderingContext {
 	public readonly renderer: Renderer;
@@ -16,7 +18,7 @@ export class CanvRenderingContext {
 
 	public layer: Layer;
 	
-	public blendMode: BlendMode;
+	public blendMode: BlendModeType;
 
 
 	constructor(canvas: HTMLCanvasElement) {
@@ -39,13 +41,14 @@ export class CanvRenderingContext {
 		this.layer.texture.updateSize();
 		this._layersRenderer = new LayersRenderer(this.renderer, this.layerStack);
 
-		this.blendMode = Settings.getValue(Settings.ID.RenderingBlendMode);
+		this.blendMode = Settings.rendering.blendMode.value;
 	}
 
 
-	public renderDrawPoints(drawPoints: Array<DrawPoint>, brushTexture: Texture) {
+	public renderDrawPoints(drawPoints: DrawPoint[], brushTexture: Texture) {
 		console.assert(drawPoints != null, `DrawPoints is ${drawPoints}`);
 		console.assert(brushTexture != null, `BrushTexture is ${brushTexture}`);
+
 		//console.log("rendering to layer", this.layerStack.stack.indexOf(this.layer));
 		const drawPointShader = this.renderer.shaders.drawPointShader;
 		const renderer = this.renderer;
@@ -58,6 +61,7 @@ export class CanvRenderingContext {
 		addDrawPointToBatch(drawPoints, drawPointShader.batch); // todo: ElementsBatch
 
 		// render
+		renderer.setViewportForSprite(layer);
 		renderer.flushShaderToTexture(drawPointShader, layer.texture);
 
 		// render output texture to canvas
@@ -74,23 +78,23 @@ export class CanvRenderingContext {
 		const blendMode = renderer.blendMode;
 
 		// save blend mode
-		renderer.blendMode = BlendMode.Normal;
+		renderer.blendMode = BlendModeType.Normal;
 
 		// combine layers
 		layersRenderer.update(this.layer);
 		layersRenderer.render()
 		
 		// prepare render to canvas
-		combinedLayers.addToBatch(outputShader.batch);
+		addToBatch(combinedLayers, outputShader.batch);
 		outputShader.resolution = combinedLayers.texture.size;
 		outputShader.texture = combinedLayers.texture;
-		renderer.setViewport(0, 0, renderer.canvas.width, renderer.canvas.height);
+		renderer.setViewPortForCanvas();
 
 		// clear canvas
-		renderer.useFrameBuffer(null);
-		renderer.clear();
+		renderer.useCanvasFrameBuffer();
+		renderer.clearCanvas();
 
 		// render
-		renderer.flushShaderToTexture(outputShader, null);
+		renderer.flushShaderToCanvas(outputShader);
 	}
 }

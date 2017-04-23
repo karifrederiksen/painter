@@ -20,3 +20,5 @@ export const expostep = (x: number) => {
 
 export const isPowerOfTwo = (width: number, height: number) =>
 	(width > 0 && (width & (width - 1)) === 0 && height > 0 && (height & (height - 1)) === 0);
+
+export const distance = (x0: number, y0: number, x1: number, y1: number) =>  Math.sqrt((x1 - x0) ** 2 + (y1 - y0) ** 2)

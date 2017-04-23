@@ -1,7 +1,7 @@
 ﻿import { Texture } from "./Texture";
 import { Renderer } from "./Renderer";
 
-export class BoundTexture {
+class BoundTexture {
 	constructor(
 		// the bound texture
 		public texture: Texture,
@@ -94,6 +94,7 @@ export class TextureManager {
 	protected getLowestPriorityBoundTexture() {
 		const bTextures = this._boundTextures;
 		let lowest = bTextures[0];
+
 		for (let i = 1, ilen = bTextures.length; i < ilen; i++) {
 			if (lowest.isLessThan(bTextures[i])) {
 				lowest = bTextures[i];
@@ -105,12 +106,6 @@ export class TextureManager {
 
 	protected getIndexOf(texture: Texture) {
 		console.assert(texture != null);
-		const bTextures = this._boundTextures;
-		for (let i = 0, ilen = bTextures.length; i < ilen; i++) {
-			if (bTextures[i].texture === texture) {
-				return i;
-			}
-		}
-		return -1;
+		return this._boundTextures.findIndex((bTex, idx) => bTex.texture === texture);
 	}
 }

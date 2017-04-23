@@ -30,10 +30,9 @@ export class Batch {
 		this._renderer = renderer;
 		const gl = renderer.gl;
 
-		const keys = Object.keys(attributes)
 		let values = 0;
-		for (let i = 0, ilen = keys.length; i < ilen; i++) {
-			values += attributes[keys[i]].size;
+		for (let key of Object.keys(attributes)) {
+			values += attributes[key].size;
 		}
 
 		this.BATCH_FLOATS_PER_INDEX = values;
@@ -55,14 +54,13 @@ export class Batch {
 		gl.bufferData(gl.ARRAY_BUFFER, arrayView, gl.DYNAMIC_DRAW);
 
 		const attributes = this._attributes;
-		const keys = Object.keys(attributes);
 		const stride = this.BATCH_STRIDE
 		let attribOffset = 0;
 		let attrib: Attribute;
 
 		// enable attributes
-		for (let i = 0, ilen = keys.length; i < ilen; i++) {
-			attrib = attributes[keys[i]];
+		for (let key of Object.keys(attributes)) {
+			attrib = attributes[key];
 			gl.vertexAttribPointer(attrib.location, attrib.size, attrib.type, false, stride, attribOffset);
 			gl.enableVertexAttribArray(attrib.location);
 			attribOffset += attrib.size * 4; // assume 4 byte
@@ -92,7 +90,7 @@ export class Batch {
 
 	TODO: having issues with this only drawing half of a square when drawing 1 at a time.
 */
-export class ElementsBatch extends Batch {
+/*export class ElementsBatch extends Batch {
 	public _indexBuffer: WebGLBuffer;
 	public _indexArray: Uint16Array;
 
@@ -121,3 +119,4 @@ export class ElementsBatch extends Batch {
 		gl.drawElements(gl.TRIANGLES, this.arrayOffset / this.BATCH_FLOATS_PER_INDEX, gl.UNSIGNED_SHORT, 0);
 	}
 }
+*/

@@ -1,5 +1,5 @@
 ﻿
-import { Batch, ElementsBatch } from "./Batch";
+import { Batch } from "./Batch";
 import { Vec2, Vec4 } from "../Math/Vec";
 import { Rgba, ColorWithAlpha } from "../Math/Color";
 
@@ -64,7 +64,6 @@ export class DrawPoint {
 		);
 
 	public equal(rhs: DrawPoint) {
-		console.assert(rhs != null, `RHS is ${rhs}`);
 		return this.position === rhs.position
 			&& this.size     === rhs.size
 			&& this.scale    === rhs.scale
@@ -73,7 +72,6 @@ export class DrawPoint {
 	}
 
 	public notEqual(rhs: DrawPoint) {
-		console.assert(rhs != null, `RHS is ${rhs}`);
 		return this.equal(rhs) === false;
 	}
 }

@@ -1,4 +1,4 @@
-﻿import { IArithmetic } from "IVec";
+﻿import { IArithmetic } from "../IArithmetic";
 
 export class Vec3 implements IArithmetic<Vec3> {
 	public static readonly default = new Vec3(0, 0, 0);
@@ -26,6 +26,12 @@ export class Vec3 implements IArithmetic<Vec3> {
 	}
 	public isDefault() {
 		return this === Vec3.default;
+	}
+
+	public equals(rhs: Vec3) {
+		return this.x === rhs.x
+			&& this.y === rhs.y
+			&& this.z === rhs.y;
 	}
 	
 	public withX(n: number) { Vec3.create(this.x + n, this.y, this.z); }

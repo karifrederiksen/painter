@@ -12,6 +12,8 @@
       "charset": "utf-8",
       "noImplicitAny": true,
       "noImplicitThis": true,
+      "noResolve": true,
+      "noImplicitReturns": true,
       "watch": true
   },
 
