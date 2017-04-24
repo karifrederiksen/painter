@@ -1,8 +1,11 @@
 
 import { Layer } from "./Layer";
+import { LayerCombiner } from "./LayersCombiner";
 import { Renderer } from "../Renderer";
 import { Texture } from "../Texture";
+import { Sprite } from "../Sprite";
 import { Vec2 } from "../../Math/Vec";
+import { List } from "immutable";
 
 /*
 	Contains the layer stack.
@@ -13,24 +16,16 @@ import { Vec2 } from "../../Math/Vec";
 	Used for manipulating the layer stack and the contained layers.
 */
 export class LayerStack {
-	protected _nextLayerId = 0;
-	protected _renderer: Renderer;
-
-	public stack: Layer[] = [];
-
-	constructor(renderer: Renderer) {
-		this._renderer = renderer;
-	}
-
+	public stack: List<Layer> = List<Layer>();
 
 	/*
 		Add a Layer at the specified index
 	*/
-	public newLayer(index: number) {
+	public newLayer(renderer: Renderer, index: number) {
 		console.assert(index >= 0);
-		const texture = new Texture(this._renderer, this._renderer.getCanvasSize());
-		const layer = new Layer(texture, this._nextLayerId++);
-		this.stack.splice(index, 0, layer);
+		const texture = new Texture(renderer, renderer.getCanvasSize());
+		const layer = Layer.create(new Sprite(texture), null, true);
+		this.stack.insert(index, layer);
 	}
 
 
@@ -38,10 +33,19 @@ export class LayerStack {
 		Move a layer to a different index
 	*/
 	public moveLayerToIdx(fromIndex: number, toIndex: number) {
+		console.assert(fromIndex !== toIndex);
 		console.assert(fromIndex >= 0);
+		console.assert(fromIndex < this.stack.count());
 		console.assert(toIndex >= 0);
-		//this.stack.move(fromIndex, toIndex);
-		console.warn("Not implemented");
+		console.assert(toIndex < this.stack.count());
+		
+		
+		const layer = this.stack.get(fromIndex);
+		const tmpStack = this.stack.remove(fromIndex);
+		if (fromIndex > toIndex) {
+			fromIndex++;
+		}
+		this.stack = this.stack.insert(fromIndex, layer);
 	}
 
 
@@ -50,16 +54,26 @@ export class LayerStack {
 	*/
 	public removeLayer(index: number) {
 		console.assert(index >= 0);
-		return this.stack.splice(index, 1)[0];
+		this.stack = this.stack.remove(index);
 	}
 
 
 	/*
 		Insert a layer back into the stack after it's been removed (undo/redo)
 	*/
-	public insertLayer(layer: Layer, idx: number) {
+	public insertLayer(layer: Layer, index: number) {
 		console.assert(layer != null);
-		console.assert(idx >= 0);
-		this.stack.splice(idx, 0, layer);
+		console.assert(index >= 0);
+
+		this.stack.insert(index, layer);
+	}
+
+	public replace(layer: Layer, newLayer: Layer) {
+		const index = this.stack.indexOf(layer)
+		this.stack.set(index, newLayer);
+	}
+
+	public first() {
+		return this.stack.first();
 	}
 }

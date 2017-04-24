@@ -3,6 +3,7 @@ import { Fun1 } from "../Common";
 import { Hsva } from "../Math/Color";
 import { Tools } from "../../Tools";
 import { InputData } from "../Input/InputData";
+import { Stack } from "immutable";
 
 /*
 	Global object for handling events. I don't yet know how extensively it will be used.
@@ -11,28 +12,23 @@ import { InputData } from "../Input/InputData";
 */
 
 export class Event<T> {
-	private _callbacks: Fun1<T, void>[] = [];
+	private _callbacks: Stack<Fun1<T, void>> = Stack<Fun1<T, void>>();
 
 	public subscribe(callback: Fun1<T, void>) {
 		const cbs = this._callbacks;
 		if (cbs.every((val) => val !== callback)) {
-			cbs.push(callback);
+			this._callbacks = cbs.push(callback);
 		}
 	}
 
 	public unsubscribe(callback: Fun1<T, void>) {
-		const cbs = this._callbacks;
-		const idx = cbs.findIndex((value) => value === callback);
-		if (idx > -1) {
-			cbs.splice(idx, 1);
-		}
+		this._callbacks = this._callbacks
+			.filter((val) => val !== callback)
+			.toStack();
 	}
 
 	public broadcast(value: T) {
-		const cbs = this._callbacks;
-		for (let func of cbs) {
-			func(value);
-		}
+		this._callbacks.forEach((func) => func(value));
 	}
 }
 

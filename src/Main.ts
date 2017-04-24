@@ -1,6 +1,6 @@
 ﻿
 
-import { CanvRenderingContext } from "./Engine/Rendering/CanvasRenderingContext";
+import { RenderingContext } from "./Engine/Rendering/RenderingContext";
 import { DrawPoint } from "./Engine/Rendering/DrawPoints";
 import { Hsv, Hsva, Rgba } from "./Engine/Math/Color"
 import { valueOr } from "./Engine/Common";
@@ -16,33 +16,8 @@ import { getCanvasById, getSvgById } from "./Engine/Misc/Misc";
 import { Vec2 } from "./Engine/Math/Vec";
 import { Settings } from "./Engine/Global/Settings";
 import { Events } from "./Engine/Global/Events";
+import { List, Iterable } from "immutable";
 
-
-export const DEFAULT_SETTINGS: any = {
-
-	// Display
-	CanvasWidth: 1000,
-	CanvasHeight: 1000,
-	Gamma: 2.2,
-
-	// Tool
-	ToolId: 0,
-
-	// Brush
-	BrushTextureSize: 1000,
-	BrushSize:       120,
-	BrushSoftness:   0.7,
-	BrushSpacing:    0.05,
-	BrushDensity:    0.7,
-	// Brush Color
-	BrushHue:        0.8,
-	BrushSaturation: 0.9,
-	BrushValue:      0.8,
-
-	// Rendering
-	RenderingMaxDrawPoints: 10000,
-	RenderingBlendMode: BlendModeType.Normal
-}
 
 
 export const dotsPerFrame = 100;
@@ -70,11 +45,11 @@ export function initSettingsValues() {
 
 let rng: RNG;
 let canvas: HTMLCanvasElement;
-let renderingContext: CanvRenderingContext;
+let renderingContext: RenderingContext;
 let inputCapture: InputCapture;
 let interpGen: InterpolatorGenerator;
 let interpolator: Interpolator;
-let dpp = Array<DrawPoint>();
+let dpp: Iterable<number, DrawPoint> = List<DrawPoint>();
 let renderingCoordinator: RenderingCoordinator;
 let brush: Brush;
 
@@ -83,7 +58,7 @@ export function start() {
 	canvas = getCanvasById("paintingArea");
 	canvas.width = Settings.rendering.canvasSize.value.x;
 	canvas.height = Settings.rendering.canvasSize.value.y;
-	renderingContext = new CanvRenderingContext(canvas);
+	renderingContext = new RenderingContext(canvas);
 	inputCapture = new InputCapture(canvas);
 
 	brush = new Brush(renderingContext.renderer);
@@ -114,7 +89,7 @@ export function animate() {
 		frameCount++;
 	}
 	else {
-		renderingContext.layer = renderingContext.layerStack.stack[1];
+		renderingContext.layerManager.setLayer(renderingContext.layerManager.stack.get(1));
 		dpp = generateRandomPoints(rng, dotsPerFrame);
 		_render();
 	}
@@ -146,7 +121,7 @@ const _onMouseDrag = (data: InputData) => {
 const _onMouseDown = (data: InputData) => {
 	const point = createDrawPoint(data);
 	interpolator = interpGen(point);
-	dpp = [ point ];
+	dpp = List([ point ]);
 	render();
 }
 
@@ -161,9 +136,9 @@ function render() {
 
 // rendering callback
 const _render = () => {
-	if (dpp.length > 0) {
+	if (dpp.count() > 0) {
 		renderingContext.renderDrawPoints(dpp, brush.getTexture());
-		dpp = [];
+		dpp = List<DrawPoint>();
 	}
 }
 
@@ -203,7 +178,7 @@ function generateRandomPoints(rng: RNG, n: number) {
 		);
 		arr.push(drawPoint);
 	}
-	return arr;
+	return List(arr);
 }
 
 

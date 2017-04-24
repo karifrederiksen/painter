@@ -3,6 +3,7 @@ import { Texture } from "../Texture";
 import { Batch } from "../Batch";
 import { createProgram } from "./WebGLHelper";
 
+
 export type ShaderDataTypes = 
 	"b" | 
 	// integers
@@ -175,7 +176,7 @@ export class Shader {
 				//console.log(`setting texture ${texture.id} to index ${idx}`);
 				break;
 			default:
-				console.error("Shader -- unknown uniform type: ", uniform.type, " -- value: ", value);
+				console.error(`Shader -- unknown uniform type: ${uniform.type} -- value: ${value}`);
 				return;
 		}
 	}

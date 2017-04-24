@@ -2,10 +2,12 @@
 import { Texture } from "./Texture";
 import { Vec2, Vec4 } from "../Math/Vec";
 import { Batch } from "./Batch";
+import { GUID } from "../Common";
 
 export class Sprite {
 	public texture: Texture;
-	public position = Vec2.create();
+	public id: number;
+	public position = Vec2.default;
 	public scale = 1;
 	public rotation = 0;
 
@@ -15,6 +17,7 @@ export class Sprite {
 	constructor(texture: Texture) {
 		console.assert(texture != null, `Texture is ${texture}`);
 		this.texture = texture;
+		this.id = GUID.next();
 	}
 }
 
@@ -24,6 +27,7 @@ export class Sprite {
 	Add sprite to a batch object.
 */
 export function addToBatch(sprite: Sprite, batch: Batch) {
+	console.assert(sprite != null, `Sprite is ${sprite}`);
 	console.assert(batch != null, `Batch is ${batch}`);
 
 	// determine vertex and texture positions

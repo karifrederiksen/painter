@@ -117,3 +117,12 @@ export function isNumberType(value: any) {
 export function valueOr<T>(value: T, alternative: T) {
 	return value != null ? value : alternative;
 }
+
+
+export module GUID {
+	let _nextId = 0;
+
+	export function next() {
+		return _nextId++;
+	}
+}

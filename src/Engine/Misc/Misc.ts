@@ -1,14 +1,4 @@
 ﻿
-
-export module GUID {
-	let _nextId = 0;
-
-	export function next() {
-		return _nextId++;
-	}
-}
-
-
 // Find a HtmlCanvasElement by its element id. Return null if not found.
 export function getCanvasById(id: string): HTMLCanvasElement {
 	const element = document.getElementById(id);

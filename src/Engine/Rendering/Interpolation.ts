@@ -4,16 +4,17 @@ import { Rgb, Rgba } from "../Math/Color";
 import { distance } from "../Math/Utils";
 import { IArithmetic, Vec2 } from "../Math/Vec";
 import { linearInterpolateFunc, InterpFunc } from "../Math/IArithmetic";
+import { List } from "immutable";
 
 
 export class InterpolatorResult {
 	constructor(
-		public values: DrawPoint[],
+		public values: List<DrawPoint>,
 		public next: (prev: Interpolator) => Interpolator
 	) {
 		Object.freeze(this);
 	}
-	public get hasValues() { return this.values.length > 0; }
+	public get hasValues() { return this.values.count() > 0; }
 }
 
 export type Interpolator = (end: DrawPoint) => InterpolatorResult;
@@ -24,8 +25,8 @@ export function interpolatorGenerator(spacingThresholdPx: number): InterpolatorG
 	function _createInterpolator(start: DrawPoint): Interpolator {
 		return (end: DrawPoint) => {
 			const results = doInterpolation(spacingThresholdPx, start, end);
-			return (results.length > 0)
-				? new InterpolatorResult(results, (prev: Interpolator) => _createInterpolator(results[results.length - 1] ))
+			return (results.count() > 0)
+				? new InterpolatorResult(results, (prev: Interpolator) => _createInterpolator(results.last()))
 				: new InterpolatorResult(results, (prev: Interpolator) => prev);
 		}
 	}
@@ -113,8 +114,7 @@ function doInterpolation(spacing: number, start: DrawPoint, end: DrawPoint) {
 			color(p)
 	));
 
-	Object.freeze(results);
-	return results;
+	return List(results);
 }
 
 

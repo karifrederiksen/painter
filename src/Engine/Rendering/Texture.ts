@@ -1,11 +1,10 @@
 ﻿
 import { Renderer } from "./Renderer";
 import { Vec2 } from "../Math/Vec";
+import { GUID } from "../Common";
 
 
 export class Texture {
-	private static _nextId = 0;
-
 	protected readonly _renderer: Renderer;
 	public readonly stencilBuffer: WebGLRenderbuffer;
 	public readonly framebuffer: WebGLFramebuffer;
@@ -19,7 +18,7 @@ export class Texture {
 		console.assert(size.y > 0, `Height is 0 or less: ${size.y}`);
 		this._renderer = renderer;
 		this.size = size;
-		this.id = Texture._nextId++;
+		this.id = GUID.next();
 
 		const gl = renderer.gl;
 		this.textureWGL = gl.createTexture();
@@ -33,8 +32,8 @@ export class Texture {
 	public updateSize() {
 		const gl = this._renderer.gl;
 		const size = this.size;
-
-		gl.bindTexture(gl.TEXTURE_2D, this.textureWGL);
+		this._renderer.textureManager.bindTexture(this, 0);
+		
 		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, size.x, size.y, 0, gl.RGBA, gl.FLOAT, null);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);

@@ -11,7 +11,7 @@ import { generateBackgroundTexture } from "../TextureGenerator";
 /*
 	Renders all the layers in the LayerStack onto a single Texture
 */
-export class LayersRenderer {
+export class LayerCombiner {
 	protected _renderer: Renderer;
 	protected _layerStack: LayerStack;
 	protected _currentLayer: Layer = null;
@@ -38,7 +38,7 @@ export class LayersRenderer {
 	}
 
 
-	public update(currentLayer: Layer) {
+	public setLayer(currentLayer: Layer) {
 		console.assert(currentLayer != null);
 		if (this._currentLayer === currentLayer) {
 			return;
@@ -52,21 +52,20 @@ export class LayersRenderer {
 
 		// below
 		const below = this._layersBelow;
-		//renderer.clear(below.texture);
-		renderer.setViewportForSprite(below);
+		renderer.clearTexture(below.texture);
+		renderer.setViewPortForSprite(below);
 		this.renderSpriteToTexture(this._background, below.texture);
 		for (let i = 0; i < currentLayerIdx; i++) {
 			console.log("current layer idx", currentLayerIdx);
-			this.renderSpriteToTexture(stack[i], below.texture);
+			this.renderSpriteToTexture(stack.get(i).sprite, below.texture);
 		}
-
 
 		// above
 		const above = this._layersAbove;
-		//renderer.clear(above.texture);
-		renderer.setViewportForSprite(above);
-		for (let i = currentLayerIdx + 1, ilen = stack.length; i < ilen; i++) {
-			this.renderSpriteToTexture(stack[i], above.texture);
+		renderer.clearTexture(above.texture);
+		renderer.setViewPortForSprite(above);
+		for (let i = currentLayerIdx + 1, ilen = stack.count(); i < ilen; i++) {
+			this.renderSpriteToTexture(stack.get(i).sprite, above.texture);
 		}
 	}
 
@@ -76,14 +75,15 @@ export class LayersRenderer {
 		const combined = this.combinedLayers;
 
 		renderer.clearTexture(combined.texture);
-		renderer.setViewportForSprite(combined);
+		renderer.setViewPortForSprite(combined);
+		
 		this.renderSpriteToTexture(this._layersBelow, combined.texture);
-		this.renderSpriteToTexture(this._currentLayer, combined.texture);
+		this.renderSpriteToTexture(this._currentLayer.sprite, combined.texture);
 		this.renderSpriteToTexture(this._layersAbove, combined.texture);
 	}
 
 	
-	public renderSpriteToTexture(sprite: Sprite, texture: Texture) {
+	private renderSpriteToTexture(sprite: Sprite, texture: Texture) {
 		console.assert(sprite != null, `Sprite is ${sprite}`);
 		console.assert(sprite.texture != null, `Sprite texture is ${sprite.texture}`);
 

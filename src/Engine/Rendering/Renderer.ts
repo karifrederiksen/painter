@@ -101,7 +101,7 @@ export class Renderer {
 		return this._setViewPort(0, 0, size.x, size.y);
 	}
 
-	public setViewportForSprite(sprite: Sprite) {
+	public setViewPortForSprite(sprite: Sprite) {
 		console.assert(sprite != null, `Sprite is ${sprite}`);
 		const size = sprite.texture.size;
 		return this._setViewPort(0, 0, size.x, size.y);
