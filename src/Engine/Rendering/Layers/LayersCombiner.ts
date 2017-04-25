@@ -48,7 +48,7 @@ export class LayerCombiner {
 		const renderer = this._renderer;
 		const combined = this.combinedLayers;
 		const stack = this._layerStack.stack;
-		const currentLayerIdx = this._layerStack.stack.indexOf(currentLayer);
+		const currentLayerIdx = stack.indexOf(currentLayer);
 
 		// below
 		const below = this._layersBelow;

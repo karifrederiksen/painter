@@ -36,6 +36,12 @@ export class RenderingContext {
 
 
 		this.blendMode = Settings.rendering.blendMode.value;
+
+		Settings.layers.current.subscribe((layer) => {
+			if (layer !== this.layerManager.currentLayer) {
+				this.layerManager.setLayer(layer);
+			}
+		});
 	}
 
 
@@ -46,7 +52,7 @@ export class RenderingContext {
 		//console.log("rendering to layer", this.layerStack.stack.indexOf(this.layer));
 		const drawPointShader = this.renderer.shaders.drawPointShader;
 		const renderer = this.renderer;
-		const layer = this.layerManager.layer;
+		const layer = this.layerManager.currentLayer;
 
 		// render to output texture
 		renderer.blendMode = this.blendMode;
@@ -60,7 +66,7 @@ export class RenderingContext {
 
 
 		const outputShader = renderer.shaders.outputShader;
-		const combinedLayers = this.layerManager.combinedLayer;
+		const combinedLayers = this.layerManager.combined;
 
 		// render output texture to canvas
 		renderer.blendMode = BlendModeType.Normal;

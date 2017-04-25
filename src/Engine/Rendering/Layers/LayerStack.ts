@@ -5,6 +5,7 @@ import { Renderer } from "../Renderer";
 import { Texture } from "../Texture";
 import { Sprite } from "../Sprite";
 import { Vec2 } from "../../Math/Vec";
+import { Settings } from "../../Global/Settings";
 import { List } from "immutable";
 
 /*
@@ -16,16 +17,41 @@ import { List } from "immutable";
 	Used for manipulating the layer stack and the contained layers.
 */
 export class LayerStack {
-	public stack: List<Layer> = List<Layer>();
+	protected _stack: List<Layer> = List<Layer>();
+
+	public get stack() { return this._stack; }
+
+
+	public first() {
+		return this._stack.first();
+	}
+
+	public last() {
+		return this._stack.last();
+	}
+
+	public count() {
+		return this._stack.count();
+	}
+
+	public get(index: number) {
+		console.assert(index > 0);
+		console.assert(index < this.count());
+		return this._stack.get(index);
+	}
+
 
 	/*
 		Add a Layer at the specified index
 	*/
 	public newLayer(renderer: Renderer, index: number) {
 		console.assert(index >= 0);
+		console.info("new layer");
 		const texture = new Texture(renderer, renderer.getCanvasSize());
 		const layer = Layer.create(new Sprite(texture), null, true);
-		this.stack.insert(index, layer);
+		this._stack = this._stack.insert(index, layer);
+
+		Settings.layers.stack.broadcast(this._stack);
 	}
 
 
@@ -35,17 +61,19 @@ export class LayerStack {
 	public moveLayerToIdx(fromIndex: number, toIndex: number) {
 		console.assert(fromIndex !== toIndex);
 		console.assert(fromIndex >= 0);
-		console.assert(fromIndex < this.stack.count());
+		console.assert(fromIndex < this._stack.count());
 		console.assert(toIndex >= 0);
-		console.assert(toIndex < this.stack.count());
+		console.assert(toIndex < this._stack.count());
 		
 		
-		const layer = this.stack.get(fromIndex);
-		const tmpStack = this.stack.remove(fromIndex);
+		const layer = this._stack.get(fromIndex);
+		const tmpStack = this._stack.remove(fromIndex);
 		if (fromIndex > toIndex) {
 			fromIndex++;
 		}
-		this.stack = this.stack.insert(fromIndex, layer);
+		this._stack = tmpStack.insert(fromIndex, layer);
+		
+		Settings.layers.stack.broadcast(this._stack);
 	}
 
 
@@ -54,7 +82,9 @@ export class LayerStack {
 	*/
 	public removeLayer(index: number) {
 		console.assert(index >= 0);
-		this.stack = this.stack.remove(index);
+		this._stack = this._stack.remove(index);
+		
+		Settings.layers.stack.broadcast(this._stack);
 	}
 
 
@@ -65,15 +95,15 @@ export class LayerStack {
 		console.assert(layer != null);
 		console.assert(index >= 0);
 
-		this.stack.insert(index, layer);
+		this._stack.insert(index, layer);
+		
+		Settings.layers.stack.broadcast(this._stack);
 	}
 
 	public replace(layer: Layer, newLayer: Layer) {
-		const index = this.stack.indexOf(layer)
-		this.stack.set(index, newLayer);
-	}
-
-	public first() {
-		return this.stack.first();
+		const index = this._stack.indexOf(layer)
+		this._stack.set(index, newLayer);
+		
+		Settings.layers.stack.broadcast(this._stack);
 	}
 }

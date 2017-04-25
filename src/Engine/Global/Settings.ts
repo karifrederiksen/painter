@@ -3,7 +3,8 @@ import { Vec2 } from "../Math/Vec";
 import { Hsva } from "../Math/Color";
 import { Tools } from "../../Tools";
 import { BlendModeType } from "../Rendering/Consts";
-import { Stack } from "immutable";
+import { Layer, LayerBasic } from "../Rendering/Layers/Layer";
+import { Stack, Iterable } from "immutable";
 
 export class Setting<T> {
 	private _callbacks: Stack<Fun1<T, void>> = Stack<Fun1<T, void>>();
@@ -46,8 +47,14 @@ const RenderSettings = {
 	maxDrawPoints: new Setting<number>()
 }
 
+const Layers = {
+	current: new Setting<LayerBasic>(),
+	stack: new Setting<Iterable<number, LayerBasic>>()
+}
+
 export const Settings = {
 	brush: BrushSettings,
 	rendering: RenderSettings,
+	layers: Layers,
 	toolId: new Setting<Tools>()
 }

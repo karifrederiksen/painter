@@ -2,10 +2,8 @@
 
 // plugins
 import babel from "rollup-plugin-babel";
-//import eslint from "rollup-plugin-eslint";
 import resolve from "rollup-plugin-node-resolve";
 import commonjs from "rollup-plugin-commonjs";
-//import uglify from "rollup-plugin-uglify";
 
 
 export default {
@@ -20,7 +18,26 @@ export default {
 			main: true,
 			browser: true
 		}),
-		commonjs(),
+		commonjs({
+			include: [
+				"node_modules/immutable/**",
+			],
+			namedExports: {
+				"node_modules/immutable/dist/immutable.js": [
+					"List", 
+					"Iterable", 
+					"Stack",
+					"Record",
+					"Set",
+					"Map",
+					"Range",
+					"OrderedMap",
+					"Repeat",
+					"Seq",
+					"Collection"
+					]
+			}
+		}),
 		babel({
     		presets: ["es2015-rollup"],
 			exclude: "node_modules/**"

@@ -10,6 +10,9 @@ export interface LayerBasic {
 	visible: boolean;
 }
 
+// the whole reason why we use LayerBasic is to hide the sprite field.
+// we could alternatively associate sprite with the layer through a Map<Layer, Sprite> 
+// - this would remove the need for casting and be more safe (current you can just cast it back to Layer)
 export class Layer implements LayerBasic {
 	public readonly id = GUID.next();
 	public readonly sprite: Sprite;

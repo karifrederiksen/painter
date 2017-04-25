@@ -1,6 +1,4 @@
-﻿
-
-import { RenderingContext } from "./Engine/Rendering/RenderingContext";
+﻿import { RenderingContext } from "./Engine/Rendering/RenderingContext";
 import { DrawPoint } from "./Engine/Rendering/DrawPoints";
 import { Hsv, Hsva, Rgba } from "./Engine/Math/Color"
 import { valueOr } from "./Engine/Common";
@@ -20,8 +18,8 @@ import { List, Iterable } from "immutable";
 
 
 
-export const dotsPerFrame = 100;
-export const frames = 0;
+export let dotsPerFrame = 100;
+export let frames = 0;
 
 /*
 	Sets the settings values from DEFAULT_SETTINGS
@@ -64,7 +62,7 @@ export function start() {
 	brush = new Brush(renderingContext.renderer);
 
 	interpGen = interpolatorGenerator(brush.getSpacingPx());
-	renderingCoordinator = new RenderingCoordinator(_render);
+	renderingCoordinator = new RenderingCoordinator(_requestRender);
 	
 
 	Settings.brush.spacing.subscribe((n: number) => interpGen = interpolatorGenerator(brush.getSpacingPx()));
@@ -77,21 +75,22 @@ export function start() {
 	Events.tool.subscribe(useTool);
 
 	useTool(Settings.toolId.value);
+	return renderingContext;
 }
 
 let frameCount = 0;
 export function animate() {
 	const newPts = generateRandomPoints(rng, dotsPerFrame);
 	dpp = dpp.concat(newPts);
-	_render();
+	_requestRender();
 	if (frameCount < frames) {
 		requestAnimationFrame(() => animate());
 		frameCount++;
 	}
 	else {
-		renderingContext.layerManager.setLayer(renderingContext.layerManager.stack.get(1));
+		renderingContext.layerManager.setLayer(renderingContext.layerManager.stack.last());
 		dpp = generateRandomPoints(rng, dotsPerFrame);
-		_render();
+		_requestRender();
 	}
 }
 
@@ -106,9 +105,9 @@ function createDrawPoint(data: InputData) {
 }
 
 
-const _onMouseMove = (data: InputData) => { }
+function _onMouseMove(data: InputData) { }
 
-const _onMouseDrag = (data: InputData) => {
+function _onMouseDrag(data: InputData) {
 	const point = createDrawPoint(data);
 	const result = interpolator(point);
 
@@ -118,14 +117,14 @@ const _onMouseDrag = (data: InputData) => {
 	render();
 }
 
-const _onMouseDown = (data: InputData) => {
+function _onMouseDown(data: InputData) {
 	const point = createDrawPoint(data);
 	interpolator = interpGen(point);
 	dpp = List([ point ]);
 	render();
 }
 
-const _onMouseUp = (data: InputData) => {
+function _onMouseUp(data: InputData)  {
 	render();
 }
 
@@ -135,19 +134,11 @@ function render() {
 
 
 // rendering callback
-const _render = () => {
+function _requestRender() {
 	if (dpp.count() > 0) {
 		renderingContext.renderDrawPoints(dpp, brush.getTexture());
 		dpp = List<DrawPoint>();
 	}
-}
-
-export function useBrush() {
-	Events.tool.broadcast(Tools.Brush);
-}
-
-export function useEraser() {
-	Events.tool.broadcast(Tools.Eraser);
 }
 
 function generateRandomPoints(rng: RNG, n: number) {
@@ -182,47 +173,41 @@ function generateRandomPoints(rng: RNG, n: number) {
 }
 
 
-let colortest = 0;
 function generateColor(rng: RNG) {
-	const gamma = Settings.rendering.gamma.value;
-	let h: number;
-	let s: number;
-	let v: number;
-	let a: number;
-	switch (colortest) {
+	let hsva: Hsva;
+	switch (parseInt("0")) {
 		case 0:
-			h = rng.next();
-			s = .8 + .2 * rng.next();
-			v = .7 + .3 * rng.next();
-			a = .7 + .3 * rng.next();
-			break;
+		hsva = Hsva.create(
+			rng.next(),
+			.8 + .2 * rng.next(),
+			.7 + .3 * rng.next(),
+			.7 + .3 * rng.next());
+		break;
+
 		case 1:
-			h = (Date.now() % 1000) / 1000;
-			s = .7;
-			v = 1;
-			a = Settings.brush.density.value;
-			break;
+		hsva = Hsva.create(
+			(Date.now() % 1000) / 1000,
+			.7,
+			1,
+			Settings.brush.color.value.a);
+		break;
+
 		case 2:
-			const color = Settings.brush.color.value;
-			h = color.h;
-			s = color.s;
-			v = color.v;
-			a = Settings.brush.density.value;
+		hsva = Settings.brush.color.value;
+		break;
+
 		default:
-			h = 0;
-			s = 0;
-			v = 0;
-			a = 1;
-			break;
+		hsva = Hsva.create(0, 0, 0, 1);
+		break;
 
 	}
-	return Hsva.create(h, s, v, a)
+	return hsva
 		.toRgba()
-		.powScalar(gamma);
+		.powScalar(Settings.rendering.gamma.value);
 }
 
 
-const useTool = (tool: Tools) => {
+function useTool(tool: Tools) {
 	switch(tool) {
 		case Tools.Eraser:
 			renderingContext.blendMode = BlendModeType.Erase;
@@ -238,88 +223,15 @@ const useTool = (tool: Tools) => {
 
 
 
+import * as UI from "./UI/UI";
 
-import { 
-	ColorSelectionArea, 
-	SliderDoubleBinding, 
-	SliderDoubleBindingColor,
-	SliderDoubleBindingArgs, 
-	SliderElement
-} from "./UI";
-
-
-// UI
-
-
-let brushHueSlider:			SliderDoubleBindingColor;
-let brushSaturationSlider:	SliderDoubleBindingColor;
-let brushValueSlider:		SliderDoubleBindingColor;
-let brushDensitySlider:		SliderDoubleBinding;
-let brushSoftnessSlider:	SliderDoubleBinding;
-let brushSpacingSlider:		SliderDoubleBinding;
-let brushSizeSlider:		SliderDoubleBinding;
-
-function initSliders() {
-	let args: SliderDoubleBindingArgs = {
-		min: 0,
-		max: 1,
-		step: 0.0002,
-		value: 0,
-		precision: 4
-	}
-	let hueSliderEl = new SliderElement("hueSlider", "Hue", args);
-	let satSliderEl = new SliderElement("saturationSlider", "Saturation", args);
-	let valSliderEl = new SliderElement("valueSlider", "Value", args);
-	let sofSliderEl = new SliderElement("softnessSlider", "Softness", args);
-	args.min = 0.001;
-	let denSliderEl = new SliderElement("densitySlider", "Density", args);
-	let spaSliderEl = new SliderElement("spacingSlider", "Spacing", args);
-	args.min = 1;
-	args.max = 512;
-	args.step = .1;
-	args.precision = 1;
-	let sizSliderEl = new SliderElement("sizeSlider", "Size", args);
-	const settingColor = Settings.brush.color;
-	brushHueSlider = new SliderDoubleBindingColor(hueSliderEl, 
-		Events.brush.color, 
-		settingColor, "h");
-	brushSaturationSlider = new SliderDoubleBindingColor(satSliderEl, 
-		Events.brush.color, 
-		settingColor, "s");
-	brushValueSlider = new SliderDoubleBindingColor(valSliderEl, 
-		Events.brush.color, 
-		settingColor, "v");
-	brushDensitySlider = new SliderDoubleBinding(denSliderEl, 
-		Events.brush.density, 
-		Settings.brush.density);
-	brushSoftnessSlider = new SliderDoubleBinding(sofSliderEl, 
-		Events.brush.softness, 
-		Settings.brush.softness);
-	brushSpacingSlider = new SliderDoubleBinding(spaSliderEl, 
-		Events.brush.spacing, 
-		Settings.brush.spacing);
-	brushSizeSlider = new SliderDoubleBinding(sizSliderEl, 
-		Events.brush.size, 
-		Settings.brush.size);
-
-	document.getElementById("btn-useBrush").addEventListener("pointerdown", () => useBrush());
-	document.getElementById("btn-useEraser").addEventListener("pointerdown", () => useEraser());
-}
-
-
-let colorPickerArea: ColorSelectionArea;
-
-function initColorPicker() {
-	colorPickerArea = new ColorSelectionArea();
-}
 
 
 
 function main() {
 	initSettingsValues();
-	start();
-	initSliders();
-	initColorPicker();
+	const context = start();
+	UI.init(context);
 	animate();
 }
 
