@@ -2,6 +2,7 @@
 import { Events } from "../Engine/Global/Events";
 import { Settings } from "../Engine/Global/Settings";
 
+import { Hsva, Hsv, Rgb } from "../Engine/Math/Color";
 import { clamp } from "../Engine/Math/Utils";
 
 
@@ -10,30 +11,30 @@ export class HueSlider {
     protected sliderElement: HTMLDivElement;
     protected canvas: HTMLCanvasElement;
     protected isPointerDown = false;
+    protected onColorChange: (hsv: Hsv) => void
 
-    constructor(elementId: string, sliderId: string) {
-        console.assert(elementId != null);
-        console.assert(elementId !== "");
-        console.assert(sliderId != null);
-        console.assert(sliderId !== "");
-        this.element = <HTMLDivElement>document.getElementById(elementId);
-        this.sliderElement = <HTMLDivElement>document.getElementById(sliderId);
-        this.element.addEventListener("pointerdown", this.pointerdown);
-        window.addEventListener("pointerup", this.pointerup);
-        document.body.addEventListener("pointermove", this.pointermove);
+    constructor(onColorChange: (hsv: Hsv) => void) {
+        this.onColorChange = onColorChange;
+        this.element = <HTMLDivElement>document.getElementById("hueArea");
+        this.sliderElement = <HTMLDivElement>document.getElementById("hueAreaSlider");
+
+        window.addEventListener("pointerup", () => {
+            this.isPointerDown = false;
+        });
+        this.element.addEventListener("pointerdown", (ev) => this.pointerdown(ev));
+        window.addEventListener("pointermove", (ev) => this.pointermove(ev));
     }
 
     private pointerup = () => {
-        this.isPointerDown = false;
     }
 
 
-    private pointerdown = (ev: PointerEvent) => {
+    private pointerdown(ev: PointerEvent) {
         this.isPointerDown = true;
         this.pointermove(ev);
     }
 
-    private pointermove = (ev: PointerEvent) => {
+    private pointermove(ev: PointerEvent) {
         if (this.isPointerDown === false) {
             return;
         }
@@ -44,8 +45,8 @@ export class HueSlider {
         let xpct = x / this.element.clientWidth;
         xpct = clamp(xpct, 0, 1);
 
-        const oldColor = Settings.brush.color.value;
-        Events.brush.color.broadcast(oldColor.withH(xpct));
+        const oldColor = Settings.brush.value.primaryColor;
+        this.onColorChange(oldColor.set({ h: xpct }));
     }
 
 

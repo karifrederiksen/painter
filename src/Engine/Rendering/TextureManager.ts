@@ -1,6 +1,7 @@
 ﻿import { Texture } from "./Texture";
 import { Renderer } from "./Renderer";
 
+
 class BoundTexture {
 	constructor(
 		// the bound texture
@@ -15,16 +16,14 @@ class BoundTexture {
 		// time that the texture was bound (in millis)
 		public time: number
 	) { }
-
-
-	public isLessThan(rhs: BoundTexture) {
-		if (this.priority !== rhs.priority) {
-			return this.priority < rhs.priority
-		}
-		return this.time < rhs.time;
-	}
 }
 
+function isLessThan(lhs: BoundTexture, rhs: BoundTexture) {
+	if (lhs.priority !== rhs.priority) {
+		return lhs.priority < rhs.priority
+	}
+	return lhs.time < rhs.time;
+}
 
 /*
 	Manages WebGl's texture bindings in order to minimize the amount of time spent rebinding textures
@@ -32,8 +31,8 @@ class BoundTexture {
 export class TextureManager {
 	protected readonly TEXTURE_SLOTS = 32;
 
-	protected _renderer: Renderer;
-	protected _boundTextures: Array<BoundTexture>;
+	protected readonly _renderer: Renderer;
+	protected _boundTextures: BoundTexture[];
 	protected _activeTextures = 0;
 
 	constructor(renderer: Renderer) {
@@ -51,36 +50,46 @@ export class TextureManager {
 		console.assert(texture != null);
 		console.assert(priority >= 0);
 		let idx = this.getIndexOf(texture);
-		let bTex: BoundTexture;
+		let { _boundTextures }  = this;
 
 		// return if already bound
 		if (idx !== -1) {
-			bTex = this._boundTextures[idx];
+			return _boundTextures[idx].textureIndex;
+		}
+
+
+		// store texture
+		let bTex: BoundTexture;
+		if (this._activeTextures < this.TEXTURE_SLOTS) {
+			bTex = this.getNextBoundTexture();
 		}
 		else {
-			// store texture
-			if (this._activeTextures < this.TEXTURE_SLOTS) {
-				bTex = this.getNextBoundTexture();
-			}
-			else {
-				bTex = this.getLowestPriorityBoundTexture();
-			}
-
-			// set texture
-			bTex.texture = texture;
-			idx = this.getIndexOf(texture);
-
-			// bind
-			const gl = this._renderer.gl;
-			gl.activeTexture(gl.TEXTURE0 + bTex.textureIndex);
-			gl.bindTexture(gl.TEXTURE_2D, this._boundTextures[idx].texture.textureWGL);
+			bTex = this.getLowestPriorityBoundTexture();
 		}
+
+		// set texture
+		bTex.texture = texture;
+		idx = this.getIndexOf(texture);
+
+		// bind
+		const { gl } = this._renderer;
+		gl.activeTexture(gl.TEXTURE0 + bTex.textureIndex);
+		gl.bindTexture(gl.TEXTURE_2D, this._boundTextures[idx].texture.textureWGL);
 
 		// set priority attributes
 		bTex.priority = priority;
 		bTex.time = Date.now();
 
 		return bTex.textureIndex;
+	}
+
+	public unbindTexture(texture: Texture) {
+		console.assert(texture != null);
+		let idx = this.getIndexOf(texture);
+		if (idx >= 0) {
+			const bound = this._boundTextures[idx];
+			bound.texture = null;
+		} 
 	}
 
 
@@ -92,12 +101,12 @@ export class TextureManager {
 	// uses sequential search
 	// TODO: list should be sorted, so use binary search
 	protected getLowestPriorityBoundTexture() {
-		const bTextures = this._boundTextures;
-		let lowest = bTextures[0];
+		const bTexs = this._boundTextures;
+		let lowest = bTexs[0];
 
-		for (let i = 1, ilen = bTextures.length; i < ilen; i++) {
-			if (lowest.isLessThan(bTextures[i])) {
-				lowest = bTextures[i];
+		for (let i = 1, ilen = bTexs.length; i < ilen; i++) {
+			if (isLessThan(lowest, bTexs[i])) {
+				lowest = bTexs[i];
 			}
 		}
 		return lowest;

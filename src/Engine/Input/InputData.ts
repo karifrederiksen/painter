@@ -17,9 +17,9 @@ export const enum InputType {
 
 export class PointerData {
 	public constructor(
-		public position: Vec2,
-		public pressure: number,
-		public tilt: Vec2
+		public readonly position: Vec2,
+		public readonly pressure: number,
+		public readonly tilt: Vec2
 	){
 		Object.freeze(this);
 	}
@@ -28,9 +28,9 @@ export class PointerData {
 
 export class InputMods {
 	public constructor(
-		public shift: boolean,
-		public alt: boolean,
-		public ctrl: boolean
+		public readonly shift: boolean,
+		public readonly alt: boolean,
+		public readonly ctrl: boolean
 	){
 		Object.freeze(this);
 	}
@@ -38,11 +38,11 @@ export class InputMods {
 
 export class InputData {
 	public constructor(
-		public source: InputSource,
-		public whichKey: number,
-		public type: InputType,
-		public mods: InputMods,
-		public positionData: PointerData
+		public readonly source: InputSource,
+		public readonly whichKey: number,
+		public readonly type: InputType,
+		public readonly mods: InputMods,
+		public readonly positionData: PointerData
 	){
 		Object.freeze(this);
 	}

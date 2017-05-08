@@ -7,13 +7,10 @@ export class ColorDisplay {
     public secondaryElem: HTMLDivElement;
 
 
-    constructor(primaryId: string, secondaryId: string) {
-        console.assert(primaryId != null);
-        console.assert(primaryId !== "");
-        console.assert(secondaryId != null);
-        console.assert(secondaryId !== "");
-        this.primaryElem = <HTMLDivElement>document.getElementById(primaryId);
-        this.secondaryElem = <HTMLDivElement>document.getElementById(secondaryId);
+    constructor(onSwap: () => void) {
+        this.primaryElem = <HTMLDivElement>document.getElementById("colorDisplayPrimary");
+        this.secondaryElem = <HTMLDivElement>document.getElementById("colorDisplaySecondary");
+        this.secondaryElem.addEventListener("pointerdown", () => onSwap());
     }
 
     public updateColor(rgb: Rgb) {

@@ -1,5 +1,11 @@
 
-import { HasDefault, IEquality } from "../Common";
+import { HasDefault, Equals } from "../Common";
+
+export interface Roundable<T> {
+	round(): T;
+	floor(): T;
+	ceil(): T;
+}
 
 export interface ScalarArithmetic<T> {
 	addScalar(rhs: number): T;
@@ -16,8 +22,13 @@ export interface TypeArithmetic<T> {
 	divide(rhs: T): T;
 }
 
-export interface IArithmetic<T> extends ScalarArithmetic<T>, TypeArithmetic<T>, HasDefault<T>, IEquality<T> {
-}
+export type IArithmetic<T> = 
+	ScalarArithmetic<T> & 
+	TypeArithmetic<T> & 
+	HasDefault<T> & 
+	Equals<T>;
+
+
 
 
 export function powiArith<T extends IArithmetic<T>>(val: T, n: number) {

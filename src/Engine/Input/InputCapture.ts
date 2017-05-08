@@ -70,7 +70,8 @@ export class InputCapture {
 		Events.pointer.move.broadcast(data);
 
 		if (this._mouseDown === true) {
-			Events.pointer.drag.broadcast(data);
+			const dragdata = this.getInputData(ev, InputType.Drag, InputSource.Pointer);
+			Events.pointer.drag.broadcast(dragdata);
 		}
 	}
 

@@ -1,5 +1,3 @@
-
-import { Events } from "../Engine/Global/Events";
 import { Settings } from "../Engine/Global/Settings";
 
 import { Vec2 } from "../Engine/Math/Vec";
@@ -29,31 +27,29 @@ export class ColorAreaDoubleBinding {
     protected element: HTMLDivElement;
     protected pickerElement: ColorAreaPicker;
     protected isPointerDown = false;
+    protected onColorChange: (hsv: Hsv) => void;
 
-    constructor(elementId: string, pickerId: string) {
-        console.assert(elementId != null);
-        console.assert(elementId !== "");
-        console.assert(pickerId != null);
-        console.assert(pickerId !== "");
-        this.element = <HTMLDivElement>document.getElementById(elementId);
-        this.pickerElement = new ColorAreaPicker(pickerId);
-        this.element.addEventListener("pointerdown", this.pointerdown);
-        window.addEventListener("pointerup", this.pointerup);
-        document.body.addEventListener("pointermove", this.pointermove);
+    constructor(onColorChange: (hsv: Hsv) => void) {
+        this.onColorChange = onColorChange;
+        this.element = <HTMLDivElement>document.getElementById("pickingArea");
+        this.pickerElement = new ColorAreaPicker("picker");
+        this.element.addEventListener("pointerdown", (ev) => this.pointerdown(ev));
+        window.addEventListener("pointerup", () => this.pointerup());
+        document.body.addEventListener("pointermove", (ev) => this.pointermove(ev));
     }
 
 
-    private pointerdown = (ev: PointerEvent) => {
+    private pointerdown(ev: PointerEvent) {
         this.isPointerDown = true;
         this.pointermove(ev);
     }
 
-    private pointerup = () => {
+    private pointerup() {
         this.isPointerDown = false;
     }
 
 
-    private pointermove = (ev: PointerEvent) => {
+    private pointermove(ev: PointerEvent) {
         if (this.isPointerDown === false) {
             return;
         }
@@ -67,11 +63,10 @@ export class ColorAreaDoubleBinding {
         xpct = clamp(xpct, 0, 1);
         ypct = clamp(ypct, 0, 1);
 
-        
-        const oldColor = Settings.brush.color.value;
-        const newColor = Hsva.create(oldColor.h, xpct, ypct, oldColor.a);
+        const oldColor = Settings.brush.value.primaryColor;
+        const newColor = Hsv.create(oldColor.h, xpct, ypct);
 
-        Events.brush.color.broadcast(newColor);
+        this.onColorChange(newColor);
     } 
 
 

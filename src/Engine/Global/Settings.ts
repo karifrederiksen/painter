@@ -1,9 +1,10 @@
 ﻿import { Fun1 } from "../Common";
 import { Vec2 } from "../Math/Vec";
 import { Hsva } from "../Math/Color";
-import { Tools } from "../../Tools";
+import { ToolType } from "../App/Tools";
 import { BlendModeType } from "../Rendering/Consts";
-import { Layer, LayerBasic } from "../Rendering/Layers/Layer";
+import { Layer } from "../Rendering/Layers/Layer";
+import { BrushSettings } from "../App/BrushSettings";
 import { Stack, Iterable } from "immutable";
 
 export class Setting<T> {
@@ -31,15 +32,6 @@ export class Setting<T> {
 }
 
 
-const BrushSettings = {
-	textureSize: new Setting<Vec2>(),
-	size: new Setting<number>(),
-	softness: new Setting<number>(),
-	spacing: new Setting<number>(),
-	density: new Setting<number>(),
-	color: new Setting<Hsva>()
-}
-
 const RenderSettings = {
 	canvasSize: new Setting<Vec2>(),
 	gamma: new Setting<number>(),
@@ -48,13 +40,13 @@ const RenderSettings = {
 }
 
 const Layers = {
-	current: new Setting<LayerBasic>(),
-	stack: new Setting<Iterable<number, LayerBasic>>()
+	current: new Setting<Layer>(),
+	stack: new Setting<Iterable<number, Layer>>()
 }
 
 export const Settings = {
-	brush: BrushSettings,
+	brush: new Setting<BrushSettings>(),
 	rendering: RenderSettings,
 	layers: Layers,
-	toolId: new Setting<Tools>()
+	toolId: new Setting<ToolType>()
 }

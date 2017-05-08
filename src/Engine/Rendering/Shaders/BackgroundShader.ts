@@ -1,4 +1,4 @@
-import { Shader, Attribute, Uniform } from "./Shader";
+import { ShaderBase, Attribute, Uniform, AttributeMap, UniformMap } from "./Shader";
 import { Texture } from "../Texture";
 import { Renderer } from "../Renderer";
 import { Vec2 } from "../../Math/Vec";
@@ -43,23 +43,31 @@ const SHADER_SHADER_FRAG = [
 	"}"
 ].join("\n");
 
+export interface BackgroundShaderAttributes extends AttributeMap {
+	aPosition: Attribute;
+}
 
-export class BackgroundShader extends Shader {
+export interface BackgroundShaderUniforms extends UniformMap {
+	uResolution: Uniform<"2f">;
+	uScale: Uniform<"1f">;
+}
+
+export class BackgroundShader extends ShaderBase<BackgroundShaderAttributes, BackgroundShaderUniforms> {
 
 	public name = "background shader";
 
 	public get scale(): number {
-		return this.uniforms["uScale"].value;
+		return this.uniforms.uScale.value;
 	}
 	public set scale(value: number) {
-		this.uniforms["uScale"].value = value;
+		this.uniforms.uScale.value = value;
 	}
 
 	public get resolution(): Vec2 {
-		return this.uniforms["uResolution"].value;
+		return this.uniforms.uResolution.value;
 	}
 	public set resolution(value: Vec2) {
-		this.uniforms["uResolution"].value = value;
+		this.uniforms.uResolution.value = value;
 	}
 
 	public constructor(renderer: Renderer, resolution: Vec2) {

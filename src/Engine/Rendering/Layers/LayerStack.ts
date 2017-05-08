@@ -6,7 +6,18 @@ import { Texture } from "../Texture";
 import { Sprite } from "../Sprite";
 import { Vec2 } from "../../Math/Vec";
 import { Settings } from "../../Global/Settings";
-import { List } from "immutable";
+import { List, OrderedMap } from "immutable";
+
+
+
+export class LayerSpriteSet {
+	constructor(
+		public readonly layer: Layer,
+		public readonly sprite: Sprite
+	){
+		Object.freeze(this);
+	}
+}
 
 /*
 	Contains the layer stack.
@@ -17,27 +28,30 @@ import { List } from "immutable";
 	Used for manipulating the layer stack and the contained layers.
 */
 export class LayerStack {
-	protected _stack: List<Layer> = List<Layer>();
+	protected _layerStack: List<LayerSpriteSet> = List<LayerSpriteSet>();
 
-	public get stack() { return this._stack; }
+	public get layerSpriteStack() { return this._layerStack; }
+
+	// TODO: this can be memoized
+	public get layerStack() { return this._layerStack.map((val) => val.layer); }
 
 
 	public first() {
-		return this._stack.first();
+		return this.layerSpriteStack.first();
 	}
 
 	public last() {
-		return this._stack.last();
+		return this.layerSpriteStack.last();
 	}
 
 	public count() {
-		return this._stack.count();
+		return this.layerSpriteStack.count();
 	}
 
 	public get(index: number) {
 		console.assert(index > 0);
 		console.assert(index < this.count());
-		return this._stack.get(index);
+		return this.layerSpriteStack.get(index);
 	}
 
 
@@ -46,12 +60,13 @@ export class LayerStack {
 	*/
 	public newLayer(renderer: Renderer, index: number) {
 		console.assert(index >= 0);
-		console.info("new layer");
+		console.info(`New layer at index ${index}`);
 		const texture = new Texture(renderer, renderer.getCanvasSize());
-		const layer = Layer.create(new Sprite(texture), null, true);
-		this._stack = this._stack.insert(index, layer);
+		const sprite = new Sprite(texture);
+		const layer = Layer.createWithSprite(sprite, null, true);
 
-		Settings.layers.stack.broadcast(this._stack);
+		this._layerStack = this._layerStack.insert(index, new LayerSpriteSet(layer, sprite));
+		Settings.layers.stack.broadcast(this.layerStack);
 	}
 
 
@@ -61,19 +76,20 @@ export class LayerStack {
 	public moveLayerToIdx(fromIndex: number, toIndex: number) {
 		console.assert(fromIndex !== toIndex);
 		console.assert(fromIndex >= 0);
-		console.assert(fromIndex < this._stack.count());
+		console.assert(fromIndex < this._layerStack.count());
 		console.assert(toIndex >= 0);
-		console.assert(toIndex < this._stack.count());
+		console.assert(toIndex < this._layerStack.count());
+		console.info(`Moving layer from index ${fromIndex} at ${toIndex}`);
 		
 		
-		const layer = this._stack.get(fromIndex);
-		const tmpStack = this._stack.remove(fromIndex);
+		const layer = this._layerStack.get(fromIndex);
+		const tmpStack = this._layerStack.remove(fromIndex);
 		if (fromIndex > toIndex) {
 			fromIndex++;
 		}
-		this._stack = tmpStack.insert(fromIndex, layer);
+		this._layerStack = tmpStack.insert(fromIndex, layer);
 		
-		Settings.layers.stack.broadcast(this._stack);
+		Settings.layers.stack.broadcast(this.layerStack);
 	}
 
 
@@ -82,28 +98,35 @@ export class LayerStack {
 	*/
 	public removeLayer(index: number) {
 		console.assert(index >= 0);
-		this._stack = this._stack.remove(index);
+		console.info(`Removing  layer at index ${index}`);
+		const layer = this._layerStack.get(index);
+		this._layerStack = this._layerStack.remove(index);
 		
-		Settings.layers.stack.broadcast(this._stack);
+		Settings.layers.stack.broadcast(this.layerStack);
+		return layer;
 	}
 
 
 	/*
 		Insert a layer back into the stack after it's been removed (undo/redo)
 	*/
-	public insertLayer(layer: Layer, index: number) {
+	public insertLayer(layer: LayerSpriteSet, index: number) {
 		console.assert(layer != null);
 		console.assert(index >= 0);
+		console.info(`Inserting old layer with id ${layer.layer.id} at index ${index}`);
 
-		this._stack.insert(index, layer);
-		
-		Settings.layers.stack.broadcast(this._stack);
+		this._layerStack = this._layerStack.insert(index, layer);
+		Settings.layers.stack.broadcast(this.layerStack);
 	}
 
 	public replace(layer: Layer, newLayer: Layer) {
-		const index = this._stack.indexOf(layer)
-		this._stack.set(index, newLayer);
+		console.info(`Replacing layer with id ${layer.id} with new layer with id ${newLayer.id}`);
+		const index = this._layerStack.findIndex(val => val.layer === layer);
+		const prev = this._layerStack.get(index);
+		const newSet = new LayerSpriteSet(newLayer, prev.sprite);
+		this._layerStack = this._layerStack.set(index, newSet);
 		
-		Settings.layers.stack.broadcast(this._stack);
+		Settings.layers.stack.broadcast(this.layerStack);
+		return newSet;
 	}
 }

@@ -1,5 +1,4 @@
-﻿
-import { Shader, Attribute, Uniform } from "./Shader"
+﻿import { ShaderBase, Attribute, Uniform, AttributeMap, UniformMap } from "./Shader";
 import { Renderer } from "../Renderer";
 import { Batch } from "../Batch";
 import { Texture } from "../Texture";
@@ -56,24 +55,34 @@ const SHADER_DRAWPOINT_FRAG = [
 ].join("\n");
 
 
+export interface DrawPointShaderAttributes extends AttributeMap {
+	aPosition: Attribute;
+	aTextureCoord: Attribute;
+}
 
-export class DrawPointShader extends Shader {
+export interface DrawPointShaderUniforms extends UniformMap {
+	uBrushTexture: Uniform<"t">;
+	uResolution: Uniform<"2f">;
+}
+
+
+export class DrawPointShader extends ShaderBase<DrawPointShaderAttributes, DrawPointShaderUniforms> {
 
 	public name = "drawpoint shader";
 	public batch: Batch;
 
 	public set brushTexture(texture: Texture) {
-		this.uniforms["uBrushTexture"].value = texture;
+		this.uniforms.uBrushTexture.value = texture;
 	}
 	public get brushTexture() {
-		return this.uniforms["uBrushTexture"].value;
+		return this.uniforms.uBrushTexture.value;
 	}
 	
 	public get resolution(): Vec2 {
-		return this.uniforms["uResolution"].value;
+		return this.uniforms.uResolution.value;
 	}
 	public set resolution(value: Vec2) {
-		this.uniforms["uResolution"].value = value;
+		this.uniforms.uResolution.value = value;
 	}
 	
 

@@ -1,11 +1,10 @@
 ﻿
-import { Shader } from "./Shaders/Shader";
 import { Texture } from "./Texture";
 import { Renderer } from "./Renderer";
 import { Batch } from "./Batch";
 
 function setSquareBatchArray(batch: Batch) {
-	const array = batch.array;
+	const { array } = batch;
 
 	array[0] = -1;
 	array[1] = -1;
@@ -32,27 +31,27 @@ function setSquareBatchArray(batch: Batch) {
 	Base class for texture generation.
 */
 export function generateBrushTexture(renderer: Renderer, texture: Texture) {
-	const gl = renderer.gl;
-	const shader = renderer.shaders.brushShader;
-	const batch = shader.batch;
+	const { gl } = renderer;
+	const { brushShader } = renderer.shaders;
+	const { batch } = brushShader;
 
 	setSquareBatchArray(batch);
 
 	renderer.setViewportForTexture(texture);
 	renderer.clearTexture(texture);
-	renderer.flushShaderToTexture(shader, texture);
+	renderer.flushShaderToTexture(brushShader, texture);
 }
 
 
 export function generateBackgroundTexture(renderer: Renderer, texture: Texture) {
-	const gl = renderer.gl;
-	const shader = renderer.shaders.backgroundShader;
-	const batch = shader.batch;
+	const { gl } = renderer;
+	const { backgroundShader } = renderer.shaders;
+	const { batch } = backgroundShader;
 
 	setSquareBatchArray(batch);
 
 	renderer.setViewportForTexture(texture);
 	renderer.clearTexture(texture);
-	renderer.flushShaderToTexture(shader, texture);
+	renderer.flushShaderToTexture(backgroundShader, texture);
 
 }

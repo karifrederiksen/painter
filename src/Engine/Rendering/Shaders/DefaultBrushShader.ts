@@ -1,4 +1,4 @@
-﻿import { Shader, Attribute, Uniform } from "./Shader";
+﻿import { ShaderBase, Attribute, Uniform, AttributeMap, UniformMap } from "./Shader";
 import { Renderer } from "../Renderer";
 
 /*
@@ -37,23 +37,31 @@ const SHADER_BRUSH_FRAG = [
 	"}"
 ].join("\n");
 
+export interface BrushShaderAttributes extends AttributeMap {
+	aPosition: Attribute;
+}
 
-export class DefaultBrushShader extends Shader {
+export interface BrushShaderUniforms extends UniformMap {
+	uSoftness: Uniform<"1f">;
+	uGamma: Uniform<"1f">;
+}
+
+export class DefaultBrushShader extends ShaderBase<BrushShaderAttributes, BrushShaderUniforms> {
 
 	public name = "brush shader";
 
 	public set softness(texture: number) {
-		this.uniforms["uSoftness"].value = texture;
+		this.uniforms.uSoftness.value = texture;
 	}
 	public get softness() {
-		return this.uniforms["uSoftness"].value;
+		return this.uniforms.uSoftness.value;
 	}
 
 	public set gamma(texture: number) {
-		this.uniforms["uGamma"].value = texture;
+		this.uniforms.uGamma.value = texture;
 	}
 	public get gamma() {
-		return this.uniforms["uGamma"].value;
+		return this.uniforms.uGamma.value;
 	}
 
 

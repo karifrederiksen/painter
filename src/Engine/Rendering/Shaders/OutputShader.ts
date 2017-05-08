@@ -1,17 +1,16 @@
-﻿
-import { Shader, Attribute, Uniform } from "./Shader";
+﻿import { ShaderBase, Attribute, Uniform, AttributeMap, UniformMap } from "./Shader";
 import { Texture } from "../Texture";
 import { Renderer } from "../Renderer";
 import { Vec2 } from "../../Math/Vec";
 
 /*
 
-The final shader that the canvas is put through before being displayed.
+	The final shader that the canvas is put through before being displayed.
 
-All color on the canvas should be in linear color space for better blending,
-	so it needs to be converted to gamma before being displayed.
+	All color on the canvas should be in linear color space for better blending,
+		so it needs to be converted to gamma before being displayed.
 
-If necessary, the shader can be expanded later on.
+	If necessary, the shader can be expanded later on.
 
 */
 const SHADER_OUTPUT_SHADER_VERT = [
@@ -34,6 +33,22 @@ const SHADER_OUTPUT_SHADER_VERT = [
 // Note: function allows us to hardcode the gamma value for better optimization. 
 // Requires recompiling shader every time gamma is changed.
 function SHADER_OUTPUT_SHADER_FRAG(gamma: number) {
+	console.assert(isNaN(gamma) === false, "Gamma expected to be numeric.");
+
+	let fragColor: string;
+	if (gamma === 1) {
+		fragColor = "pixel";
+		console.info(`Gamma is ${gamma}. Not transforming color.`)
+	}
+	else if (gamma === 2) {
+		fragColor = "sqrt(pixel)"
+		console.info(`Gamma is ${gamma}. Transforming color using: ${fragColor}`)
+	}
+	else {
+		const gammaStr = (1 / gamma).toFixed(6);
+		fragColor = `pow(pixel, vec4(${gammaStr}))`;
+		console.info(`Gamma is ${gamma}. Transforming color using: ${fragColor}`);
+	}
 	return [
 		"precision highp float;",
 
@@ -44,13 +59,23 @@ function SHADER_OUTPUT_SHADER_FRAG(gamma: number) {
 		"void main() {",
 		"	vec4 pixel = texture2D(uTexture, vTextureCoord);",
 		//"   pixel = mix(pixel, vec4(0.0, 0.0, 1.0, 1.0), 0.5);",
-		"	gl_FragColor = pow(pixel, vec4(" + (1 / gamma).toFixed(6) + "));",
+		`	gl_FragColor = ${fragColor};`,
 		"}"
 	].join("\n");
 };
 
 
-export class OutputShader extends Shader {
+export interface OutputShaderAttributes extends AttributeMap {
+	aPosition: Attribute;
+	aTextureCoord: Attribute;
+}
+
+export interface OutputShaderUniforms extends UniformMap {
+	uTexture: Uniform<"t">;
+	uResolution: Uniform<"2f">;
+}
+
+export class OutputShader extends ShaderBase<OutputShaderAttributes, OutputShaderUniforms> {
 	protected _gamma: number;
 
 	public name = "output shader";
@@ -66,18 +91,18 @@ export class OutputShader extends Shader {
 	}
 
 	public get texture(): Texture {
-		return this.uniforms["uTexture"].value;
+		return this.uniforms.uTexture.value;
 	}
 	public set texture(value: Texture) {
-		this.uniforms["uTexture"].value = value;
+		this.uniforms.uTexture.value = value;
 	}
 
 
 	public get resolution(): Vec2 {
-		return this.uniforms["uResolution"].value;
+		return this.uniforms.uResolution.value;
 	}
 	public set resolution(value: Vec2) {
-		this.uniforms["uResolution"].value = value;
+		this.uniforms.uResolution.value = value;
 	}
 
 

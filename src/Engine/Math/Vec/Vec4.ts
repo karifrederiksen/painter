@@ -1,20 +1,23 @@
-﻿import { IArithmetic } from "../IArithmetic";
+﻿import { IArithmetic, Roundable } from "../Types";
 
-export class Vec4 implements IArithmetic<Vec4> {
-	public static readonly default = new Vec4(0, 0, 0, 0);
+export interface Vec4Args {
+	x?: number;
+	y?: number;
+	z?: number;
+	w?: number;
+}
+
+export class Vec4 implements IArithmetic<Vec4>, Roundable<Vec4> {
+	public static readonly default = Object.freeze(new Vec4(0, 0, 0, 0));
 
 	private constructor(
-		private _x = 0.0,
-		private _y = 0.0,
-		private _z = 0.0,
-		private _w = 0.0
+		public readonly x = 0.0,
+		public readonly y = 0.0,
+		public readonly z = 0.0,
+		public readonly w = 0.0
 	) { 
 		Object.freeze(this);
 	}
-	public get x() { return this._x; }
-	public get y() { return this._y; }
-	public get z() { return this._z; }
-	public get w() { return this._w; }
 	public get width()	{ return this.z; }
 	public get height()	{ return this.w; }
 
@@ -22,13 +25,10 @@ export class Vec4 implements IArithmetic<Vec4> {
 		if ([x,y,z,w].every(x => x === 0)) {
 			return Vec4.default;
 		}
-		return new Vec4(x, y, z, w);
+		return Object.freeze(new Vec4(x, y, z, w));
 	}
 	public default() {
 		return Vec4.default;
-	}
-	public isDefault() {
-		return this === Vec4.default;
 	}
 
 	public equals(rhs: Vec4) {
@@ -38,79 +38,118 @@ export class Vec4 implements IArithmetic<Vec4> {
 			&& this.w === rhs.w;
 	}
 
-	public withXY(x: number, y: number)	{ return Vec4.create( x, y, this.z, this.w); }
-	public wthZW(z: number, w: number)	{ return Vec4.create(this.x, this.y, z, w); }
-	
+	public withXY(x: number, y: number)	{ 
+		return Vec4.create( x, y, this.z, this.w);
+	}
+	public wthZW(z: number, w: number)	{ 
+		return Vec4.create(this.x, this.y, z, w);
+	}
+	public set(args: Vec4Args) {
+		return Vec4.create(
+			args.x != null ? args.x : this.x,
+			args.y != null ? args.y : this.y,
+			args.z != null ? args.z : this.z,
+			args.w != null ? args.w : this.w,
+		);
+	}
+ 	
 	public add(rhs: Vec4) { 
 		return Vec4.create(
-			this._x + rhs._x, 
-			this._y + rhs._y,
-			this._z + rhs._z,
-			this._w + rhs._w
-			);
+			this.x + rhs.x, 
+			this.y + rhs.y,
+			this.z + rhs.z,
+			this.w + rhs.w
+		);
 	}
 	public subtract(rhs: Vec4) {
 		return Vec4.create(
-			this._x - rhs._x, 
-			this._y - rhs._y,
-			this._z - rhs._z,
-			this._w - rhs._w
-			);
+			this.x - rhs.x, 
+			this.y - rhs.y,
+			this.z - rhs.z,
+			this.w - rhs.w
+		);
 	}
 	public multiply(rhs: Vec4) {
 		return Vec4.create(
-			this._x * rhs._x, 
-			this._y * rhs._y,
-			this._z * rhs._z,
-			this._w * rhs._w
-			);
+			this.x * rhs.x, 
+			this.y * rhs.y,
+			this.z * rhs.z,
+			this.w * rhs.w
+		);
 	}
 	public divide(rhs: Vec4) {
 		return Vec4.create(
-			this._x / rhs._x, 
-			this._y / rhs._y,
-			this._z / rhs._z,
-			this._w / rhs._w
+			this.x / rhs.x, 
+			this.y / rhs.y,
+			this.z / rhs.z,
+			this.w / rhs.w
 		);
 	}
 	public addScalar(n: number) {
 		return Vec4.create(
-			this._x + n, 
-			this._y + n,
-			this._z + n,
-			this._w + n
-			);
+			this.x + n, 
+			this.y + n,
+			this.z + n,
+			this.w + n
+		);
 	} 
 	public subtractScalar(n: number) {
 		return Vec4.create(
-			this._x - n, 
-			this._y - n,
-			this._z - n,
-			this._w - n
-			);
+			this.x - n, 
+			this.y - n,
+			this.z - n,
+			this.w - n
+		);
 	}
 	public multiplyScalar(n: number) {
 		return Vec4.create(
-			this._x * n, 
-			this._y * n,
-			this._z * n,
-			this._w * n
+			this.x * n, 
+			this.y * n,
+			this.z * n,
+			this.w * n
 		);
 	}
 	public divideScalar(n: number) {
 		return Vec4.create(
-			this._x / n, 
-			this._y / n,
-			this._z / n,
-			this._w / n
-			);
+			this.x / n, 
+			this.y / n,
+			this.z / n,
+			this.w / n
+		);
 	}
 	public powScalar(n: number) {
 		return Vec4.create(
-			this._x ** n, 
-			this._y ** n,
-			this._z ** n,
-			this._w ** n
-			);
+			Math.exp(Math.log(this.x) * n),
+			Math.exp(Math.log(this.y) * n),
+			Math.exp(Math.log(this.z) * n),
+			Math.exp(Math.log(this.w) * n)
+		);
+	}
+
+	public round() {
+		return Vec4.create(
+			(this.x + .5) | 0,
+			(this.y + .5) | 0,
+			(this.z + .5) | 0,
+			(this.w + .5) | 0
+		);
+	}
+
+	public floor() {
+		return Vec4.create(
+			this.x | 0,
+			this.y | 0,
+			this.z | 0,
+			this.w | 0
+		);
+	}
+
+	public ceil() {
+		return Vec4.create(
+			(this.x + 1) | 0,
+			(this.y + 1) | 0,
+			(this.z + 1) | 0,
+			(this.w + 1) | 0
+		);
 	}
 }

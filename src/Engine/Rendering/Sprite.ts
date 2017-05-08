@@ -4,9 +4,11 @@ import { Vec2, Vec4 } from "../Math/Vec";
 import { Batch } from "./Batch";
 import { GUID } from "../Common";
 
+
+
 export class Sprite {
-	public texture: Texture;
-	public id: number;
+	public readonly texture: Texture;
+	public readonly id: number;
 	public position = Vec2.default;
 	public scale = 1;
 	public rotation = 0;
@@ -22,7 +24,6 @@ export class Sprite {
 }
 
 
-
 /*
 	Add sprite to a batch object.
 */
@@ -32,18 +33,18 @@ export function addToBatch(sprite: Sprite, batch: Batch) {
 
 	// determine vertex and texture positions
 	
-	const x = sprite.position.x;
-	const y = sprite.position.y;
-	const width = sprite.texture.size.x;
-	const height = sprite.texture.size.y;
-	const crop = sprite.crop;
+	const {
+		position: { x, y },
+		texture: { size: { x: width, y: height } },
+		crop, scale
+	} = sprite;
 	
 	// don't scale before center calculation
 	const centerX = x + width * .5;
 	const centerY = y + height * .5;
 	
-	const halfWidth = width * sprite.scale * .5;
-	const halfHeight = height * sprite.scale * .5;
+	const halfWidth = width * scale * .5;
+	const halfHeight = height * scale * .5;
 
 	const vertexX0 = centerX - halfWidth;
 	const vertexY0 = centerY - halfHeight;
@@ -72,7 +73,7 @@ export function addToBatch(sprite: Sprite, batch: Batch) {
 
 	// buffer data
 
-	const array = batch.array;
+	const { array } = batch;
 	let offset = batch.arrayOffset;
 
 	array[offset++] = vertexX0;

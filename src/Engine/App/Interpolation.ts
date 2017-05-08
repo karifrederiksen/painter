@@ -1,33 +1,33 @@
 ﻿
-import { DrawPoint } from "./DrawPoints";
+import { DrawPoint } from "../Rendering/DrawPoints";
 import { Rgb, Rgba } from "../Math/Color";
 import { distance } from "../Math/Utils";
 import { IArithmetic, Vec2 } from "../Math/Vec";
-import { linearInterpolateFunc, InterpFunc } from "../Math/IArithmetic";
+import { linearInterpolateFunc, InterpFunc } from "../Math/Types";
 import { List } from "immutable";
 
 
 export class InterpolatorResult {
 	constructor(
-		public values: List<DrawPoint>,
-		public next: (prev: Interpolator) => Interpolator
+		public readonly values: List<DrawPoint>,
+		public readonly next: (prev: InterpolateFunc) => InterpolateFunc
 	) {
 		Object.freeze(this);
 	}
 	public get hasValues() { return this.values.count() > 0; }
 }
 
-export type Interpolator = (end: DrawPoint) => InterpolatorResult;
-export type InterpolatorGenerator = (start: DrawPoint) => Interpolator;
+export type InterpolateFunc = (end: DrawPoint) => InterpolatorResult;
+export type InterpolatorGenerator = (start: DrawPoint) => InterpolateFunc;
 
 export function interpolatorGenerator(spacingThresholdPx: number): InterpolatorGenerator {
 	
-	function _createInterpolator(start: DrawPoint): Interpolator {
+	function _createInterpolator(start: DrawPoint): InterpolateFunc {
 		return (end: DrawPoint) => {
 			const results = doInterpolation(spacingThresholdPx, start, end);
 			return (results.count() > 0)
-				? new InterpolatorResult(results, (prev: Interpolator) => _createInterpolator(results.last()))
-				: new InterpolatorResult(results, (prev: Interpolator) => prev);
+				? new InterpolatorResult(results, (prev: InterpolateFunc) => _createInterpolator(results.last()))
+				: new InterpolatorResult(results, (prev: InterpolateFunc) => prev);
 		}
 	}
 
@@ -39,16 +39,17 @@ function getPercentagesToAdd(spacing: number, start: DrawPoint, end: DrawPoint) 
 	console.assert(start != null, `Start is ${start}`);
 	console.assert(end != null, `End is ${end}`);
 
+	const { 
+		position: { x: endX, y: endY },
+		scale: endScale
+	} = end;
+
+	let {
+		position: { x, y },
+		scale
+	} = start;
+
 	const arr = new Array<number>();
-
-	const endX = end.position.x;
-	const endY = end.position.y;
-	const endScale = end.scale;
-
-	let x = start.position.x;
-	let y = start.position.y;
-	let scale = start.scale;
-
 	const endSpacing = Math.max(spacing * endScale);
 	const totalDist = distance(x, y, endX, endY);
 
@@ -128,7 +129,7 @@ function numberInterpFunc(start: number, end: number) {
 
 function arithmeticInterpFunc<T extends IArithmetic<T>>(start: T, end: T) {
 	const delta = end.subtract(start);
-	if (delta.isDefault()) {
+	if (delta === delta.default()) {
 		return () => start;
 	}
 	return linearInterpolateFunc(start, end);

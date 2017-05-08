@@ -6,29 +6,6 @@
 	Implementation of Xorshift 128
 */
 
-/*export type RNG = IterableIterator<number>;
-
-export function* floatRNG(seed: number) {
-	const _rng = intRNG(seed);
-	while (true) {
-		yield (_rng.next().value >>> 0 ) / ((1 << 30) * 2);
-	}
-}
-
-export function* intRNG(seed: number) {
-	let x = seed;
-	let y = 0;
-	let z = 0;
-	let w = 0;
-	while(true) {
-		const t = x ^ (x << 11);
-		x = y;
-		y = z;
-		z = w;
-		w ^= (w >> 19) ^ t ^ (t >> 8);
-		yield w;
-	}
-}*/
 export class RNG {
 	public x: number;
 	public y: number;
@@ -68,3 +45,27 @@ export class RNG {
 		return (this.nextInt() >>> 0) / ((1 << 30) * 2);
 	}
 }
+
+/*export type RNG = IterableIterator<number>;
+
+export function* floatRNG(seed: number) {
+	const _rng = intRNG(seed);
+	while (true) {
+		yield (_rng.next().value >>> 0 ) / ((1 << 30) * 2);
+	}
+}
+
+export function* intRNG(seed: number) {
+	let x = seed;
+	let y = 0;
+	let z = 0;
+	let w = 0;
+	while(true) {
+		const t = x ^ (x << 11);
+		x = y;
+		y = z;
+		z = w;
+		w ^= (w >> 19) ^ t ^ (t >> 8);
+		yield w;
+	}
+}*/

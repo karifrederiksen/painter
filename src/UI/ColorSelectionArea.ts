@@ -5,6 +5,7 @@ import { Hsva, Hsv } from "../Engine/Math/Color";
 
 import { ColorAreaDoubleBinding } from "./ColorSVArea"
 import { ColorDisplay } from "./ColorDisplay"
+import { BrushSettings } from "../Engine/App/BrushSettings";
 import { HueSlider } from "./HueSlider"
 
 export class ColorSelectionArea {
@@ -14,33 +15,36 @@ export class ColorSelectionArea {
 
     protected color = Hsv.create(0, 0, 1);
     protected secondaryColor = this.color;
+    protected onColorChange: (hsv: Hsv) => void;
+    protected onColorSwap: () => void;
 
-    constructor() {
-        this.satValArea = new ColorAreaDoubleBinding("pickingArea", "picker");
-        this.hueSlider = new HueSlider("hueArea", "hueAreaSlider");
-        this.colorDisplay = new ColorDisplay("colorDisplayPrimary", "colorDisplaySecondary")
 
-        this.colorDisplay.secondaryElem.addEventListener("pointerdown", this.swapColors);
+    constructor(onColorChange: (hsv: Hsv) => void, onColorSwap: () => void) {
+        this.onColorChange = onColorChange;
+        this.onColorSwap = onColorSwap;
 
-        this.handleColor(Settings.brush.color.value);
+        this.satValArea = new ColorAreaDoubleBinding((hsv) => {
+            onColorChange(hsv);
+        });
+        this.hueSlider = new HueSlider((hsv) => {
+            onColorChange(hsv);
+        });
+        this.colorDisplay = new ColorDisplay(() => this.swapColors())
 
-        Events.brush.color.subscribe(this.handleColor);
+        this.handleColor(Settings.brush.value);
+
+        Settings.brush.subscribe((settings) => this.handleColor(settings));
     }
 
-    protected swapColors = () => {
-        const tmp = this.color;
-        this.color = this.secondaryColor;
-        this.secondaryColor = tmp;
+    protected swapColors() {
         this.colorDisplay.swapColors();
-
-
-        const oldColor = Settings.brush.color.value;
-        Events.brush.color.broadcast(Hsva.createWithHsv(this.color, oldColor.a));
+        this.onColorSwap();
     }
 
-    protected handleColor = (value: Hsva) => {
-        console.assert(value.isZeroToOne(), `HSVA color has invalid value: ${value}. Expected all values to be in range [0..1]`)
-        const hsv = value.hsv;
+    protected handleColor(settings: BrushSettings) {
+        const color = settings.primaryColor;
+        console.assert(color.isInRange(0, 1), `HSVA color has invalid value: ${color}. Expected all values to be in range [0..1]`)
+        const hsv = color;
         const rgb = hsv
             .toRgb()
             .multiplyScalar(255)

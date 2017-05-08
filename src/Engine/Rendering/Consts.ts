@@ -7,8 +7,8 @@ export const enum BlendModeType {
 
 export class BlendModeParams {
 	constructor(
-		public sfact: number,
-		public dfact: number
+		public readonly sfact: number,
+		public readonly dfact: number
 	){
 		Object.freeze(this);
 	}

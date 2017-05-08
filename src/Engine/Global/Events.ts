@@ -1,8 +1,9 @@
 ﻿
 import { Fun1 } from "../Common";
 import { Hsva } from "../Math/Color";
-import { Tools } from "../../Tools";
+import { ToolType } from "../App/Tools";
 import { InputData } from "../Input/InputData";
+import { Layer } from "../Rendering/Layers/Layer";
 import { Stack } from "immutable";
 
 /*
@@ -12,17 +13,22 @@ import { Stack } from "immutable";
 */
 
 export class Event<T> {
-	private _callbacks: Stack<Fun1<T, void>> = Stack<Fun1<T, void>>();
+	private _callbacks = Stack<Fun1<T, void>>().asMutable();
+
+	constructor() {
+		Object.freeze(this);
+	}
 
 	public subscribe(callback: Fun1<T, void>) {
 		const cbs = this._callbacks;
 		if (cbs.every((val) => val !== callback)) {
-			this._callbacks = cbs.push(callback);
+			this._callbacks.asMutable().push(callback);
 		}
 	}
 
 	public unsubscribe(callback: Fun1<T, void>) {
-		this._callbacks = this._callbacks
+		this._callbacks
+			.asMutable()
 			.filter((val) => val !== callback)
 			.toStack();
 	}
@@ -32,23 +38,22 @@ export class Event<T> {
 	}
 }
 
-const BrushEvents = {
-	color: new Event<Hsva>(),
-	density: new Event<number>(),
-	softness: new Event<number>(),
-	spacing: new Event<number>(),
-	size: new Event<number>(),
-};
 
-const Pointer = {
-	down: new Event<InputData>(),
-	up: new Event<InputData>(),
-	move: new Event<InputData>(),
-	drag: new Event<InputData>()
-}
+export const Events = Object.freeze({
+	pointer: Object.freeze({
+		down: new Event<InputData>(),
+		up: new Event<InputData>(),
+		move: new Event<InputData>(),
+		drag: new Event<InputData>()
+	}),
+	layer: Object.freeze({
+		select: new Event<Layer>(),
+		moveUp: new Event<Layer>(),
+		moveDown: new Event<Layer>(),
+		toggleVisible: new Event<Layer>(),
+		create: new Event(),
+		delete: new Event<Layer>()
 
-export const Events = {
-	brush: BrushEvents,
-	pointer: Pointer,
-	tool: new Event<Tools>()
-}
+	}),
+	tool: new Event<ToolType>()
+});

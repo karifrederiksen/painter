@@ -3,7 +3,7 @@ import { Renderer } from "../Renderer";
 import { Sprite, addToBatch } from "../Sprite";
 import { Texture } from "../Texture";
 import { Layer } from "./Layer";
-import { LayerStack } from "./LayerStack";
+import { LayerStack, LayerSpriteSet } from "./LayerStack";
 import { Vec2 } from "../../Math/Vec";
 import { generateBackgroundTexture } from "../TextureGenerator";
 
@@ -12,15 +12,15 @@ import { generateBackgroundTexture } from "../TextureGenerator";
 	Renders all the layers in the LayerStack onto a single Texture
 */
 export class LayerCombiner {
-	protected _renderer: Renderer;
-	protected _layerStack: LayerStack;
-	protected _currentLayer: Layer = null;
+	protected readonly _renderer: Renderer;
+	protected readonly _layerStack: LayerStack;
+	protected _currentLayer: LayerSpriteSet = null;
 
-	protected _layersBelow: Sprite;
-	protected _layersAbove: Sprite;
-	protected _background: Sprite;
+	protected readonly _layersBelow: Sprite;
+	protected readonly _layersAbove: Sprite;
+	protected readonly _background: Sprite;
 
-	public combinedLayers: Sprite;
+	public readonly combinedLayers: Sprite;
 
 	constructor(renderer: Renderer, layerStack: LayerStack) {
 		console.assert(renderer != null);
@@ -38,17 +38,26 @@ export class LayerCombiner {
 	}
 
 
-	public setLayer(currentLayer: Layer) {
+	public setLayer(currentLayer: LayerSpriteSet) {
 		console.assert(currentLayer != null);
-		if (this._currentLayer === currentLayer) {
-			return;
-		}
 		this._currentLayer = currentLayer;
+		this._update();
+	}
 
+
+
+	private _update() {
+		const currentLayer = this._currentLayer;
 		const renderer = this._renderer;
 		const combined = this.combinedLayers;
-		const stack = this._layerStack.stack;
-		const currentLayerIdx = stack.indexOf(currentLayer);
+		const layerStack = this._layerStack;
+		const stack = layerStack.layerSpriteStack
+			.filter(val => val.layer.visible)
+			.toIndexedSeq();
+		let currentLayerIdx = stack.indexOf(currentLayer);
+		if (currentLayerIdx === -1) {
+			currentLayerIdx = stack.count();
+		}
 
 		// below
 		const below = this._layersBelow;
@@ -56,8 +65,8 @@ export class LayerCombiner {
 		renderer.setViewPortForSprite(below);
 		this.renderSpriteToTexture(this._background, below.texture);
 		for (let i = 0; i < currentLayerIdx; i++) {
-			console.log("current layer idx", currentLayerIdx);
-			this.renderSpriteToTexture(stack.get(i).sprite, below.texture);
+			const layerSpriteSet = stack.get(i);
+			this.renderSpriteToTexture(layerSpriteSet.sprite, below.texture);
 		}
 
 		// above
@@ -65,7 +74,8 @@ export class LayerCombiner {
 		renderer.clearTexture(above.texture);
 		renderer.setViewPortForSprite(above);
 		for (let i = currentLayerIdx + 1, ilen = stack.count(); i < ilen; i++) {
-			this.renderSpriteToTexture(stack.get(i).sprite, above.texture);
+			const layerSpriteSet = stack.get(i);
+			this.renderSpriteToTexture(layerSpriteSet.sprite, above.texture);
 		}
 	}
 
@@ -73,12 +83,15 @@ export class LayerCombiner {
 	public render() {
 		const renderer = this._renderer;
 		const combined = this.combinedLayers;
+		const stack = this._layerStack.layerSpriteStack;
 
 		renderer.clearTexture(combined.texture);
 		renderer.setViewPortForSprite(combined);
-		
+
 		this.renderSpriteToTexture(this._layersBelow, combined.texture);
-		this.renderSpriteToTexture(this._currentLayer.sprite, combined.texture);
+		if (this._currentLayer.layer.visible) {
+			this.renderSpriteToTexture(this._currentLayer.sprite, combined.texture);
+		}
 		this.renderSpriteToTexture(this._layersAbove, combined.texture);
 	}
 

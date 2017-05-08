@@ -4,16 +4,14 @@ export type Fun1<T, U> = (t: T) => U;
 export type Fun2<T0, T1, U> = (t0: T0, t1: T1) => U;
 export type Fun3<T0, T1, T2, U> = (t0: T0, t1: T1, t2: T2) => U;
 
-export type Action<T> = Fun1<T, void>;
 export type Predicate<T> = Fun1<T, boolean>;
 
 
 export interface HasDefault<T> {
 	default(): T; // ?
-	isDefault(): boolean;
 }
 
-export interface IEquality<T> {
+export interface Equals<T> {
 	equals(t: T): boolean;
 }
 

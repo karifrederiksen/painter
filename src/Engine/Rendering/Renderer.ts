@@ -45,7 +45,8 @@ export class Renderer {
 
 
 	public getCanvasSize() { 
-		return Vec2.create(this.canvas.width, this.canvas.height);
+		const { width, height } = this.canvas;
+		return Vec2.create(width, height);
 	}
 
 	public useShader(shader: Shader) {
@@ -69,7 +70,7 @@ export class Renderer {
 
 	public flushShaderToTexture(shader: Shader, texture: Texture) {
 		console.assert(shader != null, `Shader is ${shader}`);
-		const id = texture.id;
+		const { id } = texture;
 
 		//console.warn(`Starting flush: ${shader.name} to texture ${id}`)
 		this.useShader(shader);
@@ -92,24 +93,25 @@ export class Renderer {
 
 	public setViewPort(area: Vec4) {
 		console.assert(area != null, `Area is ${area}`);
-		return this._setViewPort(area.x, area.y, area.width, area.height);
+		const { x, y, width, height } = area;
+		return this._setViewPort(x, y, width, height);
 	}
 
 	public setViewportForTexture(texture: Texture) {
 		console.assert(texture != null, `Texture is ${texture}`);
-		const size = texture.size;
-		return this._setViewPort(0, 0, size.x, size.y);
+		const { x, y } = texture.size;
+		return this._setViewPort(0, 0, x, y);
 	}
 
 	public setViewPortForSprite(sprite: Sprite) {
 		console.assert(sprite != null, `Sprite is ${sprite}`);
-		const size = sprite.texture.size;
-		return this._setViewPort(0, 0, size.x, size.y);
+		const { x, y } = sprite.texture.size;
+		return this._setViewPort(0, 0, x, y);
 	}
 
 	public setViewPortForCanvas() {
-		const canvas = this.canvas;
-		return this._setViewPort(0, 0, canvas.width, canvas.height);
+		const { width, height } = this.canvas;
+		return this._setViewPort(0, 0, width, height);
 	}
 
 	public clearCanvas() {

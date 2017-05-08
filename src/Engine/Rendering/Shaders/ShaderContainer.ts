@@ -7,6 +7,7 @@ import { BackgroundShader } from "./BackgroundShader";
 import { Renderer } from "../Renderer";
 import { Vec2 } from "../../Math/Vec";
 import { Settings } from "../../Global/Settings";
+import { BrushSettings } from "../../App/BrushSettings";
 
 export class ShaderContainer {
 	public readonly brushShader: DefaultBrushShader;
@@ -19,20 +20,20 @@ export class ShaderContainer {
 		const resolution = renderer.getCanvasSize();
 
 		// init default shaders
-		this.brushShader = new DefaultBrushShader(renderer, Settings.brush.softness.value, Settings.rendering.gamma.value);
+		this.brushShader = new DefaultBrushShader(renderer, Settings.brush.value.softness, Settings.rendering.gamma.value);
 		this.drawPointShader = new DrawPointShader(renderer, resolution, Settings.rendering.maxDrawPoints.value);
 		this.spriteShader = new SpriteShader(renderer, resolution);
 		this.outputShader = new OutputShader(renderer, resolution, Settings.rendering.gamma.value);
 		this.backgroundShader = new BackgroundShader(renderer, resolution);
 
 		Settings.rendering.gamma.subscribe(this._onGammaChanged);
-		Settings.brush.softness.subscribe(this._onSoftnessChanged);
+		Settings.brush.subscribe(this._onSoftnessChanged);
 		Settings.rendering.canvasSize.subscribe(this._onCanvasSizeChanged);
 	}
 	
 
-	protected _onSoftnessChanged = (value: number) => 
-		this.brushShader.softness = value;
+	protected _onSoftnessChanged = (value: BrushSettings) => 
+		this.brushShader.softness = value.softness;
 	
 
 	protected _onGammaChanged = (value: number) => {

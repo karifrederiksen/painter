@@ -1,146 +1,454 @@
 ﻿
-import { IArithmetic } from "./IArithmetic";
+import { IArithmetic, Roundable } from "./Types";
 
 export interface Color {
-	toRgb(): Rgb;
-	toHsv(): Hsv;
+	toRgb(): Readonly<Rgb>;
+	toHsv(): Readonly<Hsv>;
+	toLab(): Readonly<Lab>;
 	toHex(): number;
 	toGray(): number;
 }
 
 export interface ColorWithAlpha {
-	toRgba(): Rgba;
-	toHsva(): Hsva;
+	toRgba(): Readonly<Rgba>;
+	toHsva(): Readonly<Hsva>;
 	toHex(): number;
+	toGray(): number;
+}
+
+export interface RgbArgs {
+	r?: number;
+	g?: number;
+	b?: number;
+}
+export interface RgbaArgs {
+	r?: number;
+	g?: number;
+	b?: number;
+	a?: number;
+}
+export interface HsvArgs {
+	h?: number;
+	s?: number;
+	v?: number;
+}
+export interface HsvaArgs {
+	h?: number;
+	s?: number;
+	v?: number
+	a?: number;
+}
+export interface LabArgs {
+	l?: number;
+	a?: number;
+	b?: number;
 }
 
 
-export class Hsv implements Color, IArithmetic<Hsv> {
-	public static readonly default = new Hsv(0, 0, 0);
 
+
+
+
+
+
+export class Rgb implements Color, IArithmetic<Rgb>, Roundable<Rgb>  {
+	public static readonly default = Object.freeze(new Rgb(0, 0, 0));
+	
 	private constructor(
-		private _h: number,
-		private _s: number,
-		private _v: number
-	) { 
-		Object.freeze(this);
+		public readonly r: number,
+		public readonly g: number,
+		public readonly b: number
+	) { }
+
+	public static create(r: number, g: number, b: number) { 
+		if ([r,g,b].every(x => x === 0)) {
+			return Rgb.default;
+		}
+		return Object.freeze(new Rgb(r, g,b));
+	}
+	public default() {
+		return Rgb.default;
 	}
 
-	public get h() { return this._h; }
-	public get s() { return this._s; }
-	public get v() { return this._v; }
+	public equals(rhs: Rgb) {
+		return this.r === rhs.r
+			&& this.g === rhs.g
+			&& this.b === rhs.b;
+	}
+
+	public set(args: RgbArgs) {
+		return Rgb.create(
+			args.r != null ? args.r : this.r,
+			args.g != null ? args.g : this.g,
+			args.b != null ? args.b : this.b
+		);
+	}
+
+	public toRgb() { return this; }
+
+	public toHsv() {
+		const { r, g, b } = this;
+
+		const max = Math.max(r, g, b);
+		const min = Math.min(r, g, b);
+		const d = max - min;
+		const s = (max === 0 ? 0 : d / max);
+		const v = max;
+
+		let h: number;
+		switch (max) {
+			case min:
+				h = 0; 
+				break;
+			case r:
+				h = (g - b) / d + (g < b ? 6 : 0); 
+				break;
+			case g:
+				h = (b - r) / d + 2; 
+				break;
+			default:
+				h = (r - g) / d + 4; 
+				break;
+		}
+		h /= 6;
+		return Hsv.create(h, s, v);
+	}
+
+	public toLab() {
+		function _pivotRgb(n: number) {
+			return (n > 0.04045) ? Math.pow((n + 0.055) / 1.055, 2.4) : n / 12.92
+		}
+
+		function _pivorXyz(n: number) {
+			return (n > 0.008856451679035631) ? Math.cbrt(n) : (7.787 * n + 16) / 116;
+		}
+		let { r, g, b } = this;
+
+		// actually converts to XYZ then to LAB
+
+		r = _pivotRgb(r);
+		g = _pivotRgb(g);
+		b = _pivotRgb(b);
+
+		let x = (r * 0.4124 + g * 0.3576 + b * 0.1805);
+		let y = (r * 0.2126 + g * 0.7152 + b * 0.0722);
+		let z = (r * 0.0193 + g * 0.1192 + b * 0.9505);
+
+		x = _pivorXyz(x / 0.95047);
+		y = _pivorXyz(y / 1.00000);
+		z = _pivorXyz(z / 1.08883);
+
+		return Lab.create(
+			Math.max(0, 116 * y) - 16, 
+			500 * (x - y), 
+			200 * (y - z)
+		);
+	}
+
+	// do I need to floor the numbers before bitwise shifting?
+	public toHex() {
+		return (((this.r * 255) | 0) << 16)
+			+ (((this.g * 255) | 0) << 8)
+			+ ((this.b * 255) | 0)
+	}
+
+	public toGray() {
+		const { r, g, b } = this;
+		return Math.sqrt(
+			.299 * r * r + 
+			.587 * g * g +
+			.114 * b * b
+			);
+	}
+
+
+	public add(rhs: Rgb) {
+		return Rgb.create(
+			this.r + rhs.r,
+			this.g + rhs.g,
+			this.b + rhs.b
+		);
+	}
+	public subtract(rhs: Rgb) {
+		return Rgb.create(
+			this.r - rhs.r,
+			this.g - rhs.g,
+			this.b - rhs.b
+		);
+	}
+	public multiply(rhs: Rgb) {
+		return Rgb.create(
+			this.r * rhs.r,
+			this.g * rhs.g,
+			this.b * rhs.b
+		);
+	}
+	public divide(rhs: Rgb) {
+		return Rgb.create(
+			this.r / rhs.r,
+			this.g / rhs.g,
+			this.b / rhs.b
+		);
+	}
+	public addScalar(n: number) {
+		return Rgb.create(
+			this.r + n,
+			this.g + n,
+			this.b + n
+		);
+	}
+	public subtractScalar(n: number) {
+		return Rgb.create(
+			this.r - n,
+			this.g - n,
+			this.b - n
+		);
+	}
+	public multiplyScalar(n: number) {
+		return Rgb.create(
+			this.r * n,
+			this.g * n,
+			this.b * n
+		);
+	}
+	public divideScalar(n: number) {
+		return Rgb.create(
+			this.r / n,
+			this.g / n,
+			this.b / n
+		);
+	}
+	public powScalar(n: number) {
+		return Rgb.create(
+			Math.exp(Math.log(this.r) * n),
+			Math.exp(Math.log(this.g) * n),
+			Math.exp(Math.log(this.b) * n)
+		);
+	}
+	
+	public round() {
+		return Rgb.create(
+			(this.r + .5) | 0,
+			(this.g + .5) | 0,
+			(this.b + .5) | 0
+		);
+	}
+	
+	public floor() {
+		return Rgb.create(
+			this.r | 0,
+			this.g | 0,
+			this.b | 0
+		);
+	}
+	
+	public ceil() {
+		return Rgb.create(
+			(this.r + 1) | 0,
+			(this.g + 1) | 0,
+			(this.b + 1) | 0
+		);
+	}
+}
+
+
+
+
+
+export class Rgba implements ColorWithAlpha, IArithmetic<Rgba>, Roundable<Rgba> {
+	public static readonly default = Object.freeze(new Rgba(Rgb.create(0, 0, 0), 0));
+
+	private constructor(
+		public readonly rgb: Rgb,
+		public readonly a: number
+	) { }
+
+	public get r() { return this.rgb.r; }
+	public get g() { return this.rgb.g; }
+	public get b() { return this.rgb.b; }
+
+	public static create(r: number, g: number, b: number, a: number) { 
+		if ([r, g, b, a].every(x => x === 0)) {
+			return Rgba.default;
+		}
+		return Object.freeze(new Rgba(Rgb.create(r,g,b),a));
+	}
+
+	public static createWithRgb(rgb: Rgb, a: number){
+		if (rgb === Rgba.default.rgb && a === 0) {
+			return Rgba.default;
+		}
+		return Object.freeze(new Rgba(rgb, a));
+	}
+	public default() {
+		return Rgba.default;
+	}
+
+	public equals(rhs: Rgba) {
+		return this.rgb.equals(rhs.rgb)
+			&& this.a === rhs.a;
+	}
+
+	public set(args: RgbaArgs) {
+		return Rgba.create(
+			args.r != null ? args.r : this.r,
+			args.g != null ? args.g : this.g,
+			args.b != null ? args.b : this.b,
+			args.a != null ? args.a : this.a
+		);
+	}
+
+	public setAlpha(alpha: number) {
+		return Rgba.createWithRgb(
+			this.rgb,
+			alpha
+		);
+	}
+
+	public toRgba() { 
+		return this;
+	}
+
+	public toHsva() {
+		return Hsva.createWithHsv(
+			this.rgb.toHsv(),
+			this.a
+		);
+	}
+
+	public toHex() {
+		return (this.rgb.toHex() << 8)
+			+ ((this.a + .5) | 0);
+	}
+
+	public toGray() {
+		return this.rgb.toGray() * this.a;
+	}
+
+	public add(rhs: Rgba) {
+		return Rgba.createWithRgb(
+			this.rgb.add(rhs.rgb),
+			this.a + rhs.a
+		);
+	}
+
+	public subtract(rhs: Rgba) {
+		return Rgba.createWithRgb(
+			this.rgb.subtract(rhs.rgb),
+			this.a - rhs.a
+		);
+	}
+
+	public multiply(rhs: Rgba) {
+		return Rgba.createWithRgb(
+			this.rgb.multiply(rhs.rgb),
+			this.a * rhs.a
+		);
+	}
+
+	public divide(rhs: Rgba) {
+		return Rgba.createWithRgb(
+			this.rgb.divide(rhs.rgb),
+			this.a / rhs.a
+		);
+	}
+
+	public addScalar(n: number) {
+		return Rgba.createWithRgb(
+			this.rgb.addScalar(n),
+			this.a + n
+		);
+	}
+
+	public subtractScalar(n: number) {
+		return Rgba.createWithRgb(
+			this.rgb.subtractScalar(n),
+			this.a - n
+		);
+	}
+
+	public multiplyScalar(n: number) {
+		return Rgba.createWithRgb(
+			this.rgb.multiplyScalar(n),
+			this.a * n
+		);
+	}
+
+	public divideScalar(n: number) {
+		return Rgba.createWithRgb(
+			this.rgb.divideScalar(n),
+			this.a / n
+		);
+	}
+	public powScalar(n: number) {
+		return Rgba.createWithRgb(
+			this.rgb.powScalar(n),
+			Math.exp(Math.log(this.a) * n)
+		)
+	}
+
+	public round() {
+		return Rgba.createWithRgb(
+			this.rgb.round(),
+			(this.a + .5) | 0
+		);
+	}
+	
+	public floor() {
+		return Rgba.createWithRgb(
+			this.rgb.floor(),
+			this.a | 0
+		);
+	}
+	
+	public ceil() {
+		return Rgba.createWithRgb(
+			this.rgb.ceil(),
+			(this.a + 1) | 1
+		);
+	}
+}
+
+
+
+
+export class Hsv implements Color {
+	public static readonly default = Object.freeze(new Hsv(0, 0, 0));
+
+	private constructor(
+		public readonly h: number,
+		public readonly s: number,
+		public readonly v: number
+	) { }
 
 	public static create(h: number, s: number, v: number) {
 		if ([h,s,v].every(x => x === 0)) {
 			return Hsv.default;
 		}
-		return new Hsv(h,s,v);
+		return Object.freeze(new Hsv(h,s,v));
 	}
+
 	public default() {
 		return Hsv.default;
 	}
-	public isDefault() {
-		return this === Hsv.default;
-	}
 
 	public equals(rhs: Hsv) {
-		return this._h === rhs._h
-			&& this._s === rhs._s
-			&& this._v === rhs._v;
+		return this.h === rhs.h
+			&& this.s === rhs.s
+			&& this.v === rhs.v;
 	}
 
-	public withH(n: number) { 
-		return Hsv.create(n, this._s, this._v); 
-	}
-	public withS(n: number) { 
-		return Hsv.create(this._h, n, this._v); 
-	}
-	public withV(n: number) { 
-		return Hsv.create(this._h, this._s, n); 
-	}
-	
-
-	public add(rhs: Hsv) {
+	public set(args: HsvArgs) {
 		return Hsv.create(
-			this._h + rhs._h,
-			this._s + rhs._s,
-			this._v + rhs._v
+			args.h != null ? args.h : this.h,
+			args.s != null ? args.s : this.s,
+			args.v != null ? args.v : this.v
 		);
 	}
-	public subtract(rhs: Hsv) {
-		return Hsv.create(
-			this._h - rhs._h,
-			this._s - rhs._s,
-			this._v - rhs._v
-		);
-	}
-	public multiply(rhs: Hsv) {
-		return Hsv.create(
-			this._h * rhs._h,
-			this._s * rhs._s,
-			this._v * rhs._v
-		);
-	}
-	public divide(rhs: Hsv) {
-		return Hsv.create(
-			this._h / rhs._h,
-			this._s / rhs._s,
-			this._v / rhs._v
-		);
-	}
-	public addScalar(n: number) {
-		return Hsv.create(
-			this._h + n,
-			this._s + n,
-			this._v + n
-		);
-	}
-	public subtractScalar(n: number) {
-		return Hsv.create(
-			this._h - n,
-			this._s - n,
-			this._v - n
-		);
-	}
-	public multiplyScalar(n: number) {
-		return Hsv.create(
-			this._h * n,
-			this._s * n,
-			this._v * n
-		);
-	}
-	public divideScalar(n: number) {
-		return Hsv.create(
-			this._h / n,
-			this._s / n,
-			this._v / n
-		);
-	}
-	public powScalar(n: number) {
-		return Hsv.create(
-			this._h ** n,
-			this._s ** n,
-			this._v ** n
-		);
-	}
-
-
-
-
-	public pow(n: number) {
-		return Hsv.create(
-			Math.pow(this._h, n),
-			Math.pow(this._s, n),
-			Math.pow(this._v, n)
-		);
-	}
-	
 
 	public toRgb() {
-		const h = this._h;
-		const s = this._s; 
-		const v = this._v;
-		const i = Math.floor(h * 6);
+		const { h, s, v } = this;
+		const i = (h * 6) | 0;
 		const f = h * 6 - i;
 		const p = v * (1 - s);
 		const q = v * (1 - f * s);
@@ -172,183 +480,29 @@ export class Hsv implements Color, IArithmetic<Hsv> {
 		return Rgb.create(r, g, b);
 	}
 
-	public toHsv() { return this; }
-
-	public toHex() { return this.toRgb().toHex(); }
-
-	public toGray() { return this.toRgb().toGray(); }
-}
-
-
-
-
-
-
-export class Rgb implements Color, IArithmetic<Rgb>  {
-	public static readonly default = new Rgb(0, 0, 0);
-	
-	private constructor(
-		private _r: number,
-		private _g: number,
-		private _b: number
-	) { 
-		Object.freeze(this);
+	public toHsv() { 
+		return this;
 	}
 
-	public get r() { return this._r; }
-	public get g() { return this._g; }
-	public get b() { return this._b; }
+	public toLab() { 
+		return this.toRgb().toLab(); 
+	}
 
-	public static create(r: number, g: number, b: number) { 
-		if ([r,g,b].every(x => x === 0)) {
-			return Rgb.default;
+	public toHex() { 
+		return this.toRgb().toHex(); 
+	}
+
+	public toGray() { 
+		return this.toRgb().toGray(); 
+	}
+
+	public isInRange(min: number, max: number) {
+		function _isinRange(n: number) {
+			return n >= min && n <= max;
 		}
-		return new Rgb(r,g,b);
-	}
-	public default() {
-		return Rgb.default;
-	}
-	public isDefault() {
-		return this === Rgb.default;
-	}
-
-	public equals(rhs: Rgb) {
-		return this._r === rhs._r
-			&& this._g === rhs._g
-			&& this._b === rhs._b;
-	}
-
-	public withR(n: number) { 
-		return Rgb.create(n, this._g, this._b);
-	}
-	public withG(n: number) { 
-		return Rgb.create(this._r, n, this._b);
-	}
-	public withB(n: number) { 
-		return Rgb.create(this._r, this._g, n);
-	}
-
-
-	public add(rhs: Rgb) {
-		return Rgb.create(
-			this._r + rhs._r,
-			this._g + rhs._g,
-			this._b + rhs._b
-		);
-	}
-	public subtract(rhs: Rgb) {
-		return Rgb.create(
-			this._r - rhs._r,
-			this._g - rhs._g,
-			this._b - rhs._b
-		);
-	}
-	public multiply(rhs: Rgb) {
-		return Rgb.create(
-			this._r * rhs._r,
-			this._g * rhs._g,
-			this._b * rhs._b
-		);
-	}
-	public divide(rhs: Rgb) {
-		return Rgb.create(
-			this._r / rhs._r,
-			this._g / rhs._g,
-			this._b / rhs._b
-		);
-	}
-	public addScalar(n: number) {
-		return Rgb.create(
-			this._r + n,
-			this._g + n,
-			this._b + n
-		);
-	}
-	public subtractScalar(n: number) {
-		return Rgb.create(
-			this._r - n,
-			this._g - n,
-			this._b - n
-		);
-	}
-	public multiplyScalar(n: number) {
-		return Rgb.create(
-			this._r * n,
-			this._g * n,
-			this._b * n
-		);
-	}
-	public divideScalar(n: number) {
-		return Rgb.create(
-			this._r / n,
-			this._g / n,
-			this._b / n
-		);
-	}
-	public powScalar(n: number) {
-		return Rgb.create(
-			this._r ** n,
-			this._g ** n,
-			this._b ** n
-		);
-	}
-	
-	public round() {
-		return Rgb.create(
-			(this._r + .5) | 0,
-			(this._g + .5) | 0,
-			(this._b + .5) | 0
-		);
-	}
-
-	public toRgb() { return this; }
-
-	public toHsv() {
-		const r = this._r;
-		const g = this._g;
-		const b = this._b;
-
-		const max = Math.max(r, g, b);
-		const min = Math.min(r, g, b);
-		const d = max - min;
-		const s = (max === 0 ? 0 : d / max);
-		const v = max;
-
-		let h: number;
-		switch (max) {
-			case min:
-				h = 0; 
-				break;
-			case r:
-				h = (g - b) / d + (g < b ? 6 : 0); 
-				break;
-			case g:
-				h = (b - r) / d + 2; 
-				break;
-			default:
-				h = (r - g) / d + 4; 
-				break;
-		}
-		h /= 6;
-		return Hsv.create(h, s, v);
-	}
-
-	// do I need to floor the numbers before bitwise shifting?
-	public toHex() {
-		return (((this._r * 255) | 0) << 16)
-			+ (((this._g * 255) | 0) << 8)
-			+ ((this._b * 255) | 0)
-	}
-
-	public toGray() {
-		const r = this._r;
-		const g = this._g;
-		const b = this._b;
-		return Math.sqrt(
-			.299 * r * r + 
-			.587 * g * g +
-			.114 * b * b
-			);
+		return _isinRange(this.h)
+			&& _isinRange(this.s)
+			&& _isinRange(this.v);
 	}
 }
 
@@ -357,273 +511,161 @@ export class Rgb implements Color, IArithmetic<Rgb>  {
 
 
 
-
-export class Hsva implements ColorWithAlpha, IArithmetic<Hsva> {
-	public static readonly default = new Hsva(Hsv.create(0, 0, 0), 0);
+export class Hsva implements ColorWithAlpha {
+	public static readonly default = Object.freeze(new Hsva(Hsv.create(0, 0, 0), 0));
 
 	private constructor(
-		private _hsv: Hsv,
-		private _a: number
-	) {
-		Object.freeze(this);
-	}
+		public readonly hsv: Hsv,
+		public readonly a: number
+	) { }
 
-	public get hsv() { return this._hsv; }
-	public get h() { return this._hsv.h; }
-	public get s() { return this._hsv.s; }
-	public get v() { return this._hsv.v; }
-	public get a() { return this._a; }
+	public get h() { return this.hsv.h; }
+	public get s() { return this.hsv.s; }
+	public get v() { return this.hsv.v; }
 
 	public static create(h: number, s: number, v: number, a: number) { 
 		if ([h,s,v,a].every(x => x === 0)) {
 			return Hsva.default;
 		}
-		return new Hsva(Hsv.create(h,s,v),a);
+		return Object.freeze(new Hsva(Hsv.create(h,s,v),a));
 	}
 	public static createWithHsv(hsv: Hsv, a: number) { 
 		if (hsv === Hsva.default.hsv && a === 0) {
 			return Hsva.default;
 		}
-		return new Hsva(hsv, a);
+		return Object.freeze(new Hsva(hsv, a));
 	}
 	public default() {
 		return Hsva.default;
 	}
-	public isDefault() {
-		return this === Hsva.default;
-	}
 
 	public equals(rhs: Hsva) {
-		return this._hsv.equals(rhs._hsv)
-			&& this._a === rhs._a;
+		return this.hsv.equals(rhs.hsv)
+			&& this.a === rhs.a;
 	}
 
-	public withH(n: number) { 
-		return Hsva.createWithHsv(this._hsv.withH(n), this._a); 
-	}
-	public withS(n: number) { 
-		return Hsva.createWithHsv(this._hsv.withS(n), this._a); 
-	}
-	public withV(n: number) { 
-		return Hsva.createWithHsv(this._hsv.withV(n), this._a); 
-	}
-	public withA(n: number) { 
-		return Hsva.createWithHsv(this._hsv, n); 
-	}
-
-	public add(rhs: Hsva) {
-		return Hsva.createWithHsv(
-			this._hsv.add(rhs._hsv),
-			this._a + rhs._a
-		)
-	}
-	public subtract(rhs: Hsva) {
-		return Hsva.createWithHsv(
-			this._hsv.subtract(rhs._hsv),
-			this._a - rhs._a
-		)
-	}
-	public multiply(rhs: Hsva) {
-		return Hsva.createWithHsv(
-			this._hsv.multiply(rhs._hsv),
-			this._a * rhs._a
-		)
-	}
-	public divide(rhs: Hsva) {
-		return Hsva.createWithHsv(
-			this._hsv.divide(rhs._hsv),
-			this._a / rhs._a
-		)
-	}
-	public addScalar(n: number) {
-		return Hsva.createWithHsv(
-			this._hsv.addScalar(n),
-			this._a + n
-		)
-	}
-	public subtractScalar(n: number) {
-		return Hsva.createWithHsv(
-			this._hsv.subtractScalar(n),
-			this._a - n
-		)
-	}
-	public multiplyScalar(n: number) {
-		return Hsva.createWithHsv(
-			this._hsv.multiplyScalar(n),
-			this._a * n
-		)
-	}
-	public divideScalar(n: number) {
-		return Hsva.createWithHsv(
-			this._hsv.divideScalar(n),
-			this._a / n
-		)
-	}
-	public powScalar(n: number) {
-		return Hsva.createWithHsv(
-			this._hsv.powScalar(n),
-			this._a ** n
-		)
-	}
-
-	public toRgba = () => 
-		Rgba.createWithRgb(
-			this._hsv.toRgb(),
-			this._a
+	public set(args: HsvaArgs) {
+		return Hsva.create(
+			args.h != null ? args.h : this.h,
+			args.s != null ? args.s : this.s,
+			args.v != null ? args.v : this.v,
+			args.a != null ? args.a : this.a
 		);
+	}
 
-	public toHsva = () => this;
+	public setAlpha(alpha: number) {
+		return Hsva.createWithHsv(
+			this.hsv,
+			alpha
+		);
+	}
 
-	public toHex = () => this.toRgba().toHex();
+	public toRgba() { 
+		const rgba = Rgba.createWithRgb(
+			this.hsv.toRgb(),
+			this.a
+		);
+		return rgba;
+	}
+
+	public toHsva() { 
+		return this;
+	}
+
+	public toHex() { 
+		return this.toRgba().toHex(); 
+	}
+
+	public toGray() {
+		return this.hsv.toGray() * this.a;
+	}
 
 	public isZeroToOne() {
 		function _isZeroToOne(n: number) {
 			return n >= 0 && n <= 1;
 		}
-		return _isZeroToOne(this._hsv.h)
-			&& _isZeroToOne(this._hsv.s)
-			&& _isZeroToOne(this._hsv.v)
-			&& _isZeroToOne(this._a);
+		return _isZeroToOne(this.hsv.h)
+			&& _isZeroToOne(this.hsv.s)
+			&& _isZeroToOne(this.hsv.v)
+			&& _isZeroToOne(this.a);
 	}
 }
 
 
 
 
-
-export class Rgba implements ColorWithAlpha, IArithmetic<Rgba> {
-	public static readonly default = new Rgba(Rgb.create(0, 0, 0), 0);
+export class Lab implements Color {
+	public static readonly default = Object.freeze(new Lab(0, 0, 0));
 
 	private constructor(
-		private _rgb: Rgb,
-		private _a: number
-	) {
-		Object.freeze(this);
-	}
-	public get rgb() { return this._rgb; }
-	public get r() { return this._rgb.r; }
-	public get g() { return this._rgb.g; }
-	public get b() { return this._rgb.b; }
-	public get a() { return this._a; }
+		public readonly l: number,
+		public readonly a: number,
+		public readonly b: number
+	){}
 
-	public static create(r: number, g: number, b: number, a: number) { 
-		if ([r, g, b, a].every(x => x === 0)) {
-			return Rgba.default;
-		}
-		return new Rgba(Rgb.create(r,g,b),a);
+	public static create(l: number, a: number, b: number) {
+		return Object.freeze(new Lab(l, a, b));
 	}
-	public static createWithRgb(rgb: Rgb, a: number){
-		if (rgb === Rgba.default.rgb && a === 0) {
-			return Rgba.default;
-		}
-		return new Rgba(rgb, a);
-	}
+
 	public default() {
-		return Rgba.default;
-	}
-	public isDefault() {
-		return this === Rgba.default;
+		return Hsva.default;
 	}
 
-	public equals(rhs: Rgba) {
-		return this._rgb.equals(rhs._rgb)
-			&& this._a === rhs._a;
+	public set(args: LabArgs) {
+		return Lab.create(
+			args.l != null ? args.l : this.l,
+			args.a != null ? args.a : this.a,
+			args.b != null ? args.b : this.b,
+		);
 	}
 
-	public withR(n: number) { 
-		return Rgba.createWithRgb(this._rgb.withR(n), this._a); 
-	}
-	public withG(n: number) { 
-		return Rgba.createWithRgb(this._rgb.withG(n), this._a); 
-	} 
-	public withB(n: number) { 
-		return Rgba.createWithRgb(this._rgb.withB(n), this._a); 
-	}
-	public WithA(n: number) { 
-		return Rgba.createWithRgb(this._rgb, n); 
+	public toRgb() {
+		function _pivotXyz(n: number) {
+			const n3 = n * n * n;
+			return (n3 > 0.008856451679035631) ? (n3) : ((n - 0.13793103448275862) / 7.787)
+		}
+
+		function _pivotRgb(n: number) {
+			return (n > 0.0031308) ? (1.055 * Math.pow(n, 0.4166666666666667) - 0.055) : (12.92 * n)
+		}
+
+		// actually converts to XYZ then to RGB
+		
+		
+		let y = (this.l + 16) * 116;
+		let x = this.a / 500 + y
+		let z = y - this.b / 200;
+
+		x = 0.95047 * _pivotXyz(x);
+		y = 1.00000 * _pivotXyz(y);
+		z = 1.08883 * _pivotXyz(z);
+
+		let r = x *  3.2406 + y * -1.5372 + z * -0.4986;
+		let g = x * -0.9689 + y *  1.8758 + z *  0.0415;
+		let b = x *  0.0557 + y * -0.2040 + z *  1.0570;
+
+		r = _pivotRgb(r);
+		g = _pivotRgb(g);
+		b = _pivotRgb(b);
+
+
+		return Rgb.create(r, g, b);
 	}
 
-	public toRgba() { 
+
+	public toHsv() {
+		return this.toRgb().toHsv();
+	}
+
+	public toLab() {
 		return this;
 	}
 
-	public toHsva() {
-		return Hsva.createWithHsv(
-			this._rgb.toHsv(),
-			this._a
-		);
-	}
-
 	public toHex() {
-		return (this._rgb.toHex() << 8)
-			+ ((this._a + .5) | 0);
+		return this.toRgb().toHex();
 	}
 
-	public add(rhs: Rgba) {
-		return Rgba.createWithRgb(
-			this._rgb.add(rhs._rgb),
-			this._a + rhs._a
-		);
-	}
-
-	public subtract(rhs: Rgba) {
-		return Rgba.createWithRgb(
-			this._rgb.subtract(rhs._rgb),
-			this._a - rhs._a
-		);
-	}
-
-	public multiply(rhs: Rgba) {
-		return Rgba.createWithRgb(
-			this._rgb.multiply(rhs._rgb),
-			this._a * rhs._a
-		);
-	}
-
-	public divide(rhs: Rgba) {
-		return Rgba.createWithRgb(
-			this._rgb.divide(rhs._rgb),
-			this._a / rhs._a
-		);
-	}
-
-	public addScalar(n: number) {
-		return Rgba.createWithRgb(
-			this._rgb.addScalar(n),
-			this._a + n
-		);
-	}
-
-	public subtractScalar(n: number) {
-		return Rgba.createWithRgb(
-			this._rgb.subtractScalar(n),
-			this._a - n
-		);
-	}
-
-	public multiplyScalar(n: number) {
-		return Rgba.createWithRgb(
-			this._rgb.multiplyScalar(n),
-			this._a * n
-		);
-	}
-
-	public divideScalar(n: number) {
-		return Rgba.createWithRgb(
-			this._rgb.divideScalar(n),
-			this._a / n
-		);
-	}
-	public powScalar(n: number) {
-		return Rgba.createWithRgb(
-			this._rgb.powScalar(n),
-			this._a ** n
-		)
+	public toGray() {
+		return this.toRgb().toGray();
 	}
 }
-
-
-/*
-	In the future I'm going to need to support Lab color format as well, and possibly more.
-	I'll keep it simple for now, though.
-*/

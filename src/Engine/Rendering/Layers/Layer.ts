@@ -3,53 +3,48 @@ import { Sprite } from "../Sprite";
 import { Texture } from "../Texture";
 import { GUID } from "../../Common";
 
-export interface LayerBasic {
-	name: string;
-	scale: number;
-	rotation: number;
-	visible: boolean;
+
+export interface LayerArgs {
+	name?: string;
+	scale?: number;
+	rotation?: number;
+	visible?: boolean;
 }
 
-// the whole reason why we use LayerBasic is to hide the sprite field.
-// we could alternatively associate sprite with the layer through a Map<Layer, Sprite> 
-// - this would remove the need for casting and be more safe (current you can just cast it back to Layer)
-export class Layer implements LayerBasic {
-	public readonly id = GUID.next();
-	public readonly sprite: Sprite;
+export class Layer {
+	private static 	LAYER_NUMBER = 1;
+	public readonly id: number;
 
 	public readonly name: string;
-	public get scale() { return this.sprite.scale; }
-	public get rotation() { return this.sprite.rotation; }
+	public readonly scale: number;
+	public readonly rotation: number;
 	public readonly visible: boolean;
 
-	private constructor(sprite: Sprite, name: string, visible: boolean) {
-        console.assert(sprite != null);
-		this.sprite = sprite;
-		this.name = name || `Layer  ${this.id}`;
+	private constructor(id: number, name: string, scale: number, rotation: number, visible: boolean) {
+        console.assert(id >= 0);
+		this.id = id;
+		this.name = name || `Layer ${Layer.LAYER_NUMBER++}`;
+		this.scale = scale;
+		this.rotation = rotation;
+		this.visible = visible;
 		Object.freeze(this);
 	}
 
-	public static create(sprite: Sprite, name: string, visible: boolean) {
-		return new Layer(sprite, name, visible);
+	public static create(sprite: number, name: string = null, scale = 1, rotation = 0, visible = true) {
+		return new Layer(sprite, name, scale, rotation, visible);
 	}
 
-	public asInvisible() {
-		return this.visible 
-			? Layer.create(this.sprite, this.name, false)
-			: this;
+	public static createWithSprite(sprite: Sprite, name: string, visible: boolean) {
+		return new Layer(sprite.id, name, sprite.scale, sprite.rotation, visible);
 	}
 
-	public asVisible() {
-		return this.visible === false
-			? Layer.create(this.sprite, this.name, true)
-			: this;
-	}
-
-	public withName(name: string) {
-		return Layer.create(this.sprite, name, this.visible);
-	}
-
-	public withSprite(sprite: Sprite) {
-		return Layer.create(sprite, this.name, this.visible);
+	public set(args: LayerArgs) {
+		return new Layer(
+			this.id,
+			args.name		!= null ? args.name		: this.name,
+			args.scale		!= null ? args.scale	: this.scale,
+			args.rotation	!= null ? args.rotation	: this.rotation,
+			args.visible	!= null ? args.visible	: this.visible
+		);
 	}
 }

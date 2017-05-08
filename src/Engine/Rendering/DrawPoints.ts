@@ -2,8 +2,17 @@
 import { Batch } from "./Batch";
 import { Vec2, Vec4 } from "../Math/Vec";
 import { Rgba, ColorWithAlpha } from "../Math/Color";
+import { Equals } from "../Common";
 
-export class DrawPoint {
+export interface DrawPointArgs {
+	position?: Vec2;
+	size?: number;
+	scale?: number;
+	rotation?: number;
+	color?: ColorWithAlpha;
+}
+
+export class DrawPoint implements Equals<DrawPoint> {
 	public constructor(
 		public position: Vec2,
 		// size in pixels
@@ -15,55 +24,17 @@ export class DrawPoint {
 		Object.freeze(this);
 	}
 
-	public withPosition = (position: Vec2) =>
-		new DrawPoint(
-			position,
-			this.size,
-			this.scale,
-			this.rotation,
-			this.color
+	public set(args: DrawPointArgs) {
+		return new DrawPoint(
+			args.position	!= null ? args.position	: this.position,
+			args.size		!= null ? args.size		: this.size,
+			args.scale		!= null ? args.scale	: this.scale,
+			args.rotation	!= null ? args.rotation : this.rotation,
+			args.color		!= null ? args.color	: this.color,
 		);
-	
+	}
 
-	public withSize = (size: number) =>
-		new DrawPoint(
-			this.position,
-			size,
-			this.scale,
-			this.rotation,
-			this.color
-		);
-	
-
-	public withScale = (scale: number) => 
-		new DrawPoint(
-			this.position,
-			this.size,
-			scale,
-			this.rotation,
-			this.color
-		);
-	
-
-	public withRotation = (rotation: number) =>
-		new DrawPoint(
-			this.position,
-			this.size,
-			this.scale,
-			rotation,
-			this.color
-		);
-
-	public withColor = (color: Rgba) =>
-		new DrawPoint(
-			this.position,
-			this.size,
-			this.scale,
-			this.rotation,
-			color
-		);
-
-	public equal(rhs: DrawPoint) {
+	public equals(rhs: DrawPoint) {
 		return this.position === rhs.position
 			&& this.size     === rhs.size
 			&& this.scale    === rhs.scale
@@ -72,112 +43,108 @@ export class DrawPoint {
 	}
 
 	public notEqual(rhs: DrawPoint) {
-		return this.equal(rhs) === false;
+		return this.equals(rhs) === false;
 	}
 }
 
 
 export function addDrawPointToBatch(drawPoints: Array<DrawPoint>, batch: Batch): void {
 	console.assert(batch != null, `Batch is ${batch}}`);
-	const array = batch.array;
+	const { array } = batch;
 	let offset = batch.arrayOffset;
-	let color: Rgba;
 
-	let scaledSize = 0;
-
-	let p0 = 0;
-	let p1 = 0;
-
-	let drawPoint: DrawPoint = null;
 	for (let i = 0, ilen = drawPoints.length; i < ilen; i++) {
-		drawPoint = drawPoints[i];
+		const drawPoint = drawPoints[i];
+		const { size, scale, color, position, rotation } = drawPoint;
+		const rgba = color.toRgba();
+		const { r, g, b, a } = rgba;
+		const { x, y } = position;
 
 		// size
-		scaledSize = drawPoint.size * drawPoint.scale;
+		const scaledSize = size * scale;
 
 		// corners locations
-		p0 = -scaledSize / 2;
-		p1 = p0 + scaledSize;
+		const p0 = -scaledSize / 2;
+		const p1 = p0 + scaledSize;
 
-		color = drawPoint.color.toRgba();
 		
 		// corner 1
-		array[offset++] = color.r;
-		array[offset++] = color.g;
-		array[offset++] = color.b;
-		array[offset++] = color.a;
+		array[offset++] = r;
+		array[offset++] = g;
+		array[offset++] = b;
+		array[offset++] = a;
 		array[offset++] = 0;
 		array[offset++] = 0;
 		array[offset++] = p0;
 		array[offset++] = p0;
-		array[offset++] = drawPoint.position.x;
-		array[offset++] = drawPoint.position.y;
-		array[offset++] = drawPoint.rotation;
+		array[offset++] = x;
+		array[offset++] = y;
+		array[offset++] = rotation;
 
 		// corner 2
-		array[offset++] = color.r;
-		array[offset++] = color.g;
-		array[offset++] = color.b;
-		array[offset++] = color.a;
+		array[offset++] = r;
+		array[offset++] = g;
+		array[offset++] = b;
+		array[offset++] = a;
 		array[offset++] = 0;
 		array[offset++] = 1;
 		array[offset++] = p0;
 		array[offset++] = p1;
-		array[offset++] = drawPoint.position.x;
-		array[offset++] = drawPoint.position.y;
-		array[offset++] = drawPoint.rotation;
+		array[offset++] = x;
+		array[offset++] = y;
+		array[offset++] = rotation;
 
 		// corner 3
-		array[offset++] = color.r;
-		array[offset++] = color.g;
-		array[offset++] = color.b;
-		array[offset++] = color.a;
+		array[offset++] = r;
+		array[offset++] = g;
+		array[offset++] = b;
+		array[offset++] = a;
 		array[offset++] = 1;
 		array[offset++] = 0;
 		array[offset++] = p1;
 		array[offset++] = p0;
-		array[offset++] = drawPoint.position.x;
-		array[offset++] = drawPoint.position.y;
-		array[offset++] = drawPoint.rotation;
+		array[offset++] = x;
+		array[offset++] = y;
+		array[offset++] = rotation;
 
 		// corner 2
-		array[offset++] = color.r;
-		array[offset++] = color.g;
-		array[offset++] = color.b;
-		array[offset++] = color.a;
+		array[offset++] = r;
+		array[offset++] = g;
+		array[offset++] = b;
+		array[offset++] = a;
 		array[offset++] = 0;
 		array[offset++] = 1;
 		array[offset++] = p0;
 		array[offset++] = p1;
-		array[offset++] = drawPoint.position.x;
-		array[offset++] = drawPoint.position.y;
-		array[offset++] = drawPoint.rotation;
+		array[offset++] = x;
+		array[offset++] = y;
+		array[offset++] = rotation;
 
 		// corner 3
-		array[offset++] = color.r;
-		array[offset++] = color.g;
-		array[offset++] = color.b;
-		array[offset++] = color.a;
+		array[offset++] = r;
+		array[offset++] = g;
+		array[offset++] = b;
+		array[offset++] = a;
 		array[offset++] = 1;
 		array[offset++] = 0;
 		array[offset++] = p1;
 		array[offset++] = p0;
-		array[offset++] = drawPoint.position.x;
-		array[offset++] = drawPoint.position.y;
-		array[offset++] = drawPoint.rotation;
+		array[offset++] = x;
+		array[offset++] = y;
+		array[offset++] = rotation;
 
 		// corner 4
-		array[offset++] = color.r;
-		array[offset++] = color.g;
-		array[offset++] = color.b;
-		array[offset++] = color.a;
+		array[offset++] = r;
+		array[offset++] = g;
+		array[offset++] = b;
+		array[offset++] = a;
 		array[offset++] = 1;
 		array[offset++] = 1;
 		array[offset++] = p1;
 		array[offset++] = p1;
-		array[offset++] = drawPoint.position.x;
-		array[offset++] = drawPoint.position.y;
-		array[offset++] = drawPoint.rotation;
+		array[offset++] = x;
+		array[offset++] = y;
+		array[offset++] = rotation;
 	}
 	batch.arrayOffset = offset;
 }

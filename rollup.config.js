@@ -10,7 +10,7 @@ export default {
 	entry: "dist/js/main.js",
 	dest: "dist/app.min.js",
 	format: "iife",
-	moduleName: "MyBundle",
+	moduleName: "TSP",
 	sourceMap: "inline",
 	plugins: [
 		resolve({
