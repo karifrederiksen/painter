@@ -1,6 +1,5 @@
 ﻿
 import { Fun1 } from "../Common";
-import { Hsva } from "../Math/Color";
 import { ToolType } from "../App/Tools";
 import { InputData } from "../Input/InputData";
 import { Layer } from "../Rendering/Layers/Layer";

@@ -3,7 +3,7 @@ import { Settings } from "../Global/Settings";
 import { Texture } from "../Rendering/Texture";
 import { Renderer } from "../Rendering/Renderer";
 import { generateBrushTexture } from "../Rendering/TextureGenerator";
-import { Rgba, Hsv, Hsva, ColorWithAlpha } from "../Math/Color";
+import { Rgba, Hsv } from "../Math/Color";
 import { InputData, InputSource, InputType } from "../Input/InputData";
 import { Vec2 } from "../Math/Vec";
 import { BrushSettings, densityToAlpha } from "./BrushSettings";

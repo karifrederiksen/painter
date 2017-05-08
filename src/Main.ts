@@ -1,7 +1,7 @@
 ﻿import { RenderingContext } from "./Engine/Rendering/RenderingContext";
 import { Renderer } from "./Engine/Rendering/Renderer";
 import { DrawPoint } from "./Engine/Rendering/DrawPoints";
-import { Hsv, Hsva, Rgba } from "./Engine/Math/Color"
+import { Hsv, Rgba } from "./Engine/Math/Color"
 import { RNG } from "./Engine/Math/RNG";
 import { BrushSettings } from "./Engine/App/BrushSettings";
 import { AppContext } from "./Engine/App/AppContext";
@@ -102,33 +102,36 @@ function generateRandomPoints(rng: RNG, n: number) {
 
 
 function generateColor(rng: RNG) {
-	let hsva: Hsva;
+	let hsva: Hsv;
+	let alpha: number;
 	switch (parseInt("0")) {
 		case 0:
-			hsva = Hsva.create(
+			hsva = Hsv.create(
 				rng.next(),
 				.8 + .2 * rng.next(),
-				.7 + .3 * rng.next(),
 				.7 + .3 * rng.next());
+			alpha = .7 + .3 * rng.next();
 			break;
 
 		case 1:
-			hsva = Hsva.create(
+			hsva = Hsv.create(
 				(Date.now() % 1000) / 1000,
 				.7,
-				1,
-				.7);
+				1);
+			alpha = .7;
 			break;
 
 		default:
-			hsva = Hsva.create(0, 0, 0, 1);
+			hsva = Hsv.default;
+			alpha = 1;
 			break;
 
 	}
-	const color = hsva
-		.toRgba()
-		.powScalar(Settings.rendering.gamma.value);
-	return color;
+	const color = Rgba.createWithRgb(
+		hsva.toRgb(),
+		alpha
+	);
+	return color.powScalar(Settings.rendering.gamma.value);
 }
 
 

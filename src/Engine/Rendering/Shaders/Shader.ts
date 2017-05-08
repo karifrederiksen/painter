@@ -3,7 +3,7 @@ import { Texture } from "../Texture";
 import { Batch } from "../Batch";
 import { createProgram } from "./WebGLHelper";
 import { Vec2, Vec3, Vec4 } from "../../Math/Vec";
-import { Rgb, Rgba, Hsv, Hsva } from "../../Math/Color";
+import { Rgb, Rgba, Hsv } from "../../Math/Color";
 
 export interface ShaderDataTypeMap {
 	"b": boolean;
@@ -24,7 +24,6 @@ export interface ShaderDataTypeMap {
 	"rgb": Rgb;
 	"rgba": Rgba;
 	"hsv": Hsv;
-	"hsva": Hsva;
 
 	// texture
 	"t": Texture;
@@ -180,9 +179,6 @@ export class ShaderBase<AMap extends AttributeMap, UMap extends UniformMap> {
 				break;
 			case "hsv":
 				this._renderer.gl.uniform3f(location, (<Hsv>value).h, (<Hsv>value).s, (<Hsv>value).v);
-				break;
-			case "hsva":
-				this._renderer.gl.uniform4f(location, (<Hsva>value).h, (<Hsva>value).s, (<Hsva>value).v, (<Hsva>value).a);
 				break;
 			case "t":
 				const idx = this._renderer.textureManager.bindTexture(<Texture>value, 0);

@@ -1,4 +1,4 @@
-import { Hsv, Hsva } from "../Math/Color";
+import { Hsv } from "../Math/Color";
 import { Vec2 } from "../Math/Vec";
 import { isNumberType } from "../Common";
 import { clamp, expostep } from "../Math/Utils";

@@ -1,5 +1,4 @@
 import { Renderer } from "../Rendering/Renderer";
-import { Rgba, Hsv, Hsva, ColorWithAlpha } from "../Math/Color";
 import { InputData, InputSource, InputType } from "../Input/InputData";
 import { Vec2 } from "../Math/Vec";
 import { BrushSettings } from "./BrushSettings";

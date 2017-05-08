@@ -1,7 +1,6 @@
 
 import { Event } from "../Engine/Global/Events";
 import { Settings, Setting } from "../Engine/Global/Settings";
-import { Hsva } from "../Engine/Math/Color";
 import { BrushSettings } from "../Engine/App/BrushSettings";
 
 export interface SliderArgs {

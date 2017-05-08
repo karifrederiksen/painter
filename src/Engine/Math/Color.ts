@@ -1,47 +1,56 @@
 ﻿
 import { IArithmetic, Roundable } from "./Types";
 
+
 export interface Color {
 	toRgb(): Readonly<Rgb>;
 	toHsv(): Readonly<Hsv>;
 	toLab(): Readonly<Lab>;
-	toHex(): number;
-	toGray(): number;
 }
 
-export interface ColorWithAlpha {
-	toRgba(): Readonly<Rgba>;
-	toHsva(): Readonly<Hsva>;
-	toHex(): number;
-	toGray(): number;
-}
-
-export interface RgbArgs {
+interface RgbArgs {
 	r?: number;
 	g?: number;
 	b?: number;
 }
-export interface RgbaArgs {
+interface RgbaArgs {
 	r?: number;
 	g?: number;
 	b?: number;
 	a?: number;
 }
-export interface HsvArgs {
+interface HsvArgs {
 	h?: number;
 	s?: number;
 	v?: number;
 }
-export interface HsvaArgs {
-	h?: number;
-	s?: number;
-	v?: number
-	a?: number;
-}
-export interface LabArgs {
+interface LabArgs {
 	l?: number;
 	a?: number;
 	b?: number;
+}
+
+
+
+
+
+export function colorToGray(color: Color) {
+	const rgb = color.toRgb();
+	const { r, g, b } = rgb;
+	return Math.sqrt(
+		.299 * r * r + 
+		.587 * g * g +
+		.114 * b * b
+	);
+}
+
+
+export function colorToHex(color: Color) {
+	const rgb = color.toRgb();
+	const { r, g, b } = rgb;
+	return (((r * 255) | 0) << 16)
+		+ (((g * 255) | 0) << 8)
+		+ ((b * 255) | 0);
 }
 
 
@@ -66,6 +75,7 @@ export class Rgb implements Color, IArithmetic<Rgb>, Roundable<Rgb>  {
 		}
 		return Object.freeze(new Rgb(r, g,b));
 	}
+
 	public default() {
 		return Rgb.default;
 	}
@@ -84,7 +94,9 @@ export class Rgb implements Color, IArithmetic<Rgb>, Roundable<Rgb>  {
 		);
 	}
 
-	public toRgb() { return this; }
+	public toRgb() { 
+		return this;
+	}
 
 	public toHsv() {
 		const { r, g, b } = this;
@@ -143,22 +155,6 @@ export class Rgb implements Color, IArithmetic<Rgb>, Roundable<Rgb>  {
 			500 * (x - y), 
 			200 * (y - z)
 		);
-	}
-
-	// do I need to floor the numbers before bitwise shifting?
-	public toHex() {
-		return (((this.r * 255) | 0) << 16)
-			+ (((this.g * 255) | 0) << 8)
-			+ ((this.b * 255) | 0)
-	}
-
-	public toGray() {
-		const { r, g, b } = this;
-		return Math.sqrt(
-			.299 * r * r + 
-			.587 * g * g +
-			.114 * b * b
-			);
 	}
 
 
@@ -255,7 +251,7 @@ export class Rgb implements Color, IArithmetic<Rgb>, Roundable<Rgb>  {
 
 
 
-export class Rgba implements ColorWithAlpha, IArithmetic<Rgba>, Roundable<Rgba> {
+export class Rgba implements IArithmetic<Rgba>, Roundable<Rgba> {
 	public static readonly default = Object.freeze(new Rgba(Rgb.create(0, 0, 0), 0));
 
 	private constructor(
@@ -280,6 +276,7 @@ export class Rgba implements ColorWithAlpha, IArithmetic<Rgba>, Roundable<Rgba> 
 		}
 		return Object.freeze(new Rgba(rgb, a));
 	}
+
 	public default() {
 		return Rgba.default;
 	}
@@ -307,22 +304,6 @@ export class Rgba implements ColorWithAlpha, IArithmetic<Rgba>, Roundable<Rgba> 
 
 	public toRgba() { 
 		return this;
-	}
-
-	public toHsva() {
-		return Hsva.createWithHsv(
-			this.rgb.toHsv(),
-			this.a
-		);
-	}
-
-	public toHex() {
-		return (this.rgb.toHex() << 8)
-			+ ((this.a + .5) | 0);
-	}
-
-	public toGray() {
-		return this.rgb.toGray() * this.a;
 	}
 
 	public add(rhs: Rgba) {
@@ -488,14 +469,6 @@ export class Hsv implements Color {
 		return this.toRgb().toLab(); 
 	}
 
-	public toHex() { 
-		return this.toRgb().toHex(); 
-	}
-
-	public toGray() { 
-		return this.toRgb().toGray(); 
-	}
-
 	public isInRange(min: number, max: number) {
 		function _isinRange(n: number) {
 			return n >= min && n <= max;
@@ -511,89 +484,6 @@ export class Hsv implements Color {
 
 
 
-export class Hsva implements ColorWithAlpha {
-	public static readonly default = Object.freeze(new Hsva(Hsv.create(0, 0, 0), 0));
-
-	private constructor(
-		public readonly hsv: Hsv,
-		public readonly a: number
-	) { }
-
-	public get h() { return this.hsv.h; }
-	public get s() { return this.hsv.s; }
-	public get v() { return this.hsv.v; }
-
-	public static create(h: number, s: number, v: number, a: number) { 
-		if ([h,s,v,a].every(x => x === 0)) {
-			return Hsva.default;
-		}
-		return Object.freeze(new Hsva(Hsv.create(h,s,v),a));
-	}
-	public static createWithHsv(hsv: Hsv, a: number) { 
-		if (hsv === Hsva.default.hsv && a === 0) {
-			return Hsva.default;
-		}
-		return Object.freeze(new Hsva(hsv, a));
-	}
-	public default() {
-		return Hsva.default;
-	}
-
-	public equals(rhs: Hsva) {
-		return this.hsv.equals(rhs.hsv)
-			&& this.a === rhs.a;
-	}
-
-	public set(args: HsvaArgs) {
-		return Hsva.create(
-			args.h != null ? args.h : this.h,
-			args.s != null ? args.s : this.s,
-			args.v != null ? args.v : this.v,
-			args.a != null ? args.a : this.a
-		);
-	}
-
-	public setAlpha(alpha: number) {
-		return Hsva.createWithHsv(
-			this.hsv,
-			alpha
-		);
-	}
-
-	public toRgba() { 
-		const rgba = Rgba.createWithRgb(
-			this.hsv.toRgb(),
-			this.a
-		);
-		return rgba;
-	}
-
-	public toHsva() { 
-		return this;
-	}
-
-	public toHex() { 
-		return this.toRgba().toHex(); 
-	}
-
-	public toGray() {
-		return this.hsv.toGray() * this.a;
-	}
-
-	public isZeroToOne() {
-		function _isZeroToOne(n: number) {
-			return n >= 0 && n <= 1;
-		}
-		return _isZeroToOne(this.hsv.h)
-			&& _isZeroToOne(this.hsv.s)
-			&& _isZeroToOne(this.hsv.v)
-			&& _isZeroToOne(this.a);
-	}
-}
-
-
-
-
 export class Lab implements Color {
 	public static readonly default = Object.freeze(new Lab(0, 0, 0));
 
@@ -601,14 +491,14 @@ export class Lab implements Color {
 		public readonly l: number,
 		public readonly a: number,
 		public readonly b: number
-	){}
+	){ }
 
 	public static create(l: number, a: number, b: number) {
 		return Object.freeze(new Lab(l, a, b));
 	}
 
 	public default() {
-		return Hsva.default;
+		return Lab.default;
 	}
 
 	public set(args: LabArgs) {
@@ -659,13 +549,5 @@ export class Lab implements Color {
 
 	public toLab() {
 		return this;
-	}
-
-	public toHex() {
-		return this.toRgb().toHex();
-	}
-
-	public toGray() {
-		return this.toRgb().toGray();
 	}
 }

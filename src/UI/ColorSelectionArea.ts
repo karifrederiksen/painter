@@ -1,7 +1,7 @@
 
 import { Events } from "../Engine/Global/Events";
 import { Settings } from "../Engine/Global/Settings";
-import { Hsva, Hsv } from "../Engine/Math/Color";
+import { Hsv } from "../Engine/Math/Color";
 
 import { ColorAreaDoubleBinding } from "./ColorSVArea"
 import { ColorDisplay } from "./ColorDisplay"

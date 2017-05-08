@@ -1,7 +1,7 @@
 ﻿
 import { Batch } from "./Batch";
 import { Vec2, Vec4 } from "../Math/Vec";
-import { Rgba, ColorWithAlpha } from "../Math/Color";
+import { Rgba } from "../Math/Color";
 import { Equals } from "../Common";
 
 export interface DrawPointArgs {
@@ -9,7 +9,7 @@ export interface DrawPointArgs {
 	size?: number;
 	scale?: number;
 	rotation?: number;
-	color?: ColorWithAlpha;
+	color?: Rgba;
 }
 
 export class DrawPoint implements Equals<DrawPoint> {
@@ -19,7 +19,7 @@ export class DrawPoint implements Equals<DrawPoint> {
 		public size: number ,
 		public scale = 1.0,
 		public rotation = 0.0,
-		public color: ColorWithAlpha
+		public color: Rgba
 	){
 		Object.freeze(this);
 	}

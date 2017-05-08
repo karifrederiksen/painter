@@ -1,7 +1,7 @@
 import { Settings } from "../Engine/Global/Settings";
 
 import { Vec2 } from "../Engine/Math/Vec";
-import { Hsva, Hsv, Rgb } from "../Engine/Math/Color";
+import { Hsv, Rgb, colorToGray } from "../Engine/Math/Color";
 import { clamp } from "../Engine/Math/Utils";
 
 class ColorAreaPicker {
@@ -16,7 +16,7 @@ class ColorAreaPicker {
 
         this.element.style.left = `${(position.x-5)}px`;
         this.element.style.top = `${(position.y-5)}px`;
-        const gray = rgb.toGray();
+        const gray = colorToGray(rgb);
         const borderColor = gray > .5 ? 0 : 255;
         this.element.style.borderColor = `rgb(${borderColor}, ${borderColor}, ${borderColor})`;
     }

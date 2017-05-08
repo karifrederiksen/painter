@@ -1,6 +1,5 @@
 ﻿import { Fun1 } from "../Common";
 import { Vec2 } from "../Math/Vec";
-import { Hsva } from "../Math/Color";
 import { ToolType } from "../App/Tools";
 import { BlendModeType } from "../Rendering/Consts";
 import { Layer } from "../Rendering/Layers/Layer";
