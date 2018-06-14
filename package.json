@@ -1,31 +1,23 @@
 {
-  "name": "tspainter",
+  "name": "painter",
   "version": "0.1.0",
+  "main": "index.js",
+  "license": "MIT",
   "scripts": {
-    "dev": "concurrently \"npm run watch:js\" \"npm run lite\"",
-    "test": "node dist/js/app.min.js",
-    "build": "rollup -c",
-    "watch:js": "rollup -c -w",
-    "lite": "lite-server"
-  },
-  "devDependencies": {
-    "@types/immutable": "^3.8.7",
-    "@types/node": "^7.0.12",
-    "babel": "^6.23.0",
-    "babel-preset-es2015-rollup": "^3.0.0",
-    "concurrently": "^3.4.0",
-    "immutable": "^3.8.1",
-    "lite-server": "^2.2.2",
-    "rollup": "^0.41.6",
-    "rollup-plugin-babel": "^2.7.1",
-    "rollup-plugin-commonjs": "^8.0.2",
-    "rollup-plugin-node-resolve": "^2.0.0",
-    "rollup-plugin-uglify": "^1.0.1",
-    "rollup-watch": "^3.2.2",
-    "typescript": "^2.3.2"
+    "start": "parcel src/index.html",
+    "lint": "tslint src/**/*.ts -t verbose"
   },
   "dependencies": {
-    "@types/lodash": "^4.14.61",
-    "lodash": "^4.17.4"
+    "@types/react": "^16.3.17",
+    "@types/react-dom": "^16.0.6",
+    "react": "^16.4.0",
+    "react-dom": "^16.4.0",
+    "react-spring": "^5.3.12",
+    "styled-components": "^3.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^10.3.0",
+    "parcel-bundler": "^1.8.1",
+    "typescript": "^2.9.1"
   }
 }

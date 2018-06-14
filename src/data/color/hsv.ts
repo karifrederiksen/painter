@@ -1,0 +1,81 @@
+import { Rgb, Color } from "./rgb"
+
+export class Hsv implements  Color {
+    static make(h: number, s: number, v: number): Hsv {
+        return new Hsv(h, s, v)
+    }
+
+    private constructor(
+        readonly h: number,
+        readonly s: number,
+        readonly v: number,
+    ) {}
+
+    with(
+        args: Readonly<{
+            h?: number
+            s?: number
+            v?: number
+        }>,
+    ): Hsv {
+        return new Hsv(
+            args.h !== void 0 ? args.h : this.h,
+            args.s !== void 0 ? args.s : this.s,
+            args.v !== void 0 ? args.v : this.v,
+        )
+    }
+
+    mapHue(fn: (val: number) => number): Hsv {
+        return new Hsv(fn(this.h), this.s, this.v)
+    }
+
+    mapSaturation(fn: (val: number) => number): Hsv {
+        return new Hsv(this.h, fn(this.s), this.v)
+    }
+
+    mapValue(fn: (val: number) => number): Hsv {
+        return new Hsv(this.h, this.s, fn(this.v))
+    }
+
+    eq(other: Hsv): boolean {
+        return this.h === other.h && this.s === other.s && this.v === other.v
+    }
+
+    toRgb(): Rgb {
+        const { h, s, v } = this
+        const i = (h * 6) | 0
+        const f = h * 6 - i
+        const p = v * (1 - s)
+        const q = v * (1 - f * s)
+        const t = v * (1 - (1 - f) * s)
+
+        let r: number
+        let g: number
+        let b: number
+        switch (i % 6) {
+            case 0:
+                ;(r = v), (g = t), (b = p)
+                break
+            case 1:
+                ;(r = q), (g = v), (b = p)
+                break
+            case 2:
+                ;(r = p), (g = v), (b = t)
+                break
+            case 3:
+                ;(r = p), (g = q), (b = v)
+                break
+            case 4:
+                ;(r = t), (g = p), (b = v)
+                break
+            default:
+                ;(r = v), (g = p), (b = q)
+                break
+        }
+        return Rgb.makeFromLinear(r, g, b)
+    }
+
+    toString(): string {
+        return "Hsv( h: " + this.h + ", s: " + this.s + ", v: " + this.v + " )"
+    }
+}
