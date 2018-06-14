@@ -25,7 +25,7 @@ import {
 import { BrushPoint } from "../rendering/brushShader"
 import { ToolMsgType, ToolMsg } from "./messages"
 
-export { ToolMsg } from "./messages"
+export { ToolMsgType, ToolMsg } from "./messages"
 
 export const enum ToolType {
     Brush,

@@ -1,4 +1,4 @@
-import { render } from "react-dom"
+import { render } from "inferno"
 import { start } from "./ui"
 import { defaultState } from "./canvas"
 import { frameStream } from "./frameStream"

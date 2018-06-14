@@ -1,6 +1,7 @@
-import * as React from "react"
-import styled from "styled-components"
-import { ThemeProvider, injectGlobal } from "styled-components"
+import { createElement } from "inferno-create-element"
+import * as Inferno from "inferno"
+import { css, injectGlobal } from "emotion"
+
 import {
     Canvas,
     CanvasState,
@@ -26,7 +27,7 @@ export type PainterProps = {
     //readonly messageStream: (handler: (msg: CanvasMsg) => void) => void
 }
 
-const UIWrapper = styled.div`
+const uiWrapper = css`
     display: flex;
     flex-direction: row;
 `
@@ -76,10 +77,11 @@ function initTransient(): TransientState {
     }
 }
 
-export class Painter extends React.Component<PainterProps, PainterState> {
+export class Painter extends Inferno.Component<PainterProps, PainterState> {
     private removeInputListeners: SetOnce<RemoveListeners>
     private cancelFrameStream: SetOnce<CancelFrameStream>
     private canvas: SetOnce<Canvas>
+    private htmlCanvas: HTMLCanvasElement | null
     private transientState: TransientState
 
     constructor(props: PainterProps) {
@@ -88,15 +90,16 @@ export class Painter extends React.Component<PainterProps, PainterState> {
         this.removeInputListeners = new SetOnce()
         this.cancelFrameStream = new SetOnce()
         this.canvas = new SetOnce()
+        this.htmlCanvas = null
         this.transientState = {
             toolBar: { isDetailsExpanded: true },
         }
     }
 
     render() {
-        const state = this.state
+        const state = this.state as PainterState
         return (
-            <UIWrapper>
+            <div className={uiWrapper}>
                 <ToolBar
                     tool={state.persistent.tool}
                     transientState={state.transient.toolBar}
@@ -106,16 +109,16 @@ export class Painter extends React.Component<PainterProps, PainterState> {
                     width="800"
                     height="800"
                     key="muh-canvas"
-                    ref="muh-canvas"
+                    ref={x => (this.htmlCanvas = x)}
                     style={{ cursor: "crosshair" }}
                 />
-                <>Right side</>
-            </UIWrapper>
+                Right side
+            </div>
         )
     }
 
     componentDidMount() {
-        const htmlCanvas = this.refs["muh-canvas"] as HTMLCanvasElement
+        const htmlCanvas = this.htmlCanvas
         if (htmlCanvas == null) throw "Canvas not found"
 
         const canvas = Canvas.create(htmlCanvas, {
@@ -143,7 +146,7 @@ export class Painter extends React.Component<PainterProps, PainterState> {
     }
 
     private onClick = (input: PointerInput): void => {
-        const state = this.state
+        const state = this.state as PainterState
         const tool = this.canvas.value.onClick(state.persistent.tool, input)
         const persistent = { ...state.persistent, tool }
         const newState: PainterState = { ...state, persistent }
@@ -151,7 +154,7 @@ export class Painter extends React.Component<PainterProps, PainterState> {
     }
 
     private onRelease = (input: PointerInput): void => {
-        const { state } = this
+        const state = this.state as PainterState
         const tool = this.canvas.value.onRelease(state.persistent.tool, input)
         const persistent = { ...state.persistent, tool }
         const newState: PainterState = { ...state, persistent }
@@ -161,7 +164,7 @@ export class Painter extends React.Component<PainterProps, PainterState> {
     private onMove = (input: PointerInput): void => {}
 
     private onDrag = (input: PointerInput): void => {
-        const state = this.state
+        const state = this.state as PainterState
         const tool = this.canvas.value.onDrag(state.persistent.tool, input)
         const persistent = { ...state.persistent, tool }
         const newState: PainterState = { ...state, persistent }
@@ -169,7 +172,7 @@ export class Painter extends React.Component<PainterProps, PainterState> {
     }
 
     private onFrame = (time: number): void => {
-        const state = this.state
+        const state = this.state as PainterState
         const tool = this.canvas.value.onFrame(state.persistent.tool, time)
         const persistent = { ...state.persistent, tool }
         const newState: PainterState = { ...state, persistent }
@@ -178,5 +181,8 @@ export class Painter extends React.Component<PainterProps, PainterState> {
     }
 
     private sendMessage = (message: CanvasMsg): void =>
-        this.setState(state => ({ ...state, persistent: canvasUpate(state.persistent, message) }))
+        this.setState((state: PainterState) => ({
+            ...state,
+            persistent: canvasUpate(state.persistent, message),
+        }))
 }

@@ -1,8 +1,8 @@
-import * as React from "react"
-import styled from "styled-components"
-import { Rgb } from "../../../data"
-
-export const PrimaryButton = styled.button`
+import { Props } from "inferno"
+import { createElement } from "inferno-create-element"
+import { css } from "emotion"
+// @
+const primaryButtonClass = css`
     display: inline-flex;
     outline: none;
     justify-content: center;
@@ -26,3 +26,6 @@ export const PrimaryButton = styled.button`
         background-color: var(--color-primary-highlight);
     }
 `
+export function PrimaryButton(props: Props<{}, {}>): JSX.Element {
+    return <button className={primaryButtonClass}>{props.children}</button>
+}

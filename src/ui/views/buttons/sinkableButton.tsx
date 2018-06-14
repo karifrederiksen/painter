@@ -1,28 +1,8 @@
-import * as React from "react"
-import styled from "styled-components"
+import { createElement } from "inferno-create-element"
+import { InfernoChildren } from "inferno"
+import { css } from "emotion"
 
-export class SinkableButton extends React.PureComponent<{
-    readonly onClick: () => void
-    readonly onDownClick?: () => void
-    readonly isDown: boolean
-    readonly children: React.ReactNode
-    readonly dataKey: string
-}> {
-    render(): JSX.Element {
-        const props = this.props
-        return props.isDown ? (
-            <SunkButton key={props.dataKey} onClick={props.onDownClick}>
-                {props.children}
-            </SunkButton>
-        ) : (
-            <UnsunkButton key={props.dataKey} onClick={props.onClick}>
-                {props.children}
-            </UnsunkButton>
-        )
-    }
-}
-
-const UnsunkButton = styled.button`
+const unsunkButton = css`
     background-color: rgba(0, 0, 0, 0);
     padding: 12px 16px;
     border: 0;
@@ -34,9 +14,27 @@ const UnsunkButton = styled.button`
     }
 `
 
-const SunkButton = styled.button`
+const sunkButton = css`
     background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2));
     padding: 12px 16px;
     border: 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.5);
 `
+
+export function SinkableButton(props: {
+    readonly onClick: () => void
+    readonly onDownClick?: () => void
+    readonly isDown: boolean
+    readonly children: InfernoChildren
+    readonly dataKey: string
+}): JSX.Element {
+    return (
+        <button
+            className={props.isDown ? sunkButton : unsunkButton}
+            key={props.dataKey}
+            onClick={props.isDown ? props.onDownClick : props.onClick}
+        >
+            {props.children}
+        </button>
+    )
+}

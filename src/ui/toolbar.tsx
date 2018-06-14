@@ -1,5 +1,5 @@
-import * as React from "react"
-import styled from "styled-components"
+import { createElement } from "inferno-create-element"
+import { css } from "emotion"
 import { Tool, CanvasMsg, toolMessage } from "../canvas"
 import { BrushMsg } from "../canvas/tools/brushtool"
 import { ToolMsg, ToolType } from "../canvas/tools"
@@ -13,7 +13,7 @@ export interface ToolBarProps {
     readonly transientState: ToolBarTransientState
 }
 
-const LeftBar = styled.div`
+const LeftBar = css`
     display: flex;
     flex-direction: column;
     padding-top: 1rem;
@@ -26,57 +26,54 @@ const LeftBar = styled.div`
     }
 `
 
-const ToolBarContainer = styled.div`
+const ToolBarContainer = css`
     display: flex;
     background-color: var(--color-bg-level-0);
     color: var(--color-text-light);
 `
 
-export class ToolBar extends React.PureComponent<ToolBarProps> {
-    render(): JSX.Element {
-        const props = this.props
-        const currentToolType = props.tool.current.type
-
-        return (
-            <ToolBarContainer>
-                <LeftBar>
-                    <SinkableButton
-                        dataKey="brush"
-                        onClick={this.trigger(toolMsgs.setTool(ToolType.Brush))}
-                        isDown={currentToolType === ToolType.Brush}
-                    >
-                        🖌
-                    </SinkableButton>
-                    <SinkableButton
-                        dataKey="erase"
-                        onClick={this.trigger(toolMsgs.setTool(ToolType.Eraser))}
-                        isDown={currentToolType === ToolType.Eraser}
-                    >
-                        🔥
-                    </SinkableButton>
-                    <SinkableButton
-                        dataKey="zoom"
-                        onClick={this.trigger(toolMsgs.setTool(ToolType.Zoom))}
-                        isDown={currentToolType === ToolType.Zoom}
-                    >
-                        🔍
-                    </SinkableButton>
-                </LeftBar>
-                {props.transientState.isDetailsExpanded ? <ToolBarDetails {...props} /> : null}
-            </ToolBarContainer>
-        )
+export function ToolBar(props: ToolBarProps): JSX.Element {
+    function trigger(msg: ToolMsg) {
+        return () => props.sendMessage(toolMessage(msg))
     }
 
-    private trigger(msg: ToolMsg) {
-        return () => this.props.sendMessage(toolMessage(msg))
-    }
+    const currentToolType = props.tool.current.type
+
+    return (
+        <div className={ToolBarContainer}>
+            <div className={LeftBar}>
+                <SinkableButton
+                    dataKey="brush"
+                    onClick={trigger(toolMsgs.setTool(ToolType.Brush))}
+                    isDown={currentToolType === ToolType.Brush}
+                >
+                    🖌
+                </SinkableButton>
+                <SinkableButton
+                    dataKey="erase"
+                    onClick={trigger(toolMsgs.setTool(ToolType.Eraser))}
+                    isDown={currentToolType === ToolType.Eraser}
+                >
+                    🔥
+                </SinkableButton>
+                <SinkableButton
+                    dataKey="zoom"
+                    onClick={trigger(toolMsgs.setTool(ToolType.Zoom))}
+                    isDown={currentToolType === ToolType.Zoom}
+                >
+                    🔍
+                </SinkableButton>
+            </div>
+            {props.transientState.isDetailsExpanded ? <ToolBarDetails {...props} /> : null}
+        </div>
+    )
 }
 
 export interface ToolBarTransientState {
     readonly isDetailsExpanded: boolean
 }
 
-const Details = styled.div`
+const Details = css`
     display: flex;
     flex-direction: column;
     width: 12rem;
@@ -84,17 +81,15 @@ const Details = styled.div`
     border-left: 0.25rem solid rgba(0, 0, 0, 0.4);
 `
 
-export class ToolBarDetails extends React.PureComponent<ToolBarProps> {
-    render(): JSX.Element {
-        return (
-            <Details>
-                <p>hey</p>
-                <PrimaryButton>Click?</PrimaryButton>
-            </Details>
-        )
+export function ToolBarDetails(props: ToolBarProps): JSX.Element {
+    function trigger(msg: ToolMsg) {
+        return () => props.sendMessage(toolMessage(msg))
     }
 
-    private trigger(msg: ToolMsg) {
-        return () => this.props.sendMessage(toolMessage(msg))
-    }
+    return (
+        <div className={Details}>
+            <p>hey</p>
+            <PrimaryButton>Click?</PrimaryButton>
+        </div>
+    )
 }
