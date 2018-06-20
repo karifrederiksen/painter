@@ -1,4 +1,4 @@
-import { Rgb, T2, Vec2 } from "../../../data"
+import { Rgb, T2, Vec2, Hsv } from "../../../data"
 import { InterpolatorState, InputPoint, interpolate, init as interpInit } from "./interpolation"
 import { DelayState, BrushInput, DelayConfig } from "./brushDelay"
 import * as brushDelay from "./brushDelay"
@@ -21,8 +21,8 @@ export function initTempState(): BrushTempState {
 export interface BrushTool {
     readonly diameterPx: number
     readonly flowPct: number
-    readonly color: Rgb
-    readonly colorSecondary: Rgb
+    readonly color: Hsv
+    readonly colorSecondary: Hsv
     readonly spacingPct: number
     // TODO: I'll want more fine-grained control over _how_ pressure affects things
     //       for that, I'll want some extra stuff: [min, max, interpFunc]
@@ -35,8 +35,8 @@ export function init(): BrushTool {
     return {
         diameterPx: 10,
         flowPct: 0.4,
-        color: Rgb.Black,
-        colorSecondary: Rgb.White,
+        color: Hsv.make(0, 0, 0),
+        colorSecondary: Hsv.make(0, 0, 1),
         spacingPct: 0.05,
         pressureAffectsOpacity: false,
         pressureAffectsSize: true,
@@ -165,7 +165,7 @@ function pointerToBrushInput(_camera: Camera, input: PointerInput): BrushInput {
 
 function createBrushPoint(brush: BrushTool, input: BrushInput): BrushPoint {
     const alpha = brush.flowPct * input.pressure
-    const color = alpha === 1 ? brush.color : brush.color.mix(1 - alpha, Rgb.Black)
+    const color = alpha === 1 ? brush.color.toRgb() : brush.color.toRgb().mix(1 - alpha, Rgb.Black)
     const position = new Vec2(input.x, input.y)
     return {
         alpha,
@@ -178,7 +178,7 @@ function createBrushPoint(brush: BrushTool, input: BrushInput): BrushPoint {
 
 function createInputPoint(brush: BrushTool, input: BrushInput): InputPoint {
     const alpha = brush.flowPct * input.pressure
-    const color = alpha === 1 ? brush.color : brush.color.mix(1 - alpha, Rgb.Black)
+    const color = alpha === 1 ? brush.color.toRgb() : brush.color.toRgb().mix(1 - alpha, Rgb.Black)
     const position = new Vec2(input.x, input.y)
     return {
         alpha,

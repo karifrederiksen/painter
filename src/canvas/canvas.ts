@@ -137,7 +137,7 @@ export class Canvas {
         const resolution = renderer.getCanvasResolution()
         renderer.setFramebuffer(null)
         renderer.setViewport(new Vec4(0, 0, resolution.x, resolution.y))
-        renderer.setClearColor(Rgb.Magenta.mix(0.5, Rgb.Yellow), 1.0)
+        renderer.setClearColor(Rgb.White, 1.0)
         renderer.clear()
 
         const textureIndex = renderer.bindTexture(stroke.texture)

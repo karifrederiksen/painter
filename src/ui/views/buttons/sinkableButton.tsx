@@ -1,4 +1,3 @@
-import { createElement } from "inferno-create-element"
 import { InfernoChildren } from "inferno"
 import { css } from "emotion"
 

@@ -1,4 +1,4 @@
-import { Msg, Rgb } from "../../../data"
+import { Msg, Hsv } from "../../../data"
 
 export const enum BrushMsgType {
     SetDiameter,
@@ -14,11 +14,11 @@ export const enum BrushMsgType {
 export type BrushMsg =
     | Msg<BrushMsgType.SetDiameter, number>
     | Msg<BrushMsgType.SetOpacity, number>
-    | Msg<BrushMsgType.SetColor, Rgb>
+    | Msg<BrushMsgType.SetColor, Hsv>
     | Msg<BrushMsgType.SetSpacing, number>
     | Msg<BrushMsgType.SetPressureAffectsOpacity, boolean>
     | Msg<BrushMsgType.SetPressureAffectsSize, boolean>
-    | Msg<BrushMsgType.SwapColorFrom, Rgb>
+    | Msg<BrushMsgType.SwapColorFrom, Hsv>
     | Msg<BrushMsgType.SetDelay, number>
 
 export function setDiameter(px: number): BrushMsg {
@@ -29,7 +29,7 @@ export function setOpacity(opacity: number): BrushMsg {
     return { type: BrushMsgType.SetOpacity, payload: opacity }
 }
 
-export function setColor(color: Rgb): BrushMsg {
+export function setColor(color: Hsv): BrushMsg {
     return { type: BrushMsgType.SetColor, payload: color }
 }
 
@@ -45,7 +45,7 @@ export function setPressureAffectsSize(pressureAffectsSize: boolean): BrushMsg {
     return { type: BrushMsgType.SetPressureAffectsSize, payload: pressureAffectsSize }
 }
 
-export function SwapColorFrom(previousColor: Rgb): BrushMsg {
+export function swapColorFrom(previousColor: Hsv): BrushMsg {
     return { type: BrushMsgType.SwapColorFrom, payload: previousColor }
 }
 

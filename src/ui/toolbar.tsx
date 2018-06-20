@@ -1,4 +1,3 @@
-import { createElement } from "inferno-create-element"
 import { css } from "emotion"
 import { Tool, CanvasMsg, toolMessage } from "../canvas"
 import { BrushMsg } from "../canvas/tools/brushtool"
@@ -6,6 +5,21 @@ import { ToolMsg, ToolType } from "../canvas/tools"
 import * as toolMsgs from "../canvas/tools/messages"
 import { SinkableButton } from "./views/buttons"
 import { PrimaryButton } from "./views/buttons/filledButton"
+import { Labeled } from "./views/labeled"
+import { Slider } from "./views/slider"
+import {
+    setOpacity,
+    setColor,
+    setPressureAffectsOpacity,
+    setPressureAffectsSize,
+    swapColorFrom,
+} from "../canvas/tools/brushtool/messages"
+import { Switch } from "./views/switch"
+import { InlineLabeled } from "./views/inlineLabeled"
+import { ColorDisplay } from "./views/colorDisplay"
+import { brushMessage } from "../canvas/tools/messages"
+import { Padded } from "./views/padded"
+import { ColorWheel } from "./views/colorWheel"
 
 export interface ToolBarProps {
     readonly sendMessage: (message: CanvasMsg) => void
@@ -64,7 +78,7 @@ export function ToolBar(props: ToolBarProps): JSX.Element {
                     🔍
                 </SinkableButton>
             </div>
-            {props.transientState.isDetailsExpanded ? <ToolBarDetails {...props} /> : null}
+            {props.transientState.isDetailsExpanded ? <BrushDetails {...props} /> : null}
         </div>
     )
 }
@@ -77,19 +91,64 @@ const Details = css`
     display: flex;
     flex-direction: column;
     width: 12rem;
-    padding: 0.5rem;
+    padding: 0.5rem 0.75rem;
     border-left: 0.25rem solid rgba(0, 0, 0, 0.4);
 `
 
-export function ToolBarDetails(props: ToolBarProps): JSX.Element {
-    function trigger(msg: ToolMsg) {
-        return () => props.sendMessage(toolMessage(msg))
+export function BrushDetails(props: ToolBarProps): JSX.Element {
+    function trigger(msg: BrushMsg) {
+        return props.sendMessage(toolMessage(brushMessage(msg)))
     }
+
+    const brush = props.tool.brush
+    const color = brush.color
 
     return (
         <div className={Details}>
-            <p>hey</p>
-            <PrimaryButton>Click?</PrimaryButton>
+            <ColorWheel color={brush.color} />
+            <Labeled label="hey">
+                <PrimaryButton>Click?</PrimaryButton>
+            </Labeled>
+            <Labeled label="Flow" value={brush.flowPct.toFixed(2)}>
+                <Slider percentage={brush.flowPct} onChange={pct => trigger(setOpacity(pct))} />
+            </Labeled>
+            <Labeled label="Hue" value={color.h.toFixed(2)}>
+                <Slider
+                    percentage={color.h}
+                    onChange={pct => trigger(setColor(color.with({ h: pct })))}
+                />
+            </Labeled>
+            <Labeled label="Saturation" value={color.s.toFixed(2)}>
+                <Slider
+                    percentage={color.s}
+                    onChange={pct => trigger(setColor(color.with({ s: pct })))}
+                />
+            </Labeled>
+            <Labeled label="Value" value={color.v.toFixed(2)}>
+                <Slider
+                    percentage={color.v}
+                    onChange={pct => trigger(setColor(color.with({ v: pct })))}
+                />
+            </Labeled>
+            <InlineLabeled label="Pressure-Opacity">
+                <Switch
+                    checked={brush.pressureAffectsOpacity}
+                    onCheck={checked => trigger(setPressureAffectsOpacity(checked))}
+                />
+            </InlineLabeled>
+            <InlineLabeled label="Pressure-Size">
+                <Switch
+                    checked={brush.pressureAffectsSize}
+                    onCheck={checked => trigger(setPressureAffectsSize(checked))}
+                />
+            </InlineLabeled>
+            <Padded paddingX={0} paddingY={0.5}>
+                <ColorDisplay
+                    color={brush.color}
+                    colorSecondary={brush.colorSecondary}
+                    onClick={() => trigger(swapColorFrom(brush.color))}
+                />
+            </Padded>
         </div>
     )
 }

@@ -1,16 +1,13 @@
-import { createElement } from "inferno-create-element"
 import * as Inferno from "inferno"
-import { css, injectGlobal } from "emotion"
+import { css } from "emotion"
 
 import {
     Canvas,
     CanvasState,
-    CanvasHooks,
     RemoveListeners,
     listenToPointers,
     PointerInput,
     CanvasMsg,
-    defaultState,
     update as canvasUpate,
 } from "../canvas"
 import { FrameStream, CancelFrameStream } from "../frameStream"
@@ -30,36 +27,28 @@ export type PainterProps = {
 const uiWrapper = css`
     display: flex;
     flex-direction: row;
-`
+    box-sizing: border-box !important;
 
-injectGlobal`
-    html {
-        font-size: 16px;
-    }
-
-    @media (max-width: 900px) {
-        html {
-            font-size: 14px;
-        }
-    }
-
-    * {
+    ** {
         margin: 0;
         padding: 0;
-        font-family: "Helvetica", "Arial", sans-serif;
+        border: 0;
+        outline: none;
+        box-sizing: inherit;
     }
 
-    :root {
-        --color-primary: #9c9;
-        --color-primary-highlight: #99c;
-        --color-success: #7a7;
-        --color-warning: #aa7;
-        --color-danger: #a77;
-        --color-info: #77a;
-        --color-text-light: #ccc;
-        --color-text-dark: #333;
-        --color-bg-level-0: #555;
-    }
+    --color-primary: #aa5bc6;
+    --color-primary-highlight: #fa71fc;
+    --color-default-light: #ccc;
+    --color-default: #777;
+    --color-default-dark: #333;
+    --color-success: #7a7;
+    --color-warning: #aa7;
+    --color-danger: #a77;
+    --color-info: #77a;
+    --color-text-light: #ccc;
+    --color-text-dark: #333;
+    --color-bg-level-0: #555;
 `
 
 interface PainterState {
@@ -122,7 +111,9 @@ export class Painter extends Inferno.Component<PainterProps, PainterState> {
         if (htmlCanvas == null) throw "Canvas not found"
 
         const canvas = Canvas.create(htmlCanvas, {
-            onStats: stats => console.log(stats),
+            onStats: stats => {
+                /*console.log(stats)*/
+            },
         })
         if (canvas === null) throw "Failed to initialize Canvas"
 
