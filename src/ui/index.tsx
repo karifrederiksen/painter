@@ -13,6 +13,7 @@ import {
 import { FrameStream, CancelFrameStream } from "../frameStream"
 import { SetOnce } from "../data"
 import { ToolBar, ToolBarTransientState } from "./toolbar"
+import { MessageSender, createSender } from "../canvas/messageSender"
 
 export function start(state: CanvasState, frameStream: FrameStream): JSX.Element {
     return <Painter state={state} frameStream={frameStream} />
@@ -72,6 +73,7 @@ export class Painter extends Inferno.Component<PainterProps, PainterState> {
     private canvas: SetOnce<Canvas>
     private htmlCanvas: HTMLCanvasElement | null
     private transientState: TransientState
+    private sender: MessageSender
 
     constructor(props: PainterProps) {
         super(props)
@@ -79,6 +81,12 @@ export class Painter extends Inferno.Component<PainterProps, PainterState> {
         this.removeInputListeners = new SetOnce()
         this.cancelFrameStream = new SetOnce()
         this.canvas = new SetOnce()
+        this.sender = createSender(msg =>
+            this.setState((state: PainterState) => ({
+                ...state,
+                persistent: canvasUpate(state.persistent, msg),
+            }))
+        )
         this.htmlCanvas = null
         this.transientState = {
             toolBar: { isDetailsExpanded: true },
@@ -92,7 +100,7 @@ export class Painter extends Inferno.Component<PainterProps, PainterState> {
                 <ToolBar
                     tool={state.persistent.tool}
                     transientState={state.transient.toolBar}
-                    sendMessage={this.sendMessage}
+                    messageSender={this.sender}
                 />
                 <canvas
                     width="800"
@@ -152,7 +160,9 @@ export class Painter extends Inferno.Component<PainterProps, PainterState> {
         this.setState(newState)
     }
 
-    private onMove = (input: PointerInput): void => {}
+    private onMove = (_input: PointerInput): void => {
+        //
+    }
 
     private onDrag = (input: PointerInput): void => {
         const state = this.state as PainterState
@@ -170,10 +180,4 @@ export class Painter extends Inferno.Component<PainterProps, PainterState> {
         this.canvas.value.endFrame(persistent)
         this.setState(newState)
     }
-
-    private sendMessage = (message: CanvasMsg): void =>
-        this.setState((state: PainterState) => ({
-            ...state,
-            persistent: canvasUpate(state.persistent, message),
-        }))
 }

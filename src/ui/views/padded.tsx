@@ -21,8 +21,8 @@ export function Padded(props: PaddedProps): JSX.Element {
         return <div style={{ padding: props.padding + "rem" }}>{props.children}</div>
     }
 
-    var px = props.paddingX + "rem"
-    var py = props.paddingY + "rem"
+    const px = props.paddingX + "rem"
+    const py = props.paddingY + "rem"
     return (
         <div
             style={{

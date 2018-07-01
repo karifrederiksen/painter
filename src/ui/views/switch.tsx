@@ -16,6 +16,7 @@ const switchButtonContainerClass = css`
     display: inline-flex;
     position: absolute;
     z-index: 2;
+    transition: 150ms transform;
 `
 
 const switchButtonClass = css`
@@ -35,7 +36,7 @@ const switchBarClass = css`
     height: 0.75rem;
     border-radius: 0.3775rem;
     z-index: 1;
-    transition: 150ms background-color;
+    transition: 150ms background-color, 150ms opacity;
 `
 
 export function Switch({ checked, color, onCheck }: SwitchProps): JSX.Element {

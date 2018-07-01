@@ -1,28 +1,17 @@
 import { css } from "emotion"
-import { Tool, CanvasMsg, toolMessage } from "../canvas"
-import { BrushMsg } from "../canvas/tools/brushtool"
-import { ToolMsg, ToolType } from "../canvas/tools"
-import * as toolMsgs from "../canvas/tools/messages"
+import { Tool, MessageSender } from "../canvas"
+import { ToolType } from "../canvas/tools"
 import { SinkableButton } from "./views/buttons"
-import { PrimaryButton } from "./views/buttons/filledButton"
 import { Labeled } from "./views/labeled"
 import { Slider } from "./views/slider"
-import {
-    setOpacity,
-    setColor,
-    setPressureAffectsOpacity,
-    setPressureAffectsSize,
-    swapColorFrom,
-} from "../canvas/tools/brushtool/messages"
 import { Switch } from "./views/switch"
 import { InlineLabeled } from "./views/inlineLabeled"
 import { ColorDisplay } from "./views/colorDisplay"
-import { brushMessage } from "../canvas/tools/messages"
 import { Padded } from "./views/padded"
 import { ColorWheel } from "./views/colorWheel"
 
 export interface ToolBarProps {
-    readonly sendMessage: (message: CanvasMsg) => void
+    readonly messageSender: MessageSender
     readonly tool: Tool
     readonly transientState: ToolBarTransientState
 }
@@ -47,32 +36,29 @@ const ToolBarContainer = css`
 `
 
 export function ToolBar(props: ToolBarProps): JSX.Element {
-    function trigger(msg: ToolMsg) {
-        return () => props.sendMessage(toolMessage(msg))
-    }
-
     const currentToolType = props.tool.current.type
+    const setTool = props.messageSender.tool.setTool
 
     return (
         <div className={ToolBarContainer}>
             <div className={LeftBar}>
                 <SinkableButton
                     dataKey="brush"
-                    onClick={trigger(toolMsgs.setTool(ToolType.Brush))}
+                    onClick={() => setTool(ToolType.Brush)}
                     isDown={currentToolType === ToolType.Brush}
                 >
                     🖌
                 </SinkableButton>
                 <SinkableButton
                     dataKey="erase"
-                    onClick={trigger(toolMsgs.setTool(ToolType.Eraser))}
+                    onClick={() => setTool(ToolType.Eraser)}
                     isDown={currentToolType === ToolType.Eraser}
                 >
                     🔥
                 </SinkableButton>
                 <SinkableButton
                     dataKey="zoom"
-                    onClick={trigger(toolMsgs.setTool(ToolType.Zoom))}
+                    onClick={() => setTool(ToolType.Zoom)}
                     isDown={currentToolType === ToolType.Zoom}
                 >
                     🔍
@@ -96,57 +82,66 @@ const Details = css`
 `
 
 export function BrushDetails(props: ToolBarProps): JSX.Element {
-    function trigger(msg: BrushMsg) {
-        return props.sendMessage(toolMessage(brushMessage(msg)))
-    }
-
+    const sender = props.messageSender.tool.brush
     const brush = props.tool.brush
     const color = brush.color
 
     return (
         <div className={Details}>
             <ColorWheel color={brush.color} />
-            <Labeled label="hey">
-                <PrimaryButton>Click?</PrimaryButton>
+            <Labeled label="Size" value={brush.diameterPx.toFixed(1) + "px"}>
+                <Slider
+                    percentage={brush.diameterPx / 500}
+                    onChange={pct => sender.setDiameter(pct * 500)}
+                />
             </Labeled>
             <Labeled label="Flow" value={brush.flowPct.toFixed(2)}>
-                <Slider percentage={brush.flowPct} onChange={pct => trigger(setOpacity(pct))} />
+                <Slider percentage={brush.flowPct} onChange={sender.setOpacity} />
+            </Labeled>
+            <Labeled label="Spacing" value={brush.spacingPct.toFixed(2) + "%"}>
+                <Slider percentage={brush.spacingPct} onChange={sender.setSpacing} />
             </Labeled>
             <Labeled label="Hue" value={color.h.toFixed(2)}>
                 <Slider
                     percentage={color.h}
-                    onChange={pct => trigger(setColor(color.with({ h: pct })))}
+                    onChange={pct => sender.setColor(color.with({ h: pct }))}
                 />
             </Labeled>
             <Labeled label="Saturation" value={color.s.toFixed(2)}>
                 <Slider
                     percentage={color.s}
-                    onChange={pct => trigger(setColor(color.with({ s: pct })))}
+                    onChange={pct => sender.setColor(color.with({ s: pct }))}
                 />
             </Labeled>
             <Labeled label="Value" value={color.v.toFixed(2)}>
                 <Slider
                     percentage={color.v}
-                    onChange={pct => trigger(setColor(color.with({ v: pct })))}
+                    onChange={pct => sender.setColor(color.with({ v: pct }))}
                 />
             </Labeled>
             <InlineLabeled label="Pressure-Opacity">
                 <Switch
                     checked={brush.pressureAffectsOpacity}
-                    onCheck={checked => trigger(setPressureAffectsOpacity(checked))}
+                    onCheck={sender.setPressureAffectsOpacity}
                 />
             </InlineLabeled>
             <InlineLabeled label="Pressure-Size">
                 <Switch
                     checked={brush.pressureAffectsSize}
-                    onCheck={checked => trigger(setPressureAffectsSize(checked))}
+                    onCheck={sender.setPressureAffectsSize}
                 />
             </InlineLabeled>
+            <Labeled label="Delay" value={brush.delay.duration.toFixed(0) + "ms"}>
+                <Slider
+                    percentage={brush.delay.duration / 500}
+                    onChange={pct => sender.setDelay(pct * 500)}
+                />
+            </Labeled>
             <Padded paddingX={0} paddingY={0.5}>
                 <ColorDisplay
                     color={brush.color}
                     colorSecondary={brush.colorSecondary}
-                    onClick={() => trigger(swapColorFrom(brush.color))}
+                    onClick={() => sender.swapColorFrom(brush.color)}
                 />
             </Padded>
         </div>

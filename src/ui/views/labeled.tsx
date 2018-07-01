@@ -26,6 +26,8 @@ const textContainer = css`
     display: flex;
     justify-content: space-between;
     color: inherit;
+    pointer-events: none;
+    user-select: none;
 `
 
 export function Labeled({ children, label, value }: LabeledProps): JSX.Element {

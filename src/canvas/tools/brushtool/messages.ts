@@ -21,34 +21,29 @@ export type BrushMsg =
     | Msg<BrushMsgType.SwapColorFrom, Hsv>
     | Msg<BrushMsgType.SetDelay, number>
 
-export function setDiameter(px: number): BrushMsg {
-    return { type: BrushMsgType.SetDiameter, payload: px }
+export interface BrushMessageSender {
+    setColor(color: Hsv): void
+    setDelay(ms: number): void
+    setDiameter(px: number): void
+    setOpacity(opacity: number): void
+    setSpacing(px: number): void
+    setPressureAffectsOpacity(setPressureAffectsOpacity: boolean): void
+    setPressureAffectsSize(setPressureAffectsSize: boolean): void
+    swapColorFrom(previousColor: Hsv): void
 }
 
-export function setOpacity(opacity: number): BrushMsg {
-    return { type: BrushMsgType.SetOpacity, payload: opacity }
-}
-
-export function setColor(color: Hsv): BrushMsg {
-    return { type: BrushMsgType.SetColor, payload: color }
-}
-
-export function setSpacing(spacing: number): BrushMsg {
-    return { type: BrushMsgType.SetSpacing, payload: spacing }
-}
-
-export function setPressureAffectsOpacity(pressureAffectsOpacity: boolean): BrushMsg {
-    return { type: BrushMsgType.SetPressureAffectsOpacity, payload: pressureAffectsOpacity }
-}
-
-export function setPressureAffectsSize(pressureAffectsSize: boolean): BrushMsg {
-    return { type: BrushMsgType.SetPressureAffectsSize, payload: pressureAffectsSize }
-}
-
-export function swapColorFrom(previousColor: Hsv): BrushMsg {
-    return { type: BrushMsgType.SwapColorFrom, payload: previousColor }
-}
-
-export function setDelay(ms: number): BrushMsg {
-    return { type: BrushMsgType.SetDelay, payload: ms }
+export function createBrushSender(sendMessage: (msg: BrushMsg) => void): BrushMessageSender {
+    return {
+        setColor: color => sendMessage({ type: BrushMsgType.SetColor, payload: color }),
+        setDelay: ms => sendMessage({ type: BrushMsgType.SetDelay, payload: ms }),
+        setDiameter: px => sendMessage({ type: BrushMsgType.SetDiameter, payload: px }),
+        setOpacity: pct => sendMessage({ type: BrushMsgType.SetOpacity, payload: pct }),
+        setSpacing: px => sendMessage({ type: BrushMsgType.SetSpacing, payload: px }),
+        setPressureAffectsOpacity: x =>
+            sendMessage({ type: BrushMsgType.SetPressureAffectsOpacity, payload: x }),
+        setPressureAffectsSize: x =>
+            sendMessage({ type: BrushMsgType.SetPressureAffectsSize, payload: x }),
+        swapColorFrom: prevColor =>
+            sendMessage({ type: BrushMsgType.SwapColorFrom, payload: prevColor }),
+    }
 }

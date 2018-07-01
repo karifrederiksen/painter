@@ -1,36 +1,33 @@
 import { Msg } from "../../data/types"
-import { CameraMsg } from "./cameratools"
-import { BrushMsg } from "./brushtool"
+import { CameraMsg, CameraMessageSender, createCameraSender } from "./cameratools"
 import { ToolType } from "."
+import { BrushMsg, BrushMessageSender, createBrushSender } from "./brushtool/messages"
 
 export const enum ToolMsgType {
     SetTool,
     BrushMsg,
     EraserMsg,
-    MoveMsg,
-    ZoomMsg,
-    RotateMsg,
+    CameraMsg,
 }
 
 export type ToolMsg =
     | Msg<ToolMsgType.SetTool, ToolType>
     | Msg<ToolMsgType.BrushMsg, BrushMsg>
     | Msg<ToolMsgType.EraserMsg, BrushMsg>
-    | Msg<ToolMsgType.MoveMsg, CameraMsg>
-    | Msg<ToolMsgType.ZoomMsg, CameraMsg>
-    | Msg<ToolMsgType.RotateMsg, CameraMsg>
+    | Msg<ToolMsgType.CameraMsg, CameraMsg>
 
-export function setTool(type: ToolType): ToolMsg {
-    return { type: ToolMsgType.SetTool, payload: type }
+export interface ToolMessageSender {
+    readonly brush: BrushMessageSender
+    readonly camera: CameraMessageSender
+    setTool(type: ToolType): void
 }
 
-export function brushMessage(msg: BrushMsg): ToolMsg {
-    return { type: ToolMsgType.BrushMsg, payload: msg }
+export function createToolSender(sendMessage: (msg: ToolMsg) => void): ToolMessageSender {
+    return {
+        brush: createBrushSender(msg => sendMessage({ type: ToolMsgType.BrushMsg, payload: msg })),
+        camera: createCameraSender(msg =>
+            sendMessage({ type: ToolMsgType.CameraMsg, payload: msg })
+        ),
+        setTool: type => sendMessage({ type: ToolMsgType.SetTool, payload: type }),
+    }
 }
-export const eraserMessage = brushMessage
-
-export function moveMessage(msg: CameraMsg): ToolMsg {
-    return { type: ToolMsgType.MoveMsg, payload: msg }
-}
-export const zoomMessage = moveMessage
-export const rotateMessage = moveMessage

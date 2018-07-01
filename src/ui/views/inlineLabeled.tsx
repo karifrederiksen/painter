@@ -20,6 +20,8 @@ const labelClass = css`
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
+    pointer-events: none;
+    user-select: none;
 `
 
 export function InlineLabeled({ children, label }: InlineLabeledProps): JSX.Element {

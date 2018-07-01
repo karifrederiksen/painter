@@ -1,4 +1,4 @@
-import { Stack, NonEmptyStack, EmptyStack, T2, PushArray, Msg } from "../data";
+import { Stack, NonEmptyStack, EmptyStack, T2, PushArray, Msg } from "../data"
 
 export const enum LayersMsgType {
     SelectLayer,
@@ -9,11 +9,19 @@ export const enum LayersMsgType {
     SetHidden,
     SetFixedAlpha,
     SetGroupOpen,
-} 
+}
 
-export type LayersMsg =
-    | Msg<LayersMsgType.SelectLayer, LayerId>
+export type LayersMsg = Msg<LayersMsgType.SelectLayer, LayerId>
 
+export interface LayerMessageSender {
+    selectLayer(id: LayerId): void
+}
+
+export function createLayerSender(sendMessage: (msg: LayersMsg) => void): LayerMessageSender {
+    return {
+        selectLayer: id => sendMessage({ type: LayersMsgType.SelectLayer, payload: id }),
+    }
+}
 
 export type LayerId = number
 
@@ -28,10 +36,7 @@ export class Layers {
         return new Layers(group, new EmptyStack<number>().cons(0))
     }
 
-    private constructor(
-        readonly root: LayerGroup,
-        readonly pathToCurrent: NonEmptyStack<number>
-    ) {}
+    private constructor(readonly root: LayerGroup, readonly pathToCurrent: NonEmptyStack<number>) {}
 
     current(): ReadonlyArray<T2<LayerId, number>> {
         const arr: PushArray<T2<LayerId, number>> = []
@@ -85,7 +90,7 @@ export class LeafLayer {
     selectedLeafs(
         arr: PushArray<T2<LayerId, number>>,
         _path: Stack<number>,
-        opacity: number,
+        opacity: number
     ): void {
         arr.push([this.id, this.opacity * opacity])
     }
@@ -93,7 +98,7 @@ export class LeafLayer {
     leafsBefore(
         arr: PushArray<T2<LayerId, number>>,
         _path: NonEmptyStack<number>,
-        opacity: number,
+        opacity: number
     ): void {
         arr.push([this.id, this.opacity * opacity])
     }
@@ -101,7 +106,7 @@ export class LeafLayer {
     leafsAfter(
         arr: PushArray<T2<LayerId, number>>,
         _path: NonEmptyStack<number>,
-        opacity: number,
+        opacity: number
     ): void {
         arr.push([this.id, this.opacity * opacity])
     }
@@ -116,7 +121,7 @@ export class LayerGroup {
         readonly layers: ReadonlyArray<Layer>,
         readonly opacity: number,
         readonly isHidden: boolean,
-        readonly isFixedAlpha: boolean,
+        readonly isFixedAlpha: boolean
     ) {}
 
     get isLeaf(): false {
@@ -152,7 +157,7 @@ export class LayerGroup {
     leafsBefore(
         arr: PushArray<T2<LayerId, number>>,
         path: NonEmptyStack<number>,
-        opacity: number,
+        opacity: number
     ): void {
         opacity *= this.opacity
 
@@ -168,7 +173,7 @@ export class LayerGroup {
     leafsAfter(
         arr: PushArray<T2<LayerId, number>>,
         path: NonEmptyStack<number>,
-        opacity: number,
+        opacity: number
     ): void {
         opacity *= this.opacity
 

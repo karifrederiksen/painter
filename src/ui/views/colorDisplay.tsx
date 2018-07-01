@@ -8,6 +8,7 @@ export type ColorDisplay = {
 }
 
 const wrapperClass = css`
+    cursor: pointer;
     display: flex;
     align-items: center;
     width: 100%;

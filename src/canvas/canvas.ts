@@ -1,7 +1,7 @@
 import { Renderer } from "./rendering/renderer"
-import { Rgb, Vec2, Vec4, Msg } from "../data"
+import { Rgb, Vec4, Msg } from "../data"
 import { BrushPoint } from "./rendering/brushShader"
-import { Layers, LayersMsg } from "./layers"
+import { Layers, LayersMsg, LayerMessageSender, createLayerSender } from "./layers"
 import { RenderStats, Stats } from "./renderStats"
 import { PointerInput } from "./input/inputListener"
 import {
@@ -16,6 +16,7 @@ import {
 } from "./tools"
 import { Stroke } from "./rendering/stroke"
 import { TextureShader } from "./rendering/textureShader"
+import { ToolMessageSender, createToolSender } from "./tools/messages"
 
 export interface CanvasHooks {
     // readonly onCanvasSnapshot: (snapshot: Snapshot) => void
@@ -43,14 +44,6 @@ export const enum CanvasMsgType {
 export type CanvasMsg =
     | Msg<CanvasMsgType.ToolMsg, ToolMsg>
     | Msg<CanvasMsgType.LayersMsg, LayersMsg>
-
-export function toolMessage(msg: ToolMsg): CanvasMsg {
-    return { type: CanvasMsgType.ToolMsg, payload: msg }
-}
-
-export function layersMessage(msg: LayersMsg): CanvasMsg {
-    return { type: CanvasMsgType.LayersMsg, payload: msg }
-}
 
 export function update(state: CanvasState, msg: CanvasMsg): CanvasState {
     switch (msg.type) {
@@ -153,5 +146,18 @@ export class Canvas {
 
     dispose(): void {
         this.renderer.dispose()
+    }
+}
+export interface MessageSender {
+    readonly tool: ToolMessageSender
+    readonly layer: LayerMessageSender
+}
+
+export function createSender(sendMessage: (msg: CanvasMsg) => void): MessageSender {
+    return {
+        tool: createToolSender(msg => sendMessage({ type: CanvasMsgType.ToolMsg, payload: msg })),
+        layer: createLayerSender(msg =>
+            sendMessage({ type: CanvasMsgType.LayersMsg, payload: msg })
+        ),
     }
 }

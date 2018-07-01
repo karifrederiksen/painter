@@ -52,10 +52,11 @@ export function interpolate(
     const start = state.prevPoint
 
     const spacingPx = brush.spacingPct * brush.diameterPx
-    const pcts =
-        brush.pressureAffectsSize && start.pressure !== end.pressure
-            ? interpolateWithPressureScaling(spacingPx, start, end)
-            : interpolateNormal(spacingPx, start, end)
+    // const pcts =
+    //     brush.pressureAffectsSize && start.pressure !== end.pressure
+    //         ? interpolateWithPressureScaling(spacingPx, start, end)
+    //         : interpolateNormal(spacingPx, start, end)
+    const pcts = interpolateWithPressureScaling(spacingPx, start, end)
 
     if (pcts.length === 0) return [state, []]
 
@@ -86,7 +87,7 @@ export function interpolate(
         }
     }
 
-    const lastBrushPoint = brushPoints[brushPoints.length - 1]
+    const lastBrushPoint = brushPoints[pcts.length - 1]
     const prevPoint: InputPoint = {
         alpha: lastBrushPoint.alpha,
         color: lastBrushPoint.color,
@@ -98,6 +99,7 @@ export function interpolate(
     return [{ prevPoint }, brushPoints]
 }
 
+// TODO: fix this optimization
 function interpolateNormal(
     spacingPx: number,
     start: InputPoint,
@@ -123,20 +125,13 @@ function interpolateWithPressureScaling(
     const endX = end.position.x
     const endY = end.position.y
     const endPressure = end.pressure
-    const endSpacing = Math.max(spacingPx * endPressure, 0.1)
+    const endSpacing = Math.max(spacingPx * endPressure, 0.05)
 
     let x = start.position.x
     let y = start.position.y
     let pressure = start.pressure
 
     const totalDist = distance(x, y, endX, endY)
-    if (totalDist < endSpacing) return arr
-
-    // console.group("interpolation dump1")
-    // console.log("start", start)
-    // console.log("end", end)
-    // console.log("spacingPx, endSpacing", spacingPx, endSpacing)
-    // console.groupEnd()
 
     let dist = totalDist
     let p = 0.5
@@ -150,13 +145,14 @@ function interpolateWithPressureScaling(
         y += p * (endY - y)
         pressure += p * (endPressure - pressure)
 
+        dist = distance(x, y, endX, endY)
+
         if (x !== prevX || y !== prevY || pressure !== prevPressure) {
             arr.push(1 - dist / totalDist)
             prevX = x
             prevY = y
             prevPressure = pressure
         }
-        dist = distance(x, y, endX, endY)
     }
     return arr
 }

@@ -35,3 +35,17 @@ export function update(state: Camera, msg: CameraMsg): Camera {
             return { ...state, rotationRad: msg.payload }
     }
 }
+
+export interface CameraMessageSender {
+    setZoom(pct: number): void
+    setOffset(xyPct: Vec2): void
+    setRotation(pct: number): void
+}
+
+export function createCameraSender(sendMessage: (msg: CameraMsg) => void): CameraMessageSender {
+    return {
+        setRotation: pct => sendMessage({ type: CameraMsgType.SetRotation, payload: pct }),
+        setOffset: xyPct => sendMessage({ type: CameraMsgType.SetOffset, payload: xyPct }),
+        setZoom: pct => sendMessage({ type: CameraMsgType.SetZoom, payload: pct }),
+    }
+}

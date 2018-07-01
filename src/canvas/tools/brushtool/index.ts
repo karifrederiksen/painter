@@ -7,8 +7,6 @@ import { Camera } from "../cameratools"
 import { PointerInput } from "../../input"
 import { BrushMsg, BrushMsgType } from "./messages"
 
-export { BrushMsg } from "./messages"
-
 export type BrushTempState = {
     readonly interpState: InterpolatorState
     readonly delayState: DelayState
@@ -33,9 +31,9 @@ export interface BrushTool {
 
 export function init(): BrushTool {
     return {
-        diameterPx: 10,
-        flowPct: 0.4,
-        color: Hsv.make(0, 0, 0),
+        diameterPx: 30,
+        flowPct: 0.15,
+        color: Hsv.make(0.73, 1, 0.16),
         colorSecondary: Hsv.make(0, 0, 1),
         spacingPct: 0.05,
         pressureAffectsOpacity: false,
@@ -141,21 +139,21 @@ export function onRelease(
 ): T2<BrushTempState, ReadonlyArray<BrushPoint>> {
     if (state === null) return [null, []]
 
-    const brushInput = pointerToBrushInput(camera, input)
-    const newBrushInput = brushDelay.updateWithInput(
-        brush.delay,
-        state.delayState,
-        input.time,
-        brushInput
-    )[1]
+    // const brushInput = pointerToBrushInput(camera, input)
+    // const newBrushInput = brushDelay.updateWithInput(
+    //     brush.delay,
+    //     state.delayState,
+    //     input.time,
+    //     brushInput
+    // )[1]
 
-    const brushPoints = interpolate(
-        brush,
-        state.interpState,
-        createInputPoint(brush, newBrushInput)
-    )[1]
+    // const brushPoints = interpolate(
+    //     brush,
+    //     state.interpState,
+    //     createInputPoint(brush, newBrushInput)
+    // )[1]
 
-    return [null, brushPoints]
+    return [null, []]
 }
 
 function pointerToBrushInput(_camera: Camera, input: PointerInput): BrushInput {

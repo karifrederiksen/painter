@@ -1,4 +1,4 @@
-import { createProgram, getUniformLocation } from "./utility"
+import { createProgram, getUniformLocation } from "../../web-gl"
 import { Vec2 } from "../../data"
 import { Renderer } from "./renderer"
 

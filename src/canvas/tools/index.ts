@@ -2,7 +2,6 @@ export { BrushTool } from "./brushtool"
 import { T2, Msg, Case } from "../../data"
 import { DragState, PointerInput } from "../input"
 import {
-    BrushMsg,
     update as brushUpdate,
     BrushTool,
     init as brushInit,
