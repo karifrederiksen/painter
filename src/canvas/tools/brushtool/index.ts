@@ -1,4 +1,4 @@
-import { Rgb, T2, Vec2, Hsv } from "../../../data"
+import { T2, Vec2, Hsv, LinearRgb } from "../../../data"
 import { InterpolatorState, InputPoint, interpolate, init as interpInit } from "./interpolation"
 import { DelayState, BrushInput, DelayConfig } from "./brushDelay"
 import * as brushDelay from "./brushDelay"
@@ -163,7 +163,10 @@ function pointerToBrushInput(_camera: Camera, input: PointerInput): BrushInput {
 
 function createBrushPoint(brush: BrushTool, input: BrushInput): BrushPoint {
     const alpha = brush.flowPct * input.pressure
-    const color = alpha === 1 ? brush.color.toRgb() : brush.color.toRgb().mix(1 - alpha, Rgb.Black)
+    const color =
+        alpha === 1
+            ? brush.color.toLinearRgb()
+            : brush.color.toLinearRgb().mix(1 - alpha, LinearRgb.Black)
     const position = new Vec2(input.x, input.y)
     return {
         alpha,
@@ -176,7 +179,10 @@ function createBrushPoint(brush: BrushTool, input: BrushInput): BrushPoint {
 
 function createInputPoint(brush: BrushTool, input: BrushInput): InputPoint {
     const alpha = brush.flowPct * input.pressure
-    const color = alpha === 1 ? brush.color.toRgb() : brush.color.toRgb().mix(1 - alpha, Rgb.Black)
+    const color =
+        alpha === 1
+            ? brush.color.toLinearRgb()
+            : brush.color.toLinearRgb().mix(1 - alpha, LinearRgb.Black)
     const position = new Vec2(input.x, input.y)
     return {
         alpha,

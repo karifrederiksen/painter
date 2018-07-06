@@ -1,5 +1,5 @@
 import { Renderer } from "./rendering/renderer"
-import { Rgb, Vec4, Msg } from "../data"
+import { Rgb, Vec4, Msg, Vec2 } from "../data"
 import { BrushPoint } from "./rendering/brushShader"
 import { Layers, LayersMsg, LayerMessageSender, createLayerSender } from "./layers"
 import { RenderStats, Stats } from "./renderStats"
@@ -17,6 +17,8 @@ import {
 import { Stroke } from "./rendering/stroke"
 import { TextureShader } from "./rendering/textureShader"
 import { ToolMessageSender, createToolSender } from "./tools/messages"
+import { OutputShader } from "./rendering/outputShader"
+import { Texture } from "./rendering/texture"
 
 export interface CanvasHooks {
     // readonly onCanvasSnapshot: (snapshot: Snapshot) => void
@@ -74,17 +76,25 @@ export class Canvas {
         const texShader = TextureShader.create(renderer)
         if (texShader === null) return null
 
-        return new Canvas(canvas, renderer, stroke, texShader, hooks)
+        const outputShader = OutputShader.create(renderer)
+        if (outputShader === null) return null
+
+        const outputTexture = renderer.createTexture(renderer.getCanvasResolution())
+
+        return new Canvas(canvas, renderer, stroke, texShader, hooks, outputTexture, outputShader)
     }
 
     private readonly renderWrapper: RenderStats
+    private hasRendered: boolean = false
 
     private constructor(
         readonly canvasElement: HTMLCanvasElement,
         private readonly renderer: Renderer,
         private readonly stroke: Stroke,
         private readonly textureShader: TextureShader,
-        private readonly hooks: CanvasHooks
+        private readonly hooks: CanvasHooks,
+        private readonly outputTexture: Texture,
+        private readonly outputShader: OutputShader
     ) {
         this.renderWrapper = new RenderStats({
             maxSamples: 200,
@@ -118,17 +128,31 @@ export class Canvas {
     }
 
     endFrame(state: CanvasState): void {
+        if (!this.needsRender()) return
+
         this.renderWrapper.timedRender(state, this.endFrame_)
     }
 
+    private needsRender(): boolean {
+        if (!this.hasRendered) {
+            this.hasRendered = true
+            return true
+        }
+        return this.stroke.shader.canFlush
+    }
+
     private endFrame_ = (_state: CanvasState): void => {
-        const { renderer, stroke, textureShader } = this
+        const { renderer, stroke, textureShader, outputTexture, outputShader } = this
         if (stroke.shader.canFlush) {
             stroke.render(renderer)
         }
 
+        // render to outputTexture
         const resolution = renderer.getCanvasResolution()
-        renderer.setFramebuffer(null)
+        const outputTextureIdx = renderer.bindTexture(outputTexture)
+
+        outputTexture.updateSize(renderer, resolution, outputTextureIdx)
+        renderer.setFramebuffer(this.outputTexture.framebuffer)
         renderer.setViewport(new Vec4(0, 0, resolution.x, resolution.y))
         renderer.setClearColor(Rgb.White, 1.0)
         renderer.clear()
@@ -142,9 +166,21 @@ export class Canvas {
             x1: resolution.x,
             y1: resolution.y,
         })
+
+        // outputTexture -> canvas
+        renderer.setFramebuffer(null)
+        outputShader.render(renderer, {
+            resolution,
+            textureIndex: outputTextureIdx,
+            x0: 0,
+            y0: 0,
+            x1: resolution.x,
+            y1: resolution.y,
+        })
     }
 
     dispose(): void {
+        this.outputShader.dispose(this.renderer.gl)
         this.renderer.dispose()
     }
 }

@@ -2,13 +2,17 @@ import { Rgb, Color } from "./rgb"
 import { Hsv } from "./hsv"
 
 export function toGrayScalar(color: Color): number {
-    const { r, g, b } = color.toRgb()
-    return Math.sqrt(0.299 * r * r + 0.587 * g * g + 0.114 * b * b)
+    const rgb = color.toRgb()
+    const r = toLinear(rgb.r)
+    const g = toLinear(rgb.g)
+    const b = toLinear(rgb.b)
+
+    return fromLinear(Math.sqrt(0.299 * r * r + 0.587 * g * g + 0.114 * b * b))
 }
 
 export function toGray(color: Color): Rgb {
     const gray = toGrayScalar(color)
-    return Rgb.makeFromLinear(gray, gray, gray)
+    return Rgb.make(gray, gray, gray)
 }
 
 export function toHsv(color: Color): Hsv {
@@ -37,4 +41,12 @@ export function toHsv(color: Color): Hsv {
     }
     h /= 6
     return Hsv.make(h, s, v)
+}
+
+export function toLinear(val: number): number {
+    return val ** 2.2
+}
+
+export function fromLinear(val: number): number {
+    return val ** (1 / 2.2)
 }

@@ -1,4 +1,4 @@
-import { createProgram, getUniformLocation } from "../../web-gl"
+import { createProgram, getUniformLocation, DEFINE_from_linear } from "../../web-gl"
 import { Vec2 } from "../../data"
 import { Renderer } from "./renderer"
 
@@ -26,17 +26,19 @@ void main() {
 const FRAG_SRC = `
 precision highp float;
 
+${DEFINE_from_linear}
+
 varying vec2 v_tex_coords;
 
 uniform sampler2D u_texture;
 
 void main() {
     vec4 pixel = texture2D(u_texture, v_tex_coords);
-    gl_FragColor = pixel;
+    gl_FragColor = vec4(from_linear(pixel.rgb), pixel.a);
 }
 `
 
-export interface TextureArgs {
+export interface OutputArgs {
     readonly resolution: Vec2
     readonly textureIndex: number
     readonly x0: number
@@ -45,8 +47,8 @@ export interface TextureArgs {
     readonly y1: number
 }
 
-export class TextureShader {
-    static create(renderer: Renderer): TextureShader | null {
+export class OutputShader {
+    static create(renderer: Renderer): OutputShader | null {
         const gl = renderer.gl
         const program = createProgram(gl, VERT_SRC, FRAG_SRC)
         if (program === null) return null
@@ -60,7 +62,7 @@ export class TextureShader {
         const resolutionUniform = getUniformLocation(gl, program, "u_resolution")
         if (resolutionUniform === null) return null
 
-        return new TextureShader(gl, program, textureUniform, resolutionUniform)
+        return new OutputShader(gl, program, textureUniform, resolutionUniform)
     }
 
     private readonly buffer: WebGLBuffer
@@ -91,7 +93,7 @@ export class TextureShader {
         array[21] = 1
     }
 
-    render(renderer: Renderer, args: TextureArgs): void {
+    render(renderer: Renderer, args: OutputArgs): void {
         renderer.setProgram(this.program)
         const gl = renderer.gl
         const array = this.array

@@ -1,4 +1,6 @@
 import { T2, T3 } from "./types"
+import * as Decode_ from "./decode"
+export const Decode = Decode_
 
 export * from "./color"
 export * from "./result"

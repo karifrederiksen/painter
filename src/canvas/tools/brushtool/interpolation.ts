@@ -1,5 +1,5 @@
 import { BrushTool } from "./index"
-import { Rgb, Vec2, T2 } from "../../../data"
+import { Vec2, T2, LinearRgb } from "../../../data"
 import { BrushPoint } from "../../rendering/brushShader"
 
 function distance(x0: number, y0: number, x1: number, y1: number): number {
@@ -14,7 +14,7 @@ function lerp(pct: number, start: number, end: number): number {
 
 export interface InputPoint {
     readonly alpha: number
-    readonly color: Rgb
+    readonly color: LinearRgb
     readonly position: Vec2
     readonly pressure: number
     readonly rotation: number

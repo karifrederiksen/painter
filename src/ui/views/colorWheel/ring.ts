@@ -35,7 +35,7 @@ void main() {
     float a = smoothstep(INNER_RAD1, INNER_RAD2, dist) - smoothstep(OUTER_RAD1, OUTER_RAD2, dist);
 
     float radians = atan(pos.y, pos.x);
-    float hue = (radians / TAU);
+    float hue = (radians / TAU) + 0.5;
 
     vec3 hsv = vec3(hue, 1.0, a);
 

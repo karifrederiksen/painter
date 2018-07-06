@@ -7,13 +7,13 @@ import {
     RemoveListeners,
     listenToPointers,
     PointerInput,
-    CanvasMsg,
     update as canvasUpate,
+    MessageSender,
+    createSender,
 } from "../canvas"
 import { FrameStream, CancelFrameStream } from "../frameStream"
 import { SetOnce } from "../data"
 import { ToolBar, ToolBarTransientState } from "./toolbar"
-import { MessageSender, createSender } from "../canvas/messageSender"
 
 export function start(state: CanvasState, frameStream: FrameStream): JSX.Element {
     return <Painter state={state} frameStream={frameStream} />
@@ -81,12 +81,13 @@ export class Painter extends Inferno.Component<PainterProps, PainterState> {
         this.removeInputListeners = new SetOnce()
         this.cancelFrameStream = new SetOnce()
         this.canvas = new SetOnce()
-        this.sender = createSender(msg =>
+        this.sender = createSender(msg => {
+            console.log("Message of type ", msg.type, "with payload", msg.payload)
             this.setState((state: PainterState) => ({
                 ...state,
                 persistent: canvasUpate(state.persistent, msg),
             }))
-        )
+        })
         this.htmlCanvas = null
         this.transientState = {
             toolBar: { isDetailsExpanded: true },
@@ -115,12 +116,13 @@ export class Painter extends Inferno.Component<PainterProps, PainterState> {
     }
 
     componentDidMount() {
+        console.log("Painter mounted")
         const htmlCanvas = this.htmlCanvas
         if (htmlCanvas == null) throw "Canvas not found"
 
         const canvas = Canvas.create(htmlCanvas, {
             onStats: stats => {
-                /*console.log(stats)*/
+                console.log(stats)
             },
         })
         if (canvas === null) throw "Failed to initialize Canvas"
@@ -142,6 +144,7 @@ export class Painter extends Inferno.Component<PainterProps, PainterState> {
         this.removeInputListeners.value()
         this.cancelFrameStream.value()
         this.canvas.value.dispose()
+        console.log("Painter unmounted")
     }
 
     private onClick = (input: PointerInput): void => {

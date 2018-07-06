@@ -7,7 +7,7 @@ import { Slider } from "./views/slider"
 import { Switch } from "./views/switch"
 import { InlineLabeled } from "./views/inlineLabeled"
 import { ColorDisplay } from "./views/colorDisplay"
-import { Padded } from "./views/padded"
+import { YPadded } from "./views/padded"
 import { ColorWheel } from "./views/colorWheel"
 
 export interface ToolBarProps {
@@ -88,7 +88,14 @@ export function BrushDetails(props: ToolBarProps): JSX.Element {
 
     return (
         <div className={Details}>
-            <ColorWheel color={brush.color} />
+            <ColorWheel color={brush.color} onChange={sender.setColor} />
+            <YPadded y={0.5}>
+                <ColorDisplay
+                    color={brush.color}
+                    colorSecondary={brush.colorSecondary}
+                    onClick={() => sender.swapColorFrom(brush.color)}
+                />
+            </YPadded>
             <Labeled label="Size" value={brush.diameterPx.toFixed(1) + "px"}>
                 <Slider
                     percentage={brush.diameterPx / 500}
@@ -137,13 +144,6 @@ export function BrushDetails(props: ToolBarProps): JSX.Element {
                     onChange={pct => sender.setDelay(pct * 500)}
                 />
             </Labeled>
-            <Padded paddingX={0} paddingY={0.5}>
-                <ColorDisplay
-                    color={brush.color}
-                    colorSecondary={brush.colorSecondary}
-                    onClick={() => sender.swapColorFrom(brush.color)}
-                />
-            </Padded>
         </div>
     )
 }

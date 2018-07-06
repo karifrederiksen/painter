@@ -1,5 +1,5 @@
 import { createProgram, getUniformLocation } from "../../web-gl"
-import { Rgb, Vec2 } from "../../data"
+import { Vec2, LinearRgb } from "../../data"
 import { Renderer } from "./renderer"
 
 const INITIAL_VARRAY_SIZE = 5000
@@ -38,8 +38,7 @@ uniform sampler2D u_texture;
 
 void main() {
     float alpha = texture2D(u_texture, v_tex_coords).a;
-    vec4 pixel = v_color * alpha;
-    gl_FragColor = pixel;
+    gl_FragColor = v_color * alpha;
 }
 `
 
@@ -147,6 +146,7 @@ function doubleSize(arr: Float32Array): Float32Array {
 }
 
 function addPoint(arr: Float32Array, offset: number, point: BrushPoint): number {
+    // console.log("addPoint", point.color.r, point.color.g, point.color.b)
     const x = point.position.x
     const y = point.position.y
     const r = point.scaledDiameter * 0.5
@@ -209,7 +209,7 @@ function addCorner(
 }
 
 export interface BrushPoint {
-    readonly color: Rgb
+    readonly color: LinearRgb
     readonly alpha: number
     readonly position: Readonly<Vec2>
     readonly scaledDiameter: number

@@ -1,16 +1,12 @@
-import { Rgb, Color } from "./rgb"
-import { SetOnce } from ".."
+import { Rgb, Color, LinearRgb } from "./rgb"
 
 export class Hsv implements Color {
     static make(h: number, s: number, v: number): Hsv {
         return new Hsv(h, s, v)
     }
 
-    private memoedRgb: Rgb | null
-
-    private constructor(readonly h: number, readonly s: number, readonly v: number) {
-        this.memoedRgb = null
-    }
+    private cachedRgb: Rgb | null = null
+    private constructor(readonly h: number, readonly s: number, readonly v: number) {}
 
     with(
         args: Readonly<{
@@ -43,7 +39,7 @@ export class Hsv implements Color {
     }
 
     toRgb(): Rgb {
-        if (this.memoedRgb !== null) return this.memoedRgb
+        if (this.cachedRgb !== null) return this.cachedRgb
 
         const { h, s, v } = this
         const i = (h * 6) | 0
@@ -87,9 +83,13 @@ export class Hsv implements Color {
                 b = q
                 break
         }
-        const rgb = Rgb.makeFromLinear(r, g, b)
-        this.memoedRgb = rgb
+        const rgb = Rgb.make(r, g, b)
+        this.cachedRgb = rgb
         return rgb
+    }
+
+    toLinearRgb(): LinearRgb {
+        return this.toRgb().toLinear()
     }
 
     toString(): string {

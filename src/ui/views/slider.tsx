@@ -97,12 +97,12 @@ export class Slider extends Inferno.Component<SliderProps> {
         document.body.removeEventListener("mouseup", this.onUp)
     }
 
-    private onDown = (ev: Inferno.MouseEvent<Element>): void => {
+    private onDown = (ev: MouseEvent): void => {
         this.signal(ev)
         this.isDown = true
     }
 
-    private onUp = (ev: MouseEvent): void => {
+    private onUp = (_ev: MouseEvent): void => {
         this.isDown = false
     }
 

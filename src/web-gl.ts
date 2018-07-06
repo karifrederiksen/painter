@@ -18,7 +18,7 @@ export const DEFINE_hsv2rgb = `vec3 hsv2rgb(in vec3 c) {
 
 export const DEFINE_from_linear = `
 vec3 from_linear(in vec3 color) {
-    return pow(color, vec3(2.2)); 
+    return pow(color, vec3(1.0 / 2.2)); 
 }
 `
 

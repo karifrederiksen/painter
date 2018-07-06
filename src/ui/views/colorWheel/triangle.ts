@@ -1,8 +1,10 @@
 import { Hsv } from "../../../data"
-import { createProgram, DEFINE_from_linear } from "../../../web-gl"
+import { createProgram, DEFINE_hsv2rgb } from "../../../web-gl"
 
 const SATVAL_VERT_SRC = `
 precision highp float;
+
+${DEFINE_hsv2rgb}
 
 attribute vec2 a_position;
 attribute vec3 a_color;
@@ -12,7 +14,7 @@ varying vec3 v_color;
 void main() {
     gl_Position = vec4(a_position, 0.0, 1.0);
 
-    v_color = a_color;
+    v_color = hsv2rgb(a_color);
 }
 `
 
@@ -21,10 +23,8 @@ precision highp float;
 
 varying vec3 v_color;
 
-${DEFINE_from_linear}
-
 void main() {
-    gl_FragColor = vec4(from_linear(v_color), 1.0);
+    gl_FragColor = vec4(v_color, 1.0);
 }
 `
 
@@ -64,24 +64,20 @@ export class TriangleRenderer {
         const gl = this.gl
         const arr = this.array
 
-        const fullSat = Hsv.make(color.h, 1.0, 1.0).toRgb()
-        const fullVal = Hsv.make(color.h, 0.0, 1.0).toRgb()
-        const black = Hsv.make(color.h, 0.0, 0.0).toRgb()
+        // color 1 - No saturation
+        arr[2] = color.h
+        arr[3] = 0
+        arr[4] = 1
 
-        // color 1
-        arr[2] = fullSat.r
-        arr[3] = fullSat.g
-        arr[4] = fullSat.b
+        // color 2 - Full saturation
+        arr[7] = color.h
+        arr[8] = 1
+        arr[9] = 1
 
-        // color 2
-        arr[7] = fullVal.r
-        arr[8] = fullVal.g
-        arr[9] = fullVal.b
-
-        // color 3
-        arr[12] = black.r
-        arr[13] = black.g
-        arr[14] = black.b
+        // color 3 - Black
+        arr[12] = color.h
+        arr[13] = 1
+        arr[14] = 0
 
         gl.useProgram(this.program)
         gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.buffer)

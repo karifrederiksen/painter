@@ -1,4 +1,4 @@
-import { T3, T2, PushArray } from "./data"
+import { T3, T2 } from "./data"
 
 // Type definition for requestIdleCallback
 
@@ -25,23 +25,21 @@ declare global {
 
 window.requestIdleCallback =
     window.requestIdleCallback ||
-    function(cb) {
-        var start = Date.now()
-        return setTimeout(function() {
+    ((cb: (opts: RequestIdleCallbackDeadline) => void) => {
+        const start = Date.now()
+        return setTimeout(() => {
             cb({
                 didTimeout: false,
-                timeRemaining: function() {
-                    return Math.max(0, 20 - (Date.now() - start))
-                },
+                timeRemaining: () => Math.max(0, 20 - (Date.now() - start)),
             })
         }, 1)
-    }
+    })
 
 window.cancelIdleCallback =
     window.cancelIdleCallback ||
-    function(id) {
+    (id => {
         clearTimeout(id as any)
-    }
+    })
 
 // ============================================================= //
 // ============================================================= //

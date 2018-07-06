@@ -12,17 +12,20 @@ const wrapperClass = css`
     display: flex;
     align-items: center;
     width: 100%;
-    height: 1.5rem;
+    height: 1rem;
 `
 
 const secondaryClass = css`
-    width: 30%;
-    height: 1.5rem;
+    width: 25%;
+    height: 1rem;
+    margin-right: 5%;
+    border-top-left-radius: 0.75rem;
+    border-bottom-left-radius: 0.75rem;
 `
 
 const primaryClass = css`
     width: 70%;
-    height: 1.5rem;
+    height: 1rem;
     border-top-right-radius: 0.75rem;
     border-bottom-right-radius: 0.75rem;
 `

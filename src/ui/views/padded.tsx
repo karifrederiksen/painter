@@ -1,38 +1,31 @@
 import { InfernoChildren } from "inferno"
 
-export type PaddedProps = PaddedProps1 | PaddedProps2
-
-export interface PaddedProps1 {
-    readonly children: InfernoChildren
-    readonly padding: number
-}
-export interface PaddedProps2 {
-    readonly children: InfernoChildren
-    readonly paddingX: number
-    readonly paddingY: number
+export function XPadded({ x, children }: { x: number; children: InfernoChildren }): JSX.Element {
+    const xStr = x + "rem"
+    return <div style={{ paddingLeft: xStr, paddingRight: xStr }}>{children}</div>
 }
 
-function isVariant1(props: PaddedProps): props is PaddedProps1 {
-    return (props as any)["padding"] !== undefined
+export function YPadded({ y, children }: { y: number; children: InfernoChildren }): JSX.Element {
+    const yStr = y + "rem"
+    return <div style={{ paddingTop: yStr, paddingBottom: yStr }}>{children}</div>
 }
 
-export function Padded(props: PaddedProps): JSX.Element {
-    if (isVariant1(props)) {
-        return <div style={{ padding: props.padding + "rem" }}>{props.children}</div>
-    }
-
-    const px = props.paddingX + "rem"
-    const py = props.paddingY + "rem"
+export function Padded({
+    x,
+    y,
+    children,
+}: {
+    x: number
+    y: number
+    children: InfernoChildren
+}): JSX.Element {
+    const xStr = x + "rem"
+    const yStr = y + "rem"
     return (
         <div
-            style={{
-                paddingLeft: px,
-                paddingRight: px,
-                paddingTop: py,
-                paddingBottom: py,
-            }}
+            style={{ paddingLeft: xStr, paddingTop: yStr, paddingRight: xStr, paddingBottom: yStr }}
         >
-            {props.children}
+            {children}
         </div>
     )
 }

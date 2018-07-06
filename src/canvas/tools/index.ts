@@ -1,5 +1,5 @@
 export { BrushTool } from "./brushtool"
-import { T2, Msg, Case } from "../../data"
+import { T2, Case } from "../../data"
 import { DragState, PointerInput } from "../input"
 import {
     update as brushUpdate,
@@ -13,7 +13,6 @@ import {
     onFrame as brushOnFrame,
 } from "./brushtool"
 import {
-    CameraMsg,
     Camera,
     update as cameraUpdate,
     init as cameraInit,
@@ -114,9 +113,7 @@ export function update(tool: Tool, msg: ToolMsg): Tool {
             return { ...tool, brush: brushUpdate(tool.brush, msg.payload) }
         case ToolMsgType.EraserMsg:
             return { ...tool, eraser: brushUpdate(tool.eraser, msg.payload) }
-        case ToolMsgType.MoveMsg:
-        case ToolMsgType.ZoomMsg:
-        case ToolMsgType.RotateMsg:
+        case ToolMsgType.CameraMsg:
             return { ...tool, camera: cameraUpdate(tool.camera, msg.payload) }
     }
 }
