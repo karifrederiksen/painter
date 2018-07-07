@@ -9,6 +9,7 @@ export * from "./types"
 export * from "./stack"
 export * from "./vec2"
 export * from "./vec4"
+export * from "./functions"
 
 export function t2<a, b>(first: a, second: b): T2<a, b> {
     return [first, second]

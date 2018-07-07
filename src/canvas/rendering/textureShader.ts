@@ -1,5 +1,5 @@
 import { createProgram, getUniformLocation } from "../../web-gl"
-import { Vec2 } from "../../data"
+import { Vec2 } from "../../core"
 import { Renderer } from "./renderer"
 
 const floatsPerVertex = 4

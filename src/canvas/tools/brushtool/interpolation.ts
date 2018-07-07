@@ -1,16 +1,6 @@
 import { BrushTool } from "./index"
-import { Vec2, T2, LinearRgb } from "../../../data"
+import { Vec2, T2, LinearRgb, lerp, distance } from "../../../core"
 import { BrushPoint } from "../../rendering/brushShader"
-
-function distance(x0: number, y0: number, x1: number, y1: number): number {
-    const x = x1 - x0
-    const y = y1 - y0
-    return Math.sqrt(x * x + y * y)
-}
-
-function lerp(pct: number, start: number, end: number): number {
-    return start + (end - start) * pct
-}
 
 export interface InputPoint {
     readonly alpha: number

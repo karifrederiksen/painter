@@ -1,6 +1,6 @@
 import { Renderer } from "./renderer"
 import { Texture } from "./texture"
-import { Rgb, Vec4 } from "../../data"
+import { Rgb, Vec4 } from "../../core"
 import { getUniformLocation, createProgram } from "../../web-gl"
 
 const VERT_SRC = `

@@ -1,4 +1,4 @@
-import { T2 } from "../../../data"
+import { T2 } from "../../../core"
 
 export interface DelayConfig {
     readonly easing: (pct: number) => number

@@ -1,5 +1,5 @@
 export { BrushTool } from "./brushtool"
-import { T2, Case } from "../../data"
+import { T2, Case } from "../../core"
 import { DragState, PointerInput } from "../input"
 import {
     update as brushUpdate,

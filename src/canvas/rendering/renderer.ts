@@ -1,6 +1,6 @@
 import { BlendMode, blendModeMap } from "./blendMode"
 import { BrushShader } from "./brushShader"
-import { Rgb, T2, Vec4, Vec2 } from "../../data"
+import { Rgb, T2, Vec4, Vec2 } from "../../core"
 import { BrushTextureGenerator } from "./brushTextureGenerator"
 import { TextureManager, Texture } from "./texture"
 

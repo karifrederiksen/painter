@@ -12,8 +12,9 @@ import {
     createSender,
 } from "../canvas"
 import { FrameStream, CancelFrameStream } from "../frameStream"
-import { SetOnce } from "../data"
+import { SetOnce } from "../core"
 import { ToolBar, ToolBarTransientState } from "./toolbar"
+import { Layers } from "./layers/index"
 
 export function start(state: CanvasState, frameStream: FrameStream): JSX.Element {
     return <Painter state={state} frameStream={frameStream} />
@@ -28,6 +29,8 @@ export type PainterProps = {
 const uiWrapper = css`
     display: flex;
     flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
     box-sizing: border-box !important;
 
     ** {
@@ -50,6 +53,7 @@ const uiWrapper = css`
     --color-text-light: #ccc;
     --color-text-dark: #333;
     --color-bg-level-0: #555;
+    --color-bg-level-1: #666;
 `
 
 interface PainterState {
@@ -110,7 +114,9 @@ export class Painter extends Inferno.Component<PainterProps, PainterState> {
                     ref={x => (this.htmlCanvas = x)}
                     style={{ cursor: "crosshair" }}
                 />
-                Right side
+                <div style={{ width: "12rem" }}>
+                    <Layers layers={state.persistent.layers} />
+                </div>
             </div>
         )
     }

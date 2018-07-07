@@ -17,7 +17,7 @@ const sunkButton = css`
     background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2));
     padding: 12px 16px;
     border: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.5);
 `
 
 export function SinkableButton(props: {

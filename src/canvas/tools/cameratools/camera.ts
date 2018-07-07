@@ -1,4 +1,4 @@
-import { Vec2, Msg } from "../../../data"
+import { Vec2, Msg } from "../../../core"
 
 export interface Camera {
     readonly offsetPx: Vec2

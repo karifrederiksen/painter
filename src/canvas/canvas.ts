@@ -1,7 +1,7 @@
 import { Renderer } from "./rendering/renderer"
-import { Rgb, Vec4, Msg, Vec2 } from "../data"
+import { Rgb, Vec4, Msg } from "../core"
 import { BrushPoint } from "./rendering/brushShader"
-import { Layers, LayersMsg, LayerMessageSender, createLayerSender } from "./layers"
+import { LayerState, LayersMsg, createLayerSender, LayerMessageSender } from "./layers"
 import { RenderStats, Stats } from "./renderStats"
 import { PointerInput } from "./input/inputListener"
 import {
@@ -28,13 +28,13 @@ export interface CanvasHooks {
 
 export interface CanvasState {
     readonly tool: Tool
-    readonly layers: Layers
+    readonly layers: LayerState
 }
 
 export function defaultState(): CanvasState {
     return {
         tool: toolsInit(),
-        layers: Layers.init(),
+        layers: LayerState.init(),
     }
 }
 

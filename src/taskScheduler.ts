@@ -1,4 +1,4 @@
-import { T3, T2 } from "./data"
+import { T3, T2 } from "./core"
 
 // Type definition for requestIdleCallback
 

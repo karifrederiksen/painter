@@ -1,4 +1,4 @@
-import { Msg } from "../../data/types"
+import { Msg } from "../../core/types"
 import { CameraMsg, CameraMessageSender, createCameraSender } from "./cameratools"
 import { ToolType } from "."
 import { BrushMsg, BrushMessageSender, createBrushSender } from "./brushtool/messages"

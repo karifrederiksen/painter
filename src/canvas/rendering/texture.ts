@@ -1,5 +1,5 @@
 import { Renderer } from "./renderer"
-import { Vec2 } from "../../data"
+import { Vec2 } from "../../core"
 
 // texture
 
