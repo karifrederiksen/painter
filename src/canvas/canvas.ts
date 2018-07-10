@@ -1,5 +1,5 @@
 import { Renderer } from "./rendering/renderer"
-import { Rgb, Vec4, Msg } from "../core"
+import { Rgb, Vec4, Msg } from "core"
 import { BrushPoint } from "./rendering/brushShader"
 import { LayerState, LayersMsg, createLayerSender, LayerMessageSender } from "./layers"
 import { RenderStats, Stats } from "./renderStats"

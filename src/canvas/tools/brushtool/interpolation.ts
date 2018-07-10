@@ -1,5 +1,5 @@
-import { BrushTool } from "./index"
-import { Vec2, T2, LinearRgb, lerp, distance } from "../../../core"
+import { BrushTool } from "."
+import { Vec2, T2, LinearRgb, lerp, distance } from "core"
 import { BrushPoint } from "../../rendering/brushShader"
 
 export interface InputPoint {

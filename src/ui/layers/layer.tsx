@@ -1,5 +1,5 @@
 import { css } from "emotion"
-import { Layer, LayerState, LayerId } from "../../canvas/layers"
+import { Layer, LayerState, LayerId } from "canvas/layers"
 
 export interface LayerViewProps {
     readonly selectedId: LayerId

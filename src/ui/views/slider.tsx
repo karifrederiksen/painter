@@ -1,6 +1,6 @@
 import * as Inferno from "inferno"
 import { css } from "emotion"
-import { Hsv } from "../../data"
+import { Hsv } from "core"
 
 // Generic slider
 

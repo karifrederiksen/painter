@@ -1,4 +1,4 @@
-import { DEFINE_TAU, DEFINE_hsv2rgb, createProgram } from "../../../web-gl"
+import { DEFINE_TAU, DEFINE_hsv2rgb, createProgram } from "core/web-gl"
 
 const RING_VERT_SRC = `
 precision highp float;

@@ -1,7 +1,7 @@
 import { css } from "emotion"
 import * as Inferno from "inferno"
-import { Hsv } from "../../../data"
-import { RingRenderer } from "../colorWheel/ring"
+import { Hsv } from "core"
+import { RingRenderer } from "./ring"
 import { SatValRenderer } from "./satVal"
 
 export type ColorWheelProps = {

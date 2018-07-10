@@ -1,9 +1,9 @@
 import { render } from "inferno"
 import { start } from "./ui"
 import { defaultState } from "./canvas"
-import { frameStream } from "./frameStream"
+import { frameStream } from "./core/frameStream"
 
-// Parcel HMR hooks
+// HMR hooks
 declare global {
     interface NodeModule {
         readonly hot: {

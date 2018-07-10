@@ -8,7 +8,7 @@ import {
     arrUpdate,
     arrInsert,
     arrRemove,
-} from "../core"
+} from "core"
 
 export type LayerId = number
 

@@ -1,4 +1,4 @@
-import { T2, Vec2, Hsv, LinearRgb } from "../../../core"
+import { T2, Vec2, Hsv, LinearRgb } from "core"
 import { InterpolatorState, InputPoint, interpolate, init as interpInit } from "./interpolation"
 import { DelayState, BrushInput, DelayConfig } from "./brushDelay"
 import * as brushDelay from "./brushDelay"

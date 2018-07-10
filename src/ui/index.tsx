@@ -10,11 +10,11 @@ import {
     update as canvasUpate,
     MessageSender,
     createSender,
-} from "../canvas"
-import { FrameStream, CancelFrameStream } from "../frameStream"
-import { SetOnce } from "../core"
+} from "canvas"
+import { FrameStream, CancelFrameStream } from "core/frameStream"
+import { SetOnce } from "core"
 import { ToolBar, ToolBarTransientState } from "./toolbar"
-import { Layers } from "./layers/index"
+import { Layers } from "./layers"
 
 export function start(state: CanvasState, frameStream: FrameStream): JSX.Element {
     return <Painter state={state} frameStream={frameStream} />

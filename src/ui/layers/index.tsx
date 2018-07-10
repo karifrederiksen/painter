@@ -1,6 +1,6 @@
 import * as Inferno from "inferno"
 import { css } from "emotion"
-import { LayerState, Layer } from "../../canvas/layers"
+import { LayerState, Layer } from "canvas/layers"
 import { LayerView } from "./layer"
 
 export interface LayersProps {

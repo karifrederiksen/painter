@@ -1,5 +1,6 @@
 import { Rgb, Color } from "./rgb"
 import { Hsv } from "./hsv"
+import { toLinear, fromLinear } from "./utility"
 
 export function toGrayScalar(color: Color): number {
     const rgb = color.toRgb()
@@ -41,12 +42,4 @@ export function toHsv(color: Color): Hsv {
     }
     h /= 6
     return Hsv.make(h, s, v)
-}
-
-export function toLinear(val: number): number {
-    return val ** 2.2
-}
-
-export function fromLinear(val: number): number {
-    return val ** (1 / 2.2)
 }

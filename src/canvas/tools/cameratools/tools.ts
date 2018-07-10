@@ -1,6 +1,6 @@
 import { Camera, CameraMsg, CameraMsgType } from "./camera"
-import { DragState, PointerInput } from "../../input"
-import { Vec2 } from "../../../core"
+import { DragState, PointerInput } from "canvas/input"
+import { Vec2 } from "core"
 
 export function zoomToolUpdate(
     camera: Camera,

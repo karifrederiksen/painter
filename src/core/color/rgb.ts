@@ -1,4 +1,4 @@
-import { fromLinear, toLinear } from "./convert"
+import { toLinear } from "./utility"
 
 export interface Color {
     toRgb(): Rgb

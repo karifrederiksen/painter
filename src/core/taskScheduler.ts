@@ -1,4 +1,4 @@
-import { T3, T2 } from "./core"
+import { T3, T2 } from "./types"
 
 // Type definition for requestIdleCallback
 

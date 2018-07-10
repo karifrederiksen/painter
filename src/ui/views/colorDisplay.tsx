@@ -1,4 +1,4 @@
-import { Hsv } from "../../data"
+import { Hsv } from "core"
 import { css } from "emotion"
 
 export type ColorDisplay = {

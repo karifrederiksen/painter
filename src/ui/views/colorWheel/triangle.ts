@@ -1,5 +1,5 @@
-import { Hsv } from "../../../data"
-import { createProgram, DEFINE_hsv2rgb } from "../../../web-gl"
+import { Hsv } from "core"
+import { createProgram, DEFINE_hsv2rgb } from "core/web-gl"
 
 const SATVAL_VERT_SRC = `
 precision highp float;

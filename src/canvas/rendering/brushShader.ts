@@ -1,5 +1,5 @@
-import { createProgram, getUniformLocation } from "../../web-gl"
-import { Vec2, LinearRgb } from "../../core"
+import { createProgram, getUniformLocation } from "core/web-gl"
+import { Vec2, LinearRgb } from "core"
 import { Renderer } from "./renderer"
 
 const INITIAL_VARRAY_SIZE = 5000

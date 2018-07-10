@@ -1,6 +1,5 @@
 import { css } from "emotion"
-import { Tool, MessageSender } from "../canvas"
-import { ToolType } from "../canvas/tools"
+import { Tool, MessageSender, ToolType } from "canvas"
 import { SinkableButton } from "./views/buttons"
 import { Labeled } from "./views/labeled"
 import { Slider } from "./views/slider"

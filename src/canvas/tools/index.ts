@@ -1,5 +1,6 @@
 export { BrushTool } from "./brushtool"
-import { T2, Case } from "../../core"
+export { Camera } from "./cameratools"
+import { T2, Case } from "core"
 import { DragState, PointerInput } from "../input"
 import {
     update as brushUpdate,

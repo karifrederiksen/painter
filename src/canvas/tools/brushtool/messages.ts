@@ -1,4 +1,4 @@
-import { Msg, Hsv } from "../../../core"
+import { Msg, Hsv } from "core"
 
 export const enum BrushMsgType {
     SetDiameter,
