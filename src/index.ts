@@ -8,7 +8,7 @@ declare global {
     interface NodeModule {
         readonly hot: {
             // Module or one of its dependencies was just updated
-            accept(cb: () => void): void
+            accept(deps: string | ReadonlyArray<string>, cb: () => void): void
 
             // Module is about to be replaced
             dispose(cb: () => void): void
@@ -16,10 +16,18 @@ declare global {
     }
 }
 
+function renderUI(root: HTMLElement | null) {
+    render(start(defaultState(), frameStream), rootElement)
+}
+
+function unrenderUI() {
+    render(null, rootElement)
+}
+
 // Start
 
 const rootElement = document.getElementById("canvas-root")
-render(start(defaultState(), frameStream), rootElement)
+renderUI(rootElement)
 
 /* tslint:disable-next-line */
 var lastDisposeTime: number
@@ -31,7 +39,8 @@ if (module.hot) {
         }
 
         console.log("disposing of everything")
-        render(null, rootElement)
+        unrenderUI()
+        renderUI(rootElement)
         lastDisposeTime = performance.now()
     })
 }
