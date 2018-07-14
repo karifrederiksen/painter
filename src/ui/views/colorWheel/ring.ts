@@ -53,7 +53,7 @@ export class RingRenderer {
         gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.buffer)
         gl.bufferData(
             WebGLRenderingContext.ARRAY_BUFFER,
-            new Uint8Array([1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, -1.0]),
+            new Float32Array([1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, -1.0]),
             WebGLRenderingContext.STATIC_DRAW
         )
         gl.bindAttribLocation(this.program, 0, "a_position")
@@ -64,7 +64,7 @@ export class RingRenderer {
         gl.useProgram(this.program)
         gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.buffer)
 
-        gl.vertexAttribPointer(0, 2, WebGLRenderingContext.BYTE, false, 0, 0)
+        gl.vertexAttribPointer(0, 2, WebGLRenderingContext.FLOAT, false, 0, 0)
         gl.enableVertexAttribArray(0)
 
         gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, 4)
