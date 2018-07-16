@@ -8,6 +8,7 @@ import {
     arrUpdate,
     arrInsert,
     arrRemove,
+    Stack,
 } from "core"
 
 export type LayerId = number
@@ -40,12 +41,10 @@ export class LeafLayer {
         readonly opacity?: number
         readonly isHidden?: boolean
     }): LeafLayer {
-        return new LeafLayer(
-            this.id,
-            orDefault(args.name, this.name),
-            orDefault(args.opacity, this.opacity),
-            orDefault(args.isHidden, this.isHidden)
-        )
+        const name = orDefault(args.name, this.name)
+        const opacity = orDefault(args.opacity, this.opacity)
+        const isHidden = orDefault(args.isHidden, this.isHidden)
+        return new LeafLayer(this.id, name, opacity, isHidden)
     }
 }
 
@@ -144,27 +143,32 @@ export class GroupLayer {
         if (selectedPath.tail.isNonEmpty()) {
             if (selected.isLeaf) throw "Invariant violation"
 
-            return this.withChildren(
-                arrUpdate(this.children, index, selected.insert(selectedPath.tail, leaf))
-            )
+            const newSelected = selected.insert(selectedPath.tail, leaf)
+            const newChildren = arrUpdate(this.children, index, newSelected)
+            return this.withChildren(newChildren)
+        } else {
+            return this.withChildren(arrInsert(this.children, index, leaf))
         }
-
-        return this.withChildren(arrInsert(this.children, index, leaf))
     }
 
-    remove(selectedPath: NonEmptyStack<number>): GroupLayer {
+    remove(selectedPath: NonEmptyStack<number>): T2<GroupLayer, Stack<number>> {
         const index = selectedPath.head
         const selected = this.children[index]
 
         if (selectedPath.tail.isNonEmpty()) {
             if (selected.isLeaf) throw "Invariant violation"
 
-            return this.withChildren(
-                arrUpdate(this.children, index, selected.remove(selectedPath.tail))
-            )
-        }
+            const [newSelected, newSelectedPath] = selected.remove(selectedPath.tail)
+            const newChildren = arrUpdate(this.children, index, newSelected)
+            return [this.withChildren(newChildren), newSelectedPath.cons(index)]
+        } else {
+            const newChildren = this.withChildren(arrRemove(this.children, index))
+            if (newChildren.children.length === 0) return [newChildren, new EmptyStack()]
 
-        return this.withChildren(arrRemove(this.children, index))
+            const newIndex = this.children.length === index + 1 ? index - 1 : index
+            const newSelectedPath = index === newIndex ? selectedPath : NonEmptyStack.of(newIndex)
+            return [newChildren, newSelectedPath]
+        }
     }
 
     update<a extends Layer>(
@@ -177,13 +181,14 @@ export class GroupLayer {
         if (selectedPath.tail.isNonEmpty()) {
             if (selected.isLeaf) throw "Invariant violation"
 
-            return this.withChildren(
-                arrUpdate(this.children, index, selected.update(selectedPath.tail, updateFn))
-            )
+            const newSelected = selected.update(selectedPath.tail, updateFn)
+            const newChildren = arrUpdate(this.children, index, newSelected)
+            return this.withChildren(newChildren)
+        } else {
+            const newSelected = updateFn(selected as a)
+            const newChildren = arrUpdate(this.children, index, newSelected)
+            return this.withChildren(newChildren)
         }
-
-        // Note: :-/
-        return updateFn(this as any) as any
     }
 
     collectLeaves(array: PushArray<CollectedLayer>, context: CollectLeavesContext): void {
@@ -259,15 +264,14 @@ export class LayerState {
     static init(): LayerState {
         const leaf = LeafLayer.init(getNextLayerId())
         const group = GroupLayer.init(getNextLayerId()).withChildren([leaf])
-        return new LayerState(group, new EmptyStack<number>().cons(0), 1)
+        return new LayerState(group, new EmptyStack<number>().cons(0))
     }
 
     private splitLayers: SplitLayers | null = null
 
     private constructor(
         readonly layers: GroupLayer,
-        readonly selectedPath: NonEmptyStack<number>,
-        readonly leafCount: number
+        readonly selectedPath: NonEmptyStack<number>
     ) {}
 
     current(): Layer {
@@ -286,23 +290,22 @@ export class LayerState {
                 return this.current().id === msg.payload ? this : this.select(msg.payload)
 
             case LayersMsgType.SetOpacity: {
-                const msgLayerId = msg.payload[0]
-                const opacity = msg.payload[1]
+                const [msgLayerId, opacity] = msg.payload
                 const current = this.current()
 
                 return current.id === msgLayerId
-                    ? this
-                    : this.updateCurrent(x => x.with({ opacity }))
+                    ? this.updateCurrent(x => x.with({ opacity }))
+                    : this
             }
 
             case LayersMsgType.SetHidden: {
-                const msgLayerId = msg.payload[0]
-                const isHidden = msg.payload[1]
+                const [msgLayerId, isHidden] = msg.payload
                 const current = this.current()
+                console.log("isHidden", current.isHidden, isHidden)
 
                 return current.id === msgLayerId
-                    ? this
-                    : this.updateCurrent(x => x.with({ isHidden }))
+                    ? this.updateCurrent(x => x.with({ isHidden }))
+                    : this
             }
         }
     }
@@ -345,13 +348,13 @@ export class LayerState {
         const path = this.layers.findPath(id)
         if (path === null) return this
 
-        return new LayerState(this.layers, path, this.leafCount)
+        return new LayerState(this.layers, path)
     }
 
     private newLayer(): LayerState {
         const layers = this.layers.insert(this.selectedPath, LeafLayer.init(getNextLayerId()))
 
-        return new LayerState(layers, this.selectedPath, this.leafCount + 1)
+        return new LayerState(layers, this.selectedPath)
     }
 
     // newGroup(): LayerState {
@@ -359,18 +362,18 @@ export class LayerState {
     // }
 
     private removeCurrent(): LayerState {
-        const layers = this.layers.remove(this.selectedPath)
         const current = this.current()
-        const leafCount = this.leafCount - (current.isLeaf ? 1 : 0)
-        return new LayerState(layers, this.selectedPath, leafCount)
+        const [newLayers, newSelectedPath] = this.layers.remove(this.selectedPath)
+
+        if (newSelectedPath.isNonEmpty()) return new LayerState(newLayers, newSelectedPath)
+
+        const oldIndex = this.selectedPath.head
+        const newIndex = newLayers.children.length <= oldIndex ? oldIndex : oldIndex - 1
+        return new LayerState(newLayers, NonEmptyStack.of(newIndex))
     }
 
     private updateCurrent<a extends Layer>(updateFn: (layer: a) => a): LayerState {
-        return new LayerState(
-            this.layers.update(this.selectedPath, updateFn),
-            this.selectedPath,
-            this.leafCount
-        )
+        return new LayerState(this.layers.update(this.selectedPath, updateFn), this.selectedPath)
     }
 }
 

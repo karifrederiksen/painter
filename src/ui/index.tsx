@@ -15,6 +15,7 @@ import { FrameStream, CancelFrameStream } from "core/frameStream"
 import { SetOnce } from "core"
 import { ToolBar, ToolBarTransientState } from "./toolbar"
 import { Layers } from "./layers"
+import { cssVars } from "ui/css"
 
 export function start(state: CanvasState, frameStream: FrameStream): JSX.Element {
     return <Painter state={state} frameStream={frameStream} />
@@ -40,20 +41,6 @@ const uiWrapper = css`
         outline: none;
         box-sizing: inherit;
     }
-
-    --color-primary: #aa5bc6;
-    --color-primary-highlight: #fa71fc;
-    --color-default-light: #ccc;
-    --color-default: #777;
-    --color-default-dark: #333;
-    --color-success: #7a7;
-    --color-warning: #aa7;
-    --color-danger: #a77;
-    --color-info: #77a;
-    --color-text-light: #ccc;
-    --color-text-dark: #333;
-    --color-bg-level-0: #555;
-    --color-bg-level-1: #666;
 `
 
 interface PainterState {
@@ -101,7 +88,7 @@ export class Painter extends Inferno.Component<PainterProps, PainterState> {
     render() {
         const state = this.state as PainterState
         return (
-            <div className={uiWrapper}>
+            <div className={`${uiWrapper} ${cssVars}`}>
                 <ToolBar
                     tool={state.persistent.tool}
                     transientState={state.transient.toolBar}
@@ -114,8 +101,8 @@ export class Painter extends Inferno.Component<PainterProps, PainterState> {
                     ref={x => (this.htmlCanvas = x)}
                     style={{ cursor: "crosshair" }}
                 />
-                <div style={{ width: "12rem" }}>
-                    <Layers layers={state.persistent.layers} />
+                <div style={{ width: "14rem" }}>
+                    <Layers layers={state.persistent.layers} sender={this.sender.layer} />
                 </div>
             </div>
         )

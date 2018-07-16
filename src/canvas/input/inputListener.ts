@@ -74,16 +74,16 @@ function listenForPointers(canvas: HTMLCanvasElement, listeners: Listeners): Rem
         }
     }
 
-    document.body.addEventListener("pointerdown", checkPressureSupport)
+    window.addEventListener("pointerdown", checkPressureSupport)
     canvas.addEventListener("pointerdown", pointerDown)
-    canvas.addEventListener("pointerup", pointerUp)
-    canvas.addEventListener("pointermove", pointerMove)
+    window.addEventListener("pointerup", pointerUp)
+    window.addEventListener("pointermove", pointerMove)
 
     return () => {
-        document.body.removeEventListener("pointerdown", checkPressureSupport)
+        window.removeEventListener("pointerdown", checkPressureSupport)
         canvas.removeEventListener("pointerdown", pointerDown)
-        canvas.removeEventListener("pointerup", pointerUp)
-        canvas.removeEventListener("pointermove", pointerMove)
+        window.removeEventListener("pointerup", pointerUp)
+        window.removeEventListener("pointermove", pointerMove)
     }
 }
 
@@ -133,13 +133,13 @@ function listenForMouse(canvas: HTMLCanvasElement, listeners: Listeners): Remove
     }
 
     canvas.addEventListener("mousedown", mouseDown)
-    canvas.addEventListener("mouseup", mouseUp)
-    canvas.addEventListener("mousemove", mouseMove)
+    window.addEventListener("mouseup", mouseUp)
+    window.addEventListener("mousemove", mouseMove)
 
     return () => {
         canvas.removeEventListener("mousedown", mouseDown)
-        canvas.removeEventListener("mouseup", mouseUp)
-        canvas.removeEventListener("mousemove", mouseMove)
+        window.removeEventListener("mouseup", mouseUp)
+        window.removeEventListener("mousemove", mouseMove)
     }
 }
 

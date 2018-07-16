@@ -5,7 +5,7 @@ const unsunkButton = css`
     background-color: rgba(0, 0, 0, 0);
     padding: 12px 16px;
     border: 0;
-    border-bottom: 1px solid transparent;
+    border-bottom: 2px solid transparent;
     transition: background-color 0.15s;
 
     &:hover {

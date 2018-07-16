@@ -1,6 +1,7 @@
 import * as Inferno from "inferno"
 import { css } from "emotion"
 import { Hsv } from "core"
+import { CSS_COLOR_DEFAULT, CSS_COLOR_PRIMARY, Rem } from "ui/css"
 
 // Generic slider
 
@@ -26,7 +27,7 @@ const baseLineClass = css`
     height: 2px;
     top: 50%;
     transform: translate(0, -50%);
-    background-color: var(--color-default);
+    background-color: ${CSS_COLOR_DEFAULT};
     z-index: 0;
 `
 
@@ -36,7 +37,7 @@ const filledLineClass = css`
     height: 2px;
     top: 50%;
     transform: translate(0, -50%);
-    background-color: var(--color-default-light);
+    background-color: ${CSS_COLOR_PRIMARY};
     z-index: 1;
 `
 
@@ -47,8 +48,10 @@ const buttonClass = css`
     width: 0.75rem;
     height: 0.75rem;
     transform: translate(0, -50%);
-    background-color: var(--color-default-light);
+    background-color: ${CSS_COLOR_PRIMARY};
     z-index: 2;
+    box-shadow: 0 1px 5px 0 rgba(0, 0, 0, 0.2), 0 2px 2px 0 rgba(0, 0, 0, 0.14),
+        0 3px 1px -2px rgba(0, 0, 0, 0.12);
 `
 
 function clamp(x: number, min: number, max: number): number {
@@ -62,6 +65,7 @@ export class Slider extends Inferno.Component<SliderProps> {
     render(): JSX.Element {
         const props = this.props
         const color = props.color !== undefined ? props.color.toRgb().toCss() : undefined
+        const percentage = Math.max(0, Math.min(1, props.percentage))
         return (
             <div
                 className={containerClass}
@@ -71,14 +75,14 @@ export class Slider extends Inferno.Component<SliderProps> {
                 <div
                     className={buttonClass}
                     style={{
-                        left: "calc(" + props.percentage * 100 + "% - 0.3725rem",
+                        left: "calc(" + percentage + " * calc(100% - 0.75rem))",
                         backgroundColor: color,
                     }}
                 />
                 <div
                     className={filledLineClass}
                     style={{
-                        width: props.percentage * 100 + "%",
+                        width: percentage * 100 + "%",
                         backgroundColor: color,
                     }}
                 />
@@ -112,8 +116,11 @@ export class Slider extends Inferno.Component<SliderProps> {
 
     private signal(ev: MouseEvent): void {
         const bounds = this.container!.getBoundingClientRect()
-        const localX = clamp(ev.clientX - bounds.left, 0, bounds.width)
+        const dotWidth = Rem * 0.75
+        const width = bounds.width - dotWidth
 
-        this.props.onChange(localX / bounds.width)
+        const localX = clamp(ev.clientX - bounds.left - dotWidth / 2, 0, width)
+
+        this.props.onChange(localX / width)
     }
 }

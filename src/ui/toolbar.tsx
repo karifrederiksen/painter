@@ -8,6 +8,8 @@ import { InlineLabeled } from "./views/inlineLabeled"
 import { ColorDisplay } from "./views/colorDisplay"
 import { YPadded } from "./views/padded"
 import { ColorWheel } from "./views/colorWheel"
+import { Rgb, toHsv } from "core"
+import { CSS_COLOR_TEXT_LIGHT, CSS_COLOR_BG_LEVEL_0, CSS_COLOR_BG_LEVEL_1 } from "ui/css"
 
 export interface ToolBarProps {
     readonly messageSender: MessageSender
@@ -30,8 +32,8 @@ const LeftBar = css`
 
 const ToolBarContainer = css`
     display: flex;
-    background-color: var(--color-bg-level-0);
-    color: var(--color-text-light);
+    background-color: ${CSS_COLOR_BG_LEVEL_1};
+    color: ${CSS_COLOR_TEXT_LIGHT};
 `
 
 export function ToolBar(props: ToolBarProps): JSX.Element {
@@ -77,7 +79,7 @@ const Details = css`
     flex-direction: column;
     width: 12rem;
     padding: 0.5rem 0.75rem;
-    border-left: 0.25rem solid rgba(0, 0, 0, 0.4);
+    border-left: 0.25rem solid ${CSS_COLOR_BG_LEVEL_0};
 `
 
 export function BrushDetails(props: ToolBarProps): JSX.Element {
@@ -93,6 +95,20 @@ export function BrushDetails(props: ToolBarProps): JSX.Element {
                     color={brush.color}
                     colorSecondary={brush.colorSecondary}
                     onClick={() => sender.swapColorFrom(brush.color)}
+                />
+            </YPadded>
+            <YPadded y={0.5}>
+                <input
+                    type="text"
+                    defaultValue={brush.color.toRgb().toCss()}
+                    value={brush.color.toRgb().toCss()}
+                    style={{ width: "100%" }}
+                    oninput={text => {
+                        const rgb = Rgb.fromCss((text.target as any).value)
+                        if (rgb === null) return
+
+                        sender.setColor(toHsv(rgb))
+                    }}
                 />
             </YPadded>
             <Labeled label="Size" value={brush.diameterPx.toFixed(1) + "px"}>

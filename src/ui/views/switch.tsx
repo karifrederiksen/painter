@@ -1,4 +1,5 @@
 import { css } from "emotion"
+import { CSS_COLOR_DEFAULT_HIGHLIGHT, CSS_COLOR_PRIMARY, CSS_COLOR_DEFAULT } from "ui/css"
 
 export type SwitchProps = {
     readonly checked: boolean
@@ -31,6 +32,7 @@ const switchButtonClass = css`
 `
 
 const switchBarClass = css`
+    background-color: ${CSS_COLOR_DEFAULT};
     display: block;
     width: 1.75rem;
     height: 0.75rem;
@@ -40,7 +42,7 @@ const switchBarClass = css`
 `
 
 export function Switch({ checked, color, onCheck }: SwitchProps): JSX.Element {
-    const color_ = color || "var(--color-primary)"
+    const color_ = color || CSS_COLOR_PRIMARY
     return (
         <span className={switchClass} onClick={() => onCheck(!checked)}>
             <span
@@ -54,17 +56,11 @@ export function Switch({ checked, color, onCheck }: SwitchProps): JSX.Element {
                 <span
                     className={switchButtonClass}
                     style={{
-                        backgroundColor: checked ? color_ : "var(--color-default-light)",
+                        backgroundColor: checked ? color_ : CSS_COLOR_DEFAULT_HIGHLIGHT,
                     }}
                 />
             </span>
-            <span
-                className={switchBarClass}
-                style={{
-                    backgroundColor: checked ? color_ : "var(--color-default)",
-                    opacity: checked ? 0.5 : 1,
-                }}
-            />
+            <span className={switchBarClass} />
         </span>
     )
 }
