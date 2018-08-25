@@ -1,34 +1,34 @@
-import { css } from "emotion"
-import { InfernoChildren, VNode } from "inferno"
+import * as React from "react"
+import styled from "styled-components"
 
 export interface RowProps {
     readonly spacing?: string
-    readonly children: ReadonlyArray<VNode | string>
+    readonly children: ReadonlyArray<React.ReactChild>
 }
 
-const rowClass = css`
+const Row_ = styled.div`
     display: flex;
     flex-direction: row;
 `
 
-const colClass = css`
+const Col_ = styled.div`
     width: 100%;
 `
 
 export function Row({ spacing, children }: RowProps): JSX.Element {
     spacing = spacing || "0"
-    const spacedChildren = new Array<VNode | string>(children.length)
+    const spacedChildren = new Array<React.ReactChild>(children.length)
 
     if (children.length > 0) {
-        spacedChildren[0] = <div className={colClass}>{children[0]}</div>
+        spacedChildren[0] = <Col_ key="0">{children[0]}</Col_>
         for (let i = 1; i < children.length; i++) {
             spacedChildren[i] = (
-                <div className={colClass} style={{ marginLeft: spacing }}>
+                <Col_ key={i.toString()} style={{ marginLeft: spacing }}>
                     {children[i]}
-                </div>
+                </Col_>
             )
         }
     }
 
-    return <div className={rowClass}>{spacedChildren}</div>
+    return <Row_>{spacedChildren}</Row_>
 }

@@ -2,35 +2,36 @@
 <html lang="en">
 
 <head>
-    <meta charset="utf-8">
-    <title>Painter</title>
-    <style>
-  html {
-    background-color: #777;
-    box-sizing: border-box;
-    font-size: 16px;
-  }
-
-  @media (max-width: 900px) {
+  <meta charset="utf-8">
+  <title>Painter</title>
+  <style>
     html {
-      font-size: 14px;
+      background-color: #777;
+      box-sizing: border-box;
+      font-size: 16px;
     }
-  }
 
-  * {
-    margin: 0;
-    padding: 0;
-    border: 0;
-    outline: none;
-    font-family: "Helvetica", "Arial", sans-serif;
-    box-sizing: inherit;
-  }
-</style>
+    @media (max-width: 900px) {
+      html {
+        font-size: 14px;
+      }
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      border: 0;
+      outline: none;
+      font-family: "Helvetica", "Arial", sans-serif;
+      box-sizing: inherit;
+    }
+  </style>
 </head>
 
 <body>
-    <div id="canvas-root"></div>
-    <script src="bundle.js"></script>
+  <div id="canvas-root"></div>
+  <!-- <script src="https://unpkg.com/@webcomponents/webcomponentsjs@2.0.0/webcomponents-loader.js"></script> -->
+  <script src="main.js"></script>
 </body>
 
 </html>

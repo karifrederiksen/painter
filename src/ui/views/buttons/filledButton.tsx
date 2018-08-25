@@ -1,5 +1,5 @@
-import { InfernoChildren } from "inferno"
-import { css } from "emotion"
+import * as React from "react"
+import styled from "styled-components"
 import {
     CSS_COLOR_DEFAULT,
     CSS_COLOR_DEFAULT_HIGHLIGHT,
@@ -8,7 +8,7 @@ import {
     CSS_COLOR_PRIMARY,
 } from "ui/css"
 
-const buttonCommon = css`
+const ButtonCommon = styled.button`
     cursor: pointer;
     display: inline-flex;
     justify-content: center;
@@ -25,8 +25,7 @@ const buttonCommon = css`
     line-height: 1.4em;
 `
 
-const primaryButtonClass = css`
-    ${buttonCommon};
+export const PrimaryButton = styled(ButtonCommon)`
     background-color: ${CSS_COLOR_PRIMARY};
     color: ${CSS_COLOR_TEXT_DARK};
     box-shadow: 0 1px 5px 0 rgba(0, 0, 0, 0.2), 0 2px 2px 0 rgba(0, 0, 0, 0.14),
@@ -37,8 +36,7 @@ const primaryButtonClass = css`
     }
 `
 
-const defaultButtonClass = css`
-    ${buttonCommon};
+export const DefaultButton = styled(ButtonCommon)`
     background-color: ${CSS_COLOR_DEFAULT};
     color: ${CSS_COLOR_TEXT_LIGHTEST};
     box-shadow: 0 1px 5px 0 rgba(0, 0, 0, 0.2), 0 2px 2px 0 rgba(0, 0, 0, 0.14),
@@ -49,25 +47,3 @@ const defaultButtonClass = css`
         color: ${CSS_COLOR_TEXT_DARK};
     }
 `
-
-export interface ButtonsProps {
-    readonly onClick: () => void
-    readonly children: InfernoChildren
-    readonly tooltip?: string
-}
-
-export function PrimaryButton(props: ButtonsProps): JSX.Element {
-    return (
-        <button className={primaryButtonClass} onclick={props.onClick} title={props.tooltip}>
-            {props.children}
-        </button>
-    )
-}
-
-export function DefaultButton(props: ButtonsProps): JSX.Element {
-    return (
-        <button className={defaultButtonClass} onclick={props.onClick} title={props.tooltip}>
-            {props.children}
-        </button>
-    )
-}

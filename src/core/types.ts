@@ -43,3 +43,5 @@ export interface Msg<type, payload = undefined> {
     readonly type: type
     readonly payload: payload
 }
+
+export type Brand<a, brand> = a & { "@..brand": brand }

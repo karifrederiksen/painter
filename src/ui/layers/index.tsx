@@ -1,4 +1,5 @@
-import { css } from "emotion"
+import * as React from "react"
+import styled from "styled-components"
 import { LayerState, LayerMessageSender } from "canvas/layers"
 import { LayerView } from "./layer"
 import { DefaultButton } from "ui/views/buttons/filledButton"
@@ -14,14 +15,14 @@ export interface LayersProps {
     readonly sender: LayerMessageSender
 }
 
-const layersWrapper = css`
+const LayersWrapper = styled.div`
     background-color: ${CSS_COLOR_BG_LEVEL_0};
     height: 100%;
     padding: 0.5rem 0;
     color: ${CSS_COLOR_TEXT_LIGHT};
 `
 
-const layersListWrapper = css`
+const LayersListWrapper = styled.div`
     padding: 0.5rem;
 
     & > :not(:first-child) {
@@ -29,7 +30,7 @@ const layersListWrapper = css`
     }
 `
 
-const layersControlsWrapper = css`
+const LayersControlsWrapper = styled.div`
     background-color: ${CSS_COLOR_BG_LEVEL_1};
     display: flex;
     flex-direction: column;
@@ -42,15 +43,15 @@ export function Layers({ layers, sender }: LayersProps): JSX.Element {
     const current = layers.current()
 
     return (
-        <div className={layersWrapper}>
-            <div className={layersControlsWrapper}>
+        <LayersWrapper>
+            <LayersControlsWrapper>
                 <Row spacing="0.25rem">
-                    <DefaultButton onClick={() => sender.newLayer(current.id)} tooltip="New layer">
+                    <DefaultButton onClick={() => sender.newLayer(current.id)} title="New layer">
                         New
                     </DefaultButton>
                     <DefaultButton
                         onClick={() => sender.removeLayer(current.id)}
-                        tooltip="Remove layer"
+                        title="Remove layer"
                     >
                         Delete
                     </DefaultButton>
@@ -67,19 +68,17 @@ export function Layers({ layers, sender }: LayersProps): JSX.Element {
                         percentage={current.opacity}
                     />
                 </Labeled>
-            </div>
-            <div className={layersListWrapper}>
+            </LayersControlsWrapper>
+            <LayersListWrapper>
                 {topLayers.map(x => (
-                    <div>
-                        <LayerView
-                            layer={x}
-                            onClick={id => sender.selectLayer(id)}
-                            selectedId={current.id}
-                            key={x.id}
-                        />
-                    </div>
+                    <LayerView
+                        layer={x}
+                        onClick={id => sender.selectLayer(id)}
+                        selectedId={current.id}
+                        key={x.id}
+                    />
                 ))}
-            </div>
-        </div>
+            </LayersListWrapper>
+        </LayersWrapper>
     )
 }

@@ -1,5 +1,5 @@
-import * as Inferno from "inferno"
-import { css } from "emotion"
+import * as React from "react"
+import styled from "styled-components"
 import { Hsv } from "core"
 import { CSS_COLOR_DEFAULT, CSS_COLOR_PRIMARY, Rem } from "ui/css"
 
@@ -11,7 +11,7 @@ export type SliderProps = {
     readonly color?: Hsv
 }
 
-const containerClass = css`
+const Container = styled.div`
     cursor: pointer;
     margin: 0.25rem 0;
     padding: 0.25rem 0;
@@ -19,7 +19,7 @@ const containerClass = css`
     position: relative;
 `
 
-const baseLineClass = css`
+const BaseLine = styled.div`
     cursor: pointer;
     position: absolute;
     width: 100%;
@@ -31,7 +31,7 @@ const baseLineClass = css`
     z-index: 0;
 `
 
-const filledLineClass = css`
+const FilledLineClass = styled.div`
     cursor: pointer;
     position: absolute;
     height: 2px;
@@ -41,7 +41,7 @@ const filledLineClass = css`
     z-index: 1;
 `
 
-const buttonClass = css`
+const ButtonClass = styled.div`
     cursor: pointer;
     position: absolute;
     border-radius: 50%;
@@ -58,7 +58,9 @@ function clamp(x: number, min: number, max: number): number {
     return x < min ? min : x > max ? max : x
 }
 
-export class Slider extends Inferno.Component<SliderProps> {
+type WithClientX = Readonly<{ clientX: number }>
+
+export class Slider extends React.Component<SliderProps> {
     private container: HTMLDivElement | null = null
     private isDown: boolean = false
 
@@ -67,32 +69,30 @@ export class Slider extends Inferno.Component<SliderProps> {
         const color = props.color !== undefined ? props.color.toRgb().toCss() : undefined
         const percentage = Math.max(0, Math.min(1, props.percentage))
         return (
-            <div
-                className={containerClass}
-                onmousedown={this.onDown}
-                ref={el => (this.container = el)}
-            >
-                <div
-                    className={buttonClass}
-                    style={{
-                        left: "calc(" + percentage + " * calc(100% - 0.75rem))",
-                        backgroundColor: color,
-                    }}
-                />
-                <div
-                    className={filledLineClass}
-                    style={{
-                        width: percentage * 100 + "%",
-                        backgroundColor: color,
-                    }}
-                />
-                <div className={baseLineClass} />
-            </div>
+            <Container>
+                <div onMouseDown={this.onDown} ref={el => (this.container = el)}>
+                    <ButtonClass
+                        style={{
+                            left: "calc(" + percentage + " * calc(100% - 0.75rem))",
+                            backgroundColor: color,
+                        }}
+                    />
+                    <FilledLineClass
+                        style={{
+                            width: percentage * 100 + "%",
+                            backgroundColor: color,
+                        }}
+                    />
+                    <BaseLine />
+                </div>
+            </Container>
         )
     }
 
     componentDidMount(): void {
-        document.body.addEventListener("mousemove", this.onMove, { passive: true })
+        document.body.addEventListener("mousemove", this.onMove, {
+            passive: true,
+        })
         document.body.addEventListener("mouseup", this.onUp, { passive: true })
     }
 
@@ -101,20 +101,20 @@ export class Slider extends Inferno.Component<SliderProps> {
         document.body.removeEventListener("mouseup", this.onUp)
     }
 
-    private onDown = (ev: MouseEvent): void => {
+    private onDown = (ev: WithClientX): void => {
         this.signal(ev)
         this.isDown = true
     }
 
-    private onUp = (_ev: MouseEvent): void => {
+    private onUp = (): void => {
         this.isDown = false
     }
 
-    private onMove = (ev: MouseEvent): void => {
+    private onMove = (ev: WithClientX): void => {
         if (this.isDown) this.signal(ev)
     }
 
-    private signal(ev: MouseEvent): void {
+    private signal(ev: WithClientX): void {
         const bounds = this.container!.getBoundingClientRect()
         const dotWidth = Rem * 0.75
         const width = bounds.width - dotWidth

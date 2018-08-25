@@ -1,4 +1,6 @@
-import { css } from "emotion"
+import * as React from "react"
+
+import styled from "styled-components"
 import { Tool, MessageSender, ToolType } from "canvas"
 import { SinkableButton } from "./views/buttons"
 import { Labeled } from "./views/labeled"
@@ -17,7 +19,7 @@ export interface ToolBarProps {
     readonly transientState: ToolBarTransientState
 }
 
-const LeftBar = css`
+const LeftBar = styled.div`
     display: flex;
     flex-direction: column;
     padding-top: 1rem;
@@ -30,7 +32,7 @@ const LeftBar = css`
     }
 `
 
-const ToolBarContainer = css`
+const ToolBarContainer = styled.div`
     display: flex;
     background-color: ${CSS_COLOR_BG_LEVEL_1};
     color: ${CSS_COLOR_TEXT_LIGHT};
@@ -41,8 +43,8 @@ export function ToolBar(props: ToolBarProps): JSX.Element {
     const setTool = props.messageSender.tool.setTool
 
     return (
-        <div className={ToolBarContainer}>
-            <div className={LeftBar}>
+        <ToolBarContainer>
+            <LeftBar>
                 <SinkableButton
                     dataKey="brush"
                     onClick={() => setTool(ToolType.Brush)}
@@ -64,9 +66,9 @@ export function ToolBar(props: ToolBarProps): JSX.Element {
                 >
                     🔍
                 </SinkableButton>
-            </div>
+            </LeftBar>
             {props.transientState.isDetailsExpanded ? <BrushDetails {...props} /> : null}
-        </div>
+        </ToolBarContainer>
     )
 }
 
@@ -74,7 +76,7 @@ export interface ToolBarTransientState {
     readonly isDetailsExpanded: boolean
 }
 
-const Details = css`
+const Details = styled.div`
     display: flex;
     flex-direction: column;
     width: 12rem;
@@ -88,7 +90,7 @@ export function BrushDetails(props: ToolBarProps): JSX.Element {
     const color = brush.color
 
     return (
-        <div className={Details}>
+        <Details>
             <ColorWheel color={brush.color} onChange={sender.setColor} />
             <YPadded y={0.5}>
                 <ColorDisplay
@@ -100,10 +102,9 @@ export function BrushDetails(props: ToolBarProps): JSX.Element {
             <YPadded y={0.5}>
                 <input
                     type="text"
-                    defaultValue={brush.color.toRgb().toCss()}
                     value={brush.color.toRgb().toCss()}
                     style={{ width: "100%" }}
-                    oninput={text => {
+                    onChange={text => {
                         const rgb = Rgb.fromCss((text.target as any).value)
                         if (rgb === null) return
 
@@ -159,6 +160,6 @@ export function BrushDetails(props: ToolBarProps): JSX.Element {
                     onChange={pct => sender.setDelay(pct * 500)}
                 />
             </Labeled>
-        </div>
+        </Details>
     )
 }

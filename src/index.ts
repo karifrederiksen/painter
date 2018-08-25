@@ -1,4 +1,4 @@
-import { render } from "inferno"
+import * as ReactDOM from "react-dom"
 import { start } from "./ui"
 import { defaultState } from "./canvas"
 import { frameStream } from "./core/frameStream"
@@ -16,17 +16,18 @@ declare global {
     }
 }
 
-function renderUI(root: HTMLElement | null) {
-    render(start(defaultState(), frameStream), rootElement)
-}
-
-function unrenderUI() {
-    render(null, rootElement)
-}
-
 // Start
 
 const rootElement = document.getElementById("canvas-root")
+
+if (!rootElement) {
+    throw "canvas-root not found"
+}
+
+const renderUI = (root: HTMLElement | null) => ReactDOM.render(start(frameStream), rootElement)
+
+const unrenderUI = () => ReactDOM.unmountComponentAtNode(rootElement)
+
 renderUI(rootElement)
 
 /* tslint:disable-next-line */

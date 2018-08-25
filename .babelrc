@@ -1,12 +1,8 @@
 {
-    "presets": [["env", { "modules": false }]],
+    "presets": [["env", { "modules": false }], "react"],
     "plugins": [
+        ["styled-components", { "displayName": true }],
         ["transform-inline-environment-variables", { "include": ["NODE_ENV"] }],
-        [
-            "babel-plugin-inferno",
-            {
-                "imports": true
-            }
-        ]
+        "transform-runtime"
     ]
 }

@@ -1,12 +1,12 @@
-import { VNode } from "inferno"
-import { css } from "emotion"
+import * as React from "react"
+import styled from "styled-components"
 
 export type InlineLabeledProps = {
     readonly label: string
-    readonly children: VNode | Element
+    readonly children: React.ReactChild
 }
 
-const containerClass = css`
+const Container = styled.div`
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -15,7 +15,7 @@ const containerClass = css`
     width: 100%;
 `
 
-const labelClass = css`
+const Label = styled.div`
     color: inherit;
     text-overflow: ellipsis;
     overflow: hidden;
@@ -26,9 +26,9 @@ const labelClass = css`
 
 export function InlineLabeled({ children, label }: InlineLabeledProps): JSX.Element {
     return (
-        <div className={containerClass}>
-            <div className={labelClass}>{label}</div>
+        <Container>
+            <Label>{label}</Label>
             {children}
-        </div>
+        </Container>
     )
 }

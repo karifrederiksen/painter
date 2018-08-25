@@ -1,4 +1,4 @@
-import { css } from "emotion"
+import styled from "styled-components"
 
 export const Rem = 16
 
@@ -15,7 +15,7 @@ export const CSS_COLOR_BG_LEVEL_0 = "var(--color-bg-level-0)"
 export const CSS_COLOR_BG_LEVEL_1 = "var(--color-bg-level-1)"
 export const CSS_COLOR_BG_LEVEL_2 = "var(--color-bg-level-2)"
 
-export const cssVars = css`
+export const CssVars = styled.div`
     --color-primary: rgb(191, 151, 255);
     --color-primary-highlight: rgb(255, 159, 255);
     --color-default: rgb(135, 135, 135);

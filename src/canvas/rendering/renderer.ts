@@ -3,6 +3,7 @@ import { BrushShader } from "./brushShader"
 import { Rgb, T2, Vec4, Vec2 } from "core"
 import { BrushTextureGenerator } from "./brushTextureGenerator"
 import { TextureManager, Texture } from "./texture"
+import { TextureShader } from "canvas/rendering/textureShader"
 
 const contextAttributes: WebGLContextAttributes = {
     antialias: false,
@@ -20,6 +21,7 @@ export interface Compatibility {
 
 export interface Shaders {
     readonly brushTextureGenerator: BrushTextureGenerator
+    readonly textureShader: TextureShader
 }
 
 export class Renderer {
@@ -59,12 +61,18 @@ export class Renderer {
             return null
         }
 
-        const shaders: Shaders = { brushTextureGenerator }
+        const textureShader = TextureShader.create(gl)
+        if (textureShader === null) {
+            console.error("Failed to initialize TextureShader")
+            return null
+        }
+
+        const shaders: Shaders = { brushTextureGenerator, textureShader }
 
         return new Renderer(gl, compat, shaders, initState(gl))
     }
 
-    private textureManager: TextureManager
+    private readonly textureManager: TextureManager
 
     private constructor(
         readonly gl: WebGLRenderingContext,

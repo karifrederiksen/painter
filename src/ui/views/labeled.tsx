@@ -1,28 +1,28 @@
-import { VNode } from "inferno"
-import { css } from "emotion"
+import * as React from "react"
+import styled from "styled-components"
 
 export type LabeledProps = {
     readonly label: string
     readonly value?: string
-    readonly children: VNode | Element
+    readonly children: React.ReactChild
 }
 
-const containerClass = css`
+const Container = styled.div`
     color: inherit;
     margin: 0.5rem 0;
     width: 100%;
 `
 
-const labelClass = css`
+const Label = styled.p`
     color: inherit;
     margin-bottom: 0.25rem;
 `
 
-const contentClass = css`
+const Content = styled.div`
     width: 100%;
 `
 
-const textContainer = css`
+const TextContainer = styled.div`
     display: flex;
     justify-content: space-between;
     color: inherit;
@@ -32,12 +32,12 @@ const textContainer = css`
 
 export function Labeled({ children, label, value }: LabeledProps): JSX.Element {
     return (
-        <div className={containerClass}>
-            <div className={textContainer}>
-                <p className={labelClass}>{label}</p>
-                <p className={labelClass}>{value}</p>
-            </div>
-            <div className={contentClass}>{children}</div>
-        </div>
+        <Container>
+            <TextContainer>
+                <Label>{label}</Label>
+                <Label>{value}</Label>
+            </TextContainer>
+            <Content>{children}</Content>
+        </Container>
     )
 }

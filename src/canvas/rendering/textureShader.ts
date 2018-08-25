@@ -46,8 +46,7 @@ export interface TextureArgs {
 }
 
 export class TextureShader {
-    static create(renderer: Renderer): TextureShader | null {
-        const gl = renderer.gl
+    static create(gl: WebGLRenderingContext): TextureShader | null {
         const program = createProgram(gl, VERT_SRC, FRAG_SRC)
         if (program === null) return null
 

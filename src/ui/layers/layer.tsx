@@ -1,13 +1,7 @@
-import { css } from "emotion"
+import * as React from "react"
+import styled from "styled-components"
 import { Layer, LayerId } from "canvas/layers"
-import {
-    CSS_COLOR_TEXT_DARK,
-    CSS_COLOR_TEXT_LIGHT,
-    CSS_COLOR_BG_LEVEL_1,
-    CSS_COLOR_DEFAULT_HIGHLIGHT,
-    CSS_COLOR_DEFAULT,
-    CSS_COLOR_TEXT_LIGHTEST,
-} from "ui/css"
+import { CSS_COLOR_TEXT_LIGHT, CSS_COLOR_BG_LEVEL_1, CSS_COLOR_TEXT_LIGHTEST } from "ui/css"
 
 export interface LayerViewProps {
     readonly selectedId: LayerId
@@ -15,7 +9,7 @@ export interface LayerViewProps {
     readonly onClick: (id: LayerId) => void
 }
 
-const layerWrapper = css`
+const LayerWrapper = styled.div`
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -26,7 +20,7 @@ const layerWrapper = css`
     transition: all 150ms;
 `
 
-const unselectedLayerWrapper = css`
+const UnselectedLayerWrapper = styled(LayerWrapper)`
     cursor: pointer;
     background-color: ${CSS_COLOR_BG_LEVEL_1};
     color: ${CSS_COLOR_TEXT_LIGHT};
@@ -36,59 +30,53 @@ const unselectedLayerWrapper = css`
     }
 `
 
-const selectedLayerWrapper = css`
+const SelectedLayerWrapper = styled(LayerWrapper)`
     background-color: ${CSS_COLOR_BG_LEVEL_1};
     color: ${CSS_COLOR_TEXT_LIGHTEST};
     box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.2), 0 4px 2px 0 rgba(0, 0, 0, 0.14),
         0 6px 1px -2px rgba(0, 0, 0, 0.12);
-    margin-left: -0.5rem;
+    margin-left: -0.25rem;
 `
 
-const layerLeft = css`
+const LayerLeft = styled.div`
     height: 3rem;
     width: 3rem;
     margin-right: 0.5rem;
     background-color: #789;
 `
-const layerRight = css`
+const LayerRight = styled.div`
     display: flex;
     flex-direction: column;
     margin-right: 0.5rem;
 `
 
-const layerName = css`
+const LayerName = styled.div`
     font-size: 1rem;
 `
 
-const layerOpacity = css`
+const LayerOpacity = styled.div`
     font-size: 0.75rem;
 `
 
 export function LayerView({ layer, selectedId, onClick }: LayerViewProps): JSX.Element {
     const isSelected = selectedId === layer.id
+    const Container = isSelected ? SelectedLayerWrapper : UnselectedLayerWrapper
     return (
-        <div
-            className={`${layerWrapper} ${
-                isSelected ? selectedLayerWrapper : unselectedLayerWrapper
-            }`}
-            onclick={() => onClick(layer.id)}
-        >
-            <div className={layerLeft} />
-            <div className={layerRight}>
-                <div className={layerName}>
-                    {layer.name !== "" ? layer.name : "Layer " + layer.id}
-                </div>
-                {layer.isHidden ? (
-                    <div className={layerOpacity}>
+        <Container onClick={() => onClick(layer.id)}>
+            <LayerLeft />
+            <LayerRight>
+                <LayerName>{layer.name !== "" ? layer.name : "Layer " + layer.id}</LayerName>
+                <LayerOpacity>
+                    {layer.isHidden ? (
                         <span>Hidden</span>
-                    </div>
-                ) : (
-                    <div className={layerOpacity}>
-                        <span>Opacity: </span>
-                        <span>{layer.opacity.toFixed(2)} </span>
-                    </div>
-                )}
-            </div>
-        </div>
+                    ) : (
+                        <span>
+                            <span>Opacity: </span>
+                            <span>{layer.opacity.toFixed(2)} </span>
+                        </span>
+                    )}
+                </LayerOpacity>
+            </LayerRight>
+        </Container>
     )
 }

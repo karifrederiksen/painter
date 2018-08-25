@@ -10,7 +10,7 @@ export interface DecodeErr<a> {
 
 export type DecodeResult<a> = DecodeOk<a> | DecodeErr<a>
 
-export type DecoderBlock<a> = (val: any) => DecodeResult<a>
+export type DecoderBlock<a> = (val: unknown) => DecodeResult<a>
 
 export function ok<a>(value: a): DecodeResult<a> {
     return { isOk: true, value }
@@ -20,19 +20,19 @@ export function err<a extends never>(): DecodeResult<a> {
     return { isOk: false, value: null }
 }
 
-export function bool(val: any): DecodeResult<boolean> {
+export function bool(val: unknown): DecodeResult<boolean> {
     return typeof val === "boolean" ? ok(val) : err()
 }
 
-export function int(val: any): DecodeResult<number> {
+export function int(val: unknown): DecodeResult<number> {
     return typeof val === "number" && Number.isInteger(val) ? ok(val) : err()
 }
 
-export function number(val: any): DecodeResult<number> {
+export function number(val: unknown): DecodeResult<number> {
     return typeof val === "number" ? ok(val) : err()
 }
 
-export function string(val: any): DecodeResult<string> {
+export function string(val: unknown): DecodeResult<string> {
     return typeof val === "string" ? ok(val) : err()
 }
 
@@ -40,7 +40,7 @@ export function nullable<a>(decoder: DecoderBlock<a>): DecoderBlock<a | null> {
     return val => nullable_(decoder, val)
 }
 
-function nullable_<a>(decoder: DecoderBlock<a>, val: any): DecodeResult<a | null> {
+function nullable_<a>(decoder: DecoderBlock<a>, val: unknown): DecodeResult<a | null> {
     return val === null ? ok(null) : decoder(val)
 }
 
@@ -48,7 +48,7 @@ export function maybe<a>(decoder: DecoderBlock<a>): DecoderBlock<a | undefined> 
     return val => maybe_(decoder, val)
 }
 
-function maybe_<a>(decoder: DecoderBlock<a>, val: any): DecodeResult<a | undefined> {
+function maybe_<a>(decoder: DecoderBlock<a>, val: unknown): DecodeResult<a | undefined> {
     return val === undefined ? ok(undefined) : decoder(val)
 }
 
@@ -56,7 +56,7 @@ export function array<a>(decode: DecoderBlock<a>): DecoderBlock<Array<a>> {
     return val => array_(decode, val)
 }
 
-function array_<a>(decode: DecoderBlock<a>, val: any): DecodeResult<Array<a>> {
+function array_<a>(decode: DecoderBlock<a>, val: unknown): DecodeResult<Array<a>> {
     if (typeof val !== "object" || !Array.isArray(val)) return err()
 
     const arr: Array<a> = []
@@ -102,7 +102,7 @@ export function tuple2<a, b>(
 function tuple2_<a, b>(
     decoder1: DecoderBlock<a>,
     decoder2: DecoderBlock<b>,
-    val: any
+    val: unknown
 ): DecodeResult<[a, b]> {
     if (typeof val !== "object" || !Array.isArray(val) || val.length < 2) return err()
 
@@ -120,7 +120,7 @@ export function oneOf<a>(decoders: ReadonlyArray<DecoderBlock<a>>): DecoderBlock
     return val => oneOf_(decoders, val)
 }
 
-function oneOf_<a>(decoders: ReadonlyArray<DecoderBlock<a>>, val: any): DecodeResult<a> {
+function oneOf_<a>(decoders: ReadonlyArray<DecoderBlock<a>>, val: unknown): DecodeResult<a> {
     for (let i = 0; i < decoders.length; i++) {
         const res = decoders[i](val)
         if (res.isOk) return res
@@ -132,7 +132,11 @@ export function map<a, b>(decoder: DecoderBlock<a>, transform: (val: a) => b): D
     return val => map_(decoder, transform, val)
 }
 
-function map_<a, b>(decoder: DecoderBlock<a>, transform: (val: a) => b, val: any): DecodeResult<b> {
+function map_<a, b>(
+    decoder: DecoderBlock<a>,
+    transform: (val: a) => b,
+    val: unknown
+): DecodeResult<b> {
     const res = decoder(val)
     return res.isOk ? ok(transform(res.value)) : err()
 }
@@ -147,7 +151,7 @@ export function filter<a>(
 function filter_<a>(
     decoder: DecoderBlock<a>,
     predicate: (val: a) => boolean,
-    val: any
+    val: unknown
 ): DecodeResult<a> {
     const res = decoder(val)
     if (!res.isOk) return res
@@ -167,7 +171,7 @@ export function extend<a, b>(
 function extend_<a, b>(
     decoder: DecoderBlock<a>,
     transform: (val: a) => DecodeResult<b>,
-    val: any
+    val: unknown
 ): DecodeResult<b> {
     const baseRes = decoder(val)
     return baseRes.isOk ? transform(baseRes.value) : err()
@@ -191,6 +195,6 @@ function decodeJson<a>(decoder: DecoderBlock<a>, json: string): DecodeResult<a> 
     }
 }
 
-export function decodeValue<a>(decoder: DecoderBlock<a>, value: any): DecodeResult<a> {
+export function decodeValue<a>(decoder: DecoderBlock<a>, value: unknown): DecodeResult<a> {
     return decoder(value)
 }

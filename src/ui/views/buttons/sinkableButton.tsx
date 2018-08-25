@@ -1,7 +1,7 @@
-import { InfernoChildren } from "inferno"
-import { css } from "emotion"
+import * as React from "react"
+import styled from "styled-components"
 
-const unsunkButton = css`
+const UnsunkButton = styled.button`
     background-color: rgba(0, 0, 0, 0);
     padding: 12px 16px;
     border: 0;
@@ -13,7 +13,7 @@ const unsunkButton = css`
     }
 `
 
-const sunkButton = css`
+const SunkButton = styled.button`
     background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2));
     padding: 12px 16px;
     border: 0;
@@ -24,16 +24,13 @@ export function SinkableButton(props: {
     readonly onClick: () => void
     readonly onDownClick?: () => void
     readonly isDown: boolean
-    readonly children: InfernoChildren
+    readonly children: React.ReactNode
     readonly dataKey: string
 }): JSX.Element {
+    const El = props.isDown ? SunkButton : UnsunkButton
     return (
-        <button
-            className={props.isDown ? sunkButton : unsunkButton}
-            key={props.dataKey}
-            onClick={props.isDown ? props.onDownClick : props.onClick}
-        >
+        <El key={props.dataKey} onClick={props.isDown ? props.onDownClick : props.onClick}>
             {props.children}
-        </button>
+        </El>
     )
 }

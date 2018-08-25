@@ -1,5 +1,6 @@
+import * as React from "react"
 import { Hsv } from "core"
-import { css } from "emotion"
+import styled from "styled-components"
 
 export type ColorDisplay = {
     readonly color: Hsv
@@ -7,7 +8,7 @@ export type ColorDisplay = {
     readonly onClick: () => void
 }
 
-const wrapperClass = css`
+const Container = styled.div`
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -15,7 +16,7 @@ const wrapperClass = css`
     height: 1rem;
 `
 
-const secondaryClass = css`
+const Secondary = styled.span`
     width: 25%;
     height: 1rem;
     margin-right: 5%;
@@ -25,7 +26,7 @@ const secondaryClass = css`
         0 6px 1px -2px rgba(0, 0, 0, 0.12);
 `
 
-const primaryClass = css`
+const Primary = styled.span`
     width: 70%;
     height: 1rem;
     border-top-right-radius: 0.75rem;
@@ -36,19 +37,17 @@ const primaryClass = css`
 
 export function ColorDisplay({ color, colorSecondary, onClick }: ColorDisplay): JSX.Element {
     return (
-        <div className={wrapperClass} onClick={onClick}>
-            <span
-                className={secondaryClass}
+        <Container onClick={onClick}>
+            <Secondary
                 style={{
                     backgroundColor: colorSecondary.toRgb().toCss(),
                 }}
             />
-            <span
-                className={primaryClass}
+            <Primary
                 style={{
                     backgroundColor: color.toRgb().toCss(),
                 }}
             />
-        </div>
+        </Container>
     )
 }

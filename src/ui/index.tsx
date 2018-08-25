@@ -1,5 +1,5 @@
-import * as Inferno from "inferno"
-import { css } from "emotion"
+import * as React from "react"
+import styled from "styled-components"
 
 import {
     Canvas,
@@ -10,14 +10,16 @@ import {
     update as canvasUpate,
     MessageSender,
     createSender,
+    defaultState,
 } from "canvas"
 import { FrameStream, CancelFrameStream } from "core/frameStream"
 import { SetOnce } from "core"
 import { ToolBar, ToolBarTransientState } from "./toolbar"
 import { Layers } from "./layers"
-import { cssVars } from "ui/css"
+import { CssVars } from "ui/css"
 
-export function start(state: CanvasState, frameStream: FrameStream): JSX.Element {
+export function start(frameStream: FrameStream): JSX.Element {
+    const state = defaultState()
     return <Painter state={state} frameStream={frameStream} />
 }
 
@@ -27,7 +29,7 @@ export type PainterProps = {
     //readonly messageStream: (handler: (msg: CanvasMsg) => void) => void
 }
 
-const uiWrapper = css`
+const Wrapper = styled(CssVars)`
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -58,7 +60,7 @@ function initTransient(): TransientState {
     }
 }
 
-export class Painter extends Inferno.Component<PainterProps, PainterState> {
+class Painter extends React.Component<PainterProps, PainterState> {
     private removeInputListeners: SetOnce<RemoveListeners>
     private cancelFrameStream: SetOnce<CancelFrameStream>
     private canvas: SetOnce<Canvas>
@@ -88,7 +90,7 @@ export class Painter extends Inferno.Component<PainterProps, PainterState> {
     render() {
         const state = this.state as PainterState
         return (
-            <div className={`${uiWrapper} ${cssVars}`}>
+            <Wrapper>
                 <ToolBar
                     tool={state.persistent.tool}
                     transientState={state.transient.toolBar}
@@ -104,7 +106,7 @@ export class Painter extends Inferno.Component<PainterProps, PainterState> {
                 <div style={{ width: "14rem" }}>
                     <Layers layers={state.persistent.layers} sender={this.sender.layer} />
                 </div>
-            </div>
+            </Wrapper>
         )
     }
 

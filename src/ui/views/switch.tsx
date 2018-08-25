@@ -1,4 +1,5 @@
-import { css } from "emotion"
+import * as React from "react"
+import styled from "styled-components"
 import { CSS_COLOR_DEFAULT_HIGHLIGHT, CSS_COLOR_PRIMARY, CSS_COLOR_DEFAULT } from "ui/css"
 
 export type SwitchProps = {
@@ -7,20 +8,20 @@ export type SwitchProps = {
     readonly color?: string
 }
 
-const switchClass = css`
+const Switch_ = styled.span`
     cursor: pointer;
     display: inline-flex;
     margin: 0.5rem 0;
 `
 
-const switchButtonContainerClass = css`
+const SwitchButtonContainer = styled.span`
     display: inline-flex;
     position: absolute;
     z-index: 2;
     transition: 150ms transform;
 `
 
-const switchButtonClass = css`
+const SwitchButton = styled.span`
     cursor: pointer;
     width: 1rem;
     height: 1rem;
@@ -31,7 +32,7 @@ const switchButtonClass = css`
         0 3px 1px -2px rgba(0, 0, 0, 0.12);
 `
 
-const switchBarClass = css`
+const SwitchBar = styled.span`
     background-color: ${CSS_COLOR_DEFAULT};
     display: block;
     width: 1.75rem;
@@ -44,23 +45,21 @@ const switchBarClass = css`
 export function Switch({ checked, color, onCheck }: SwitchProps): JSX.Element {
     const color_ = color || CSS_COLOR_PRIMARY
     return (
-        <span className={switchClass} onClick={() => onCheck(!checked)}>
-            <span
-                className={switchButtonContainerClass}
+        <Switch_ onClick={() => onCheck(!checked)}>
+            <SwitchButtonContainer
                 style={{
                     transform: checked
                         ? "translate(0.75rem, -0.125rem)"
                         : "translate(0, -0.125rem)",
                 }}
             >
-                <span
-                    className={switchButtonClass}
+                <SwitchButton
                     style={{
                         backgroundColor: checked ? color_ : CSS_COLOR_DEFAULT_HIGHLIGHT,
                     }}
                 />
-            </span>
-            <span className={switchBarClass} />
-        </span>
+            </SwitchButtonContainer>
+            <SwitchBar />
+        </Switch_>
     )
 }

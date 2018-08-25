@@ -1,9 +1,9 @@
 import { Renderer } from "./renderer"
-import { Vec2 } from "core"
+import { Vec2, Brand } from "core"
 
 // texture
 
-export type TextureId = number
+export type TextureId = Brand<number, "TextureId">
 
 export class Texture {
     constructor(
@@ -13,7 +13,7 @@ export class Texture {
         private __size: Vec2
     ) {}
 
-    get size(): Readonly<Vec2> {
+    get size(): Vec2 {
         return this.__size
     }
 
@@ -68,9 +68,12 @@ export interface Bindings {
     [index: number]: Binding | null
 }
 
-export class TextureManager {
-    private static nextTextureId = 1
+const getNextTextureId: () => TextureId = (() => {
+    let nextTextureId = 1
+    return () => nextTextureId++ as TextureId
+})()
 
+export class TextureManager {
     readonly textures: Map<TextureId, Texture>
     readonly bindings: Bindings
 
@@ -90,7 +93,7 @@ export class TextureManager {
         const framebuf = gl.createFramebuffer()
         if (framebuf === null) throw "Failed to create FrameBuffer"
 
-        const texture = new Texture(TextureManager.nextTextureId++, webglTex, framebuf, size)
+        const texture = new Texture(getNextTextureId(), webglTex, framebuf, size)
 
         console.log("created texture with id", texture.id)
 

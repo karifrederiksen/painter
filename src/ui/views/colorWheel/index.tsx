@@ -1,5 +1,5 @@
-import { css } from "emotion"
-import * as Inferno from "inferno"
+import * as React from "react"
+import styled from "styled-components"
 import { Hsv } from "core"
 import { RingRenderer } from "./ring"
 import { SatValRenderer } from "./satVal"
@@ -9,7 +9,7 @@ export type ColorWheelProps = {
     readonly onChange: (color: Hsv) => void
 }
 
-const containerClass = css`
+const Container = styled.div`
     display: flex;
     justify-content: center;
     width: 100%;
@@ -22,8 +22,15 @@ const enum PointerState {
 }
 
 const MARGIN = (1 - 0.55) / 2
+type WithClientXY = Readonly<{
+    clientX: number
+    clientY: number
+}>
 
-export class ColorWheel extends Inferno.Component<ColorWheelProps> {
+/* tslint:disable-next-line */
+const noOp = () => {}
+
+export class ColorWheel extends React.Component<ColorWheelProps> {
     private container: HTMLDivElement | null = null
     private pointerState: PointerState = PointerState.Default
     private gl: WebGLRenderingContext | null = null
@@ -32,13 +39,11 @@ export class ColorWheel extends Inferno.Component<ColorWheelProps> {
 
     render(): JSX.Element {
         return (
-            <div
-                className={containerClass}
-                onMouseDown={this.onDown}
-                ref={el => (this.container = el)}
-            >
-                <canvas width="160" height="160" ref={this.initialize} />
-            </div>
+            <Container>
+                <div onMouseDown={this.onDown} ref={el => (this.container = el)}>
+                    <canvas width="160" height="160" ref={this.initialize} />
+                </div>
+            </Container>
         )
     }
 
@@ -81,7 +86,7 @@ export class ColorWheel extends Inferno.Component<ColorWheelProps> {
         this.satValRenderer!.render(this.props.color)
     }
 
-    private onDown = (ev: MouseEvent): void => {
+    private onDown = (ev: WithClientXY): void => {
         const bounds = this.container!.getBoundingClientRect()
         const x = clamp(ev.clientX - bounds.left, 0, bounds.width)
         const y = clamp(ev.clientY - bounds.top, 0, bounds.height)
@@ -102,11 +107,11 @@ export class ColorWheel extends Inferno.Component<ColorWheelProps> {
         }
     }
 
-    private onUp = (_ev: MouseEvent): void => {
+    private onUp = (_ev: WithClientXY): void => {
         this.pointerState = PointerState.Default
     }
 
-    private onMove = (ev: MouseEvent): void => {
+    private onMove = (ev: WithClientXY): void => {
         switch (this.pointerState) {
             case PointerState.Default:
                 break
@@ -119,7 +124,7 @@ export class ColorWheel extends Inferno.Component<ColorWheelProps> {
         }
     }
 
-    private signalOuter(ev: MouseEvent) {
+    private signalOuter(ev: WithClientXY) {
         // get xy delta from the center of the ring
         const bounds = this.container!.getBoundingClientRect()
         const x = ev.clientX - bounds.left - bounds.width * 0.5
@@ -136,7 +141,7 @@ export class ColorWheel extends Inferno.Component<ColorWheelProps> {
         this.props.onChange(color)
     }
 
-    private signalInner(ev: MouseEvent): void {
+    private signalInner(ev: WithClientXY): void {
         const bounds = this.container!.getBoundingClientRect()
         const marginX = bounds.width * MARGIN
         const marginY = bounds.height * MARGIN

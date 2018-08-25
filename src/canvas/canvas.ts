@@ -19,6 +19,7 @@ import { TextureShader } from "./rendering/textureShader"
 import { ToolMessageSender, createToolSender } from "./tools/messages"
 import { OutputShader } from "./rendering/outputShader"
 import { Texture } from "./rendering/texture"
+import { CombinedLayers } from "canvas/rendering/combinedLayers"
 
 export interface CanvasHooks {
     // readonly onCanvasSnapshot: (snapshot: Snapshot) => void
@@ -73,25 +74,22 @@ export class Canvas {
         const stroke = Stroke.create(renderer)
         if (stroke === null) return null
 
-        const texShader = TextureShader.create(renderer)
-        if (texShader === null) return null
-
         const outputShader = OutputShader.create(renderer)
         if (outputShader === null) return null
 
         const outputTexture = renderer.createTexture(renderer.getCanvasResolution())
 
-        return new Canvas(canvas, renderer, stroke, texShader, hooks, outputTexture, outputShader)
+        return new Canvas(canvas, renderer, stroke, hooks, outputTexture, outputShader)
     }
 
     private readonly renderWrapper: RenderStats
+    private readonly combineLayers: CombinedLayers
     private hasRendered: boolean = false
 
     private constructor(
         readonly canvasElement: HTMLCanvasElement,
         private readonly renderer: Renderer,
         private readonly stroke: Stroke,
-        private readonly textureShader: TextureShader,
         private readonly hooks: CanvasHooks,
         private readonly outputTexture: Texture,
         private readonly outputShader: OutputShader
@@ -101,6 +99,7 @@ export class Canvas {
             outputFrequency: 100,
             onStats: this.hooks.onStats,
         })
+        this.combineLayers = new CombinedLayers(renderer, renderer.getCanvasResolution())
     }
 
     onClick(tool: Tool, input: PointerInput): Tool {
@@ -142,7 +141,7 @@ export class Canvas {
     }
 
     private endFrame_ = (_state: CanvasState): void => {
-        const { renderer, stroke, textureShader, outputTexture, outputShader } = this
+        const { renderer, stroke, outputTexture, outputShader, combineLayers } = this
         if (stroke.shader.canFlush) {
             stroke.render(renderer)
         }
@@ -158,7 +157,7 @@ export class Canvas {
         renderer.clear()
 
         const textureIndex = renderer.bindTexture(stroke.texture)
-        textureShader.render(renderer, {
+        renderer.shaders.textureShader.render(renderer, {
             resolution,
             textureIndex,
             x0: 0,

@@ -9,9 +9,10 @@ import {
     arrInsert,
     arrRemove,
     Stack,
+    Brand,
 } from "core"
 
-export type LayerId = number
+export type LayerId = Brand<number, "LayerId">
 
 export interface CollectedLayer {
     readonly id: LayerId
@@ -377,7 +378,7 @@ export class LayerState {
     }
 }
 
-const getNextLayerId: () => number = (() => {
+const getNextLayerId: () => LayerId = (() => {
     let layerId = 1
-    return () => layerId++
+    return () => layerId++ as LayerId
 })()
