@@ -20,14 +20,23 @@ describe("Color transforms work according to the sample data", () => {
         expect(colorSamplesResults.isOk).toBe(true)
     })
 
-    const floatEq = (l: number, r: number) => Math.abs(l - r) < 0.000001
+    const roughEq = (l: number, r: number) => {
+        const marginOfError = 0.00001
+        const d = l - r
+        return d < marginOfError && d > -marginOfError
+    }
 
     const rgbRoughEq = (l: color.Rgb, r: color.Rgb) =>
-        floatEq(l.r, r.r) && floatEq(l.g, r.g) && floatEq(l.b, r.b)
+        roughEq(l.r, r.r) && roughEq(l.g, r.g) && roughEq(l.b, r.b)
 
     const samplesRoughEq = (l: ReadonlyArray<color.Rgb>, r: ReadonlyArray<color.Rgb>) => {
+        if (l.length !== r.length) return false
+
         for (let i = 0; i < l.length; i++) {
-            if (!rgbRoughEq(l[i], r[i])) return false
+            if (!rgbRoughEq(l[i], r[i])) {
+                //console.log("!", l[i], r[i])
+                return false
+            }
         }
         return true
     }

@@ -157,7 +157,7 @@ function tuple3_<a, b, c>(
     const second = decoder2(val[1])
     if (!second.isOk) return err()
 
-    const third = decoder3(val[1])
+    const third = decoder3(val[2])
     if (!third.isOk) return err()
 
     const tup: [a, b, c] = [first.value, second.value, third.value]

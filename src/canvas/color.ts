@@ -19,7 +19,6 @@ export interface Color {
     toRgb(): Rgb
     toStyle(): string
 }
-
 export class Rgb implements Color {
     static White = new Rgb(1, 1, 1)
     static Black = new Rgb(0, 0, 0)
@@ -27,8 +26,10 @@ export class Rgb implements Color {
     static fromCss(css: string): Rgb | null {
         css = css.replace(/[ \t]/, "")
         if (css.startsWith("rgb(")) return parseRgbCss(css.substr(4, css.length - 5))
-        if (css.startsWith("#")) return parseHexCss(css.substr(1))
-        return null
+        if (css.startsWith("#")) {
+            return parseHexCss(css.substr(1))
+        }
+        return parseHexCss(css)
     }
 
     constructor(readonly r: number, readonly g: number, readonly b: number) {}
@@ -209,8 +210,7 @@ function radiansToDegrees(rad: number) {
 }
 
 function lengthOfRayUntilIntersect(theta: number, vec: Vec2) {
-    const { x: m1, y: b1 } = vec
-    const length = b1 / (Math.sin(theta) - m1 * Math.cos(theta))
+    const length = vec.y / (Math.sin(theta) - vec.x * Math.cos(theta))
     if (length < 0.0) {
         return -0.0001
     } else {
@@ -221,7 +221,7 @@ function lengthOfRayUntilIntersect(theta: number, vec: Vec2) {
 type ZeroToTwo = 0 | 1 | 2
 
 function getBounds(l: number): ReadonlyArray<Vec2> {
-    const sub1 = ((l + 16) ^ 3) / 1560896
+    const sub1 = (l + 16) ** 3 / 1560896
     const sub2 = sub1 > epsilon ? sub1 : l / kappa
 
     const bounds = new Array<Vec2>(3 * 2)
@@ -237,7 +237,7 @@ function getBounds(l: number): ReadonlyArray<Vec2> {
             const top1 = (284517 * m1 - 94839 * m3) * sub2
             const top2 = (838422 * m3 + 769860 * m2 + 731718 * m1) * l * sub2 - 769860 * t * l
             const bottom = (632260 * m3 - 126452 * m2) * sub2 + 126452 * t
-            bounds[c * 3 + t] = new Vec2(top1 / bottom, top2 / bottom)
+            bounds[c * 2 + t] = new Vec2(top1 / bottom, top2 / bottom)
         }
     }
 
@@ -256,13 +256,14 @@ function maxSafeChromaForL(l: number) {
     const bounds = getBounds(l)
 
     let min = Number.MAX_VALUE
-    for (let i = 0; i < 2; i++) {
-        const m1 = bounds[i].x
-        const b1 = bounds[i].y
 
-        const x = intersectLineLine(new Vec2(m1, b1), new Vec2(-1 / min, 0))
+    for (let i = 0; i < 2; ++i) {
+        const line = bounds[i]
 
-        const length = distance(x, b1 + x * m1)
+        // TODO: inline
+        const x = intersectLineLine(line, new Vec2(-1 / line.x, 0))
+
+        const length = distance(x, line.y + x * line.x)
 
         if (length < min) min = length
     }
@@ -275,17 +276,18 @@ function maxChromaForLH(l: number, h: number) {
     const bounds = getBounds(l)
 
     let min = Number.MAX_VALUE
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < bounds.length; i++) {
+        // TODO: inline
         const length = lengthOfRayUntilIntersect(hrad, bounds[i])
 
-        if (length < min) min = length
+        if (length >= 0 && length < min) min = length
     }
     return min
 }
 
 function funF(t: number) {
     if (t > epsilon) {
-        return 116 * ((t / refY) ^ (1 / 3)) - 16
+        return 116 * (t / refY) ** (1 / 3) - 16
     } else {
         return (t / refY) * kappa
     }
@@ -293,7 +295,7 @@ function funF(t: number) {
 
 function funFInv(t: number) {
     if (t > 8.0) {
-        return (refY * ((t + 16.0) / 116.0)) ^ 3.0
+        return (refY * ((t + 16.0) / 116.0)) ** 3.0
     } else {
         return (refY * t) / kappa
     }
@@ -303,13 +305,13 @@ function fromLinear(c: number) {
     if (c <= 0.0031308) {
         return 12.92 * c
     } else {
-        return 1.055 * (c ^ (1.0 / 2.4)) - 0.055
+        return 1.055 * c ** (1.0 / 2.4) - 0.055
     }
 }
 
 function toLinear(c: number) {
     if (c > 0.04045) {
-        return ((c + 0.055) / 1.055) ^ 2.4
+        return ((c + 0.055) / 1.055) ** 2.4
     } else {
         return c / 12.92
     }
@@ -318,21 +320,21 @@ function toLinear(c: number) {
 export function luvToLch({ l, u, v }: Luv): Lch {
     const c = distance(u, v)
     if (c < 0.00000001) {
-        return { l: 0, c: 0, h: 0 }
+        return new Lch(l, c, 0)
     }
     const h = radiansToDegrees(Math.atan2(v, u))
     if (h < 0.0) {
-        return { l, c, h: h + 360 }
+        return new Lch(l, c, h + 360)
     } else {
-        return { l, c, h }
+        return new Lch(l, c, h)
     }
 }
 
 export function lchToLuv({ l, c, h }: Lch): Luv {
     const hrad = degreesToRadians(h)
-    const u = Math.cos(hrad * c)
-    const v = Math.sin(hrad * c)
-    return { l, u, v }
+    const u = Math.cos(hrad) * c
+    const v = Math.sin(hrad) * c
+    return new Luv(l, u, v)
 }
 
 export function rgbToLinear({ r, g, b }: Rgb): RgbLinear {
@@ -347,7 +349,7 @@ export function rgbToXyz(rgb: Rgb): Xyz {
     const lrgb = rgbToLinear(rgb)
     // todo: unwrap map
     const xyz = mat3map(vec => lrgb.r * vec.x + lrgb.g * vec.y + lrgb.b * vec.z, mInv)
-    return { x: xyz[0], y: xyz[1], z: xyz[2] }
+    return new Xyz(xyz[0], xyz[1], xyz[2])
 }
 
 export function xyzToRgb(xyz: Xyz): Rgb {
@@ -370,14 +372,14 @@ export function lchToHsluv({ l, c, h }: Lch): Hsluv {
 
 export function hsluvToLch({ h, s, l }: Hsluv): Lch {
     if (l > 99.9999999) {
-        return { l: 100, c: 0.0, h }
+        return new Lch(100, 0.0, h)
     }
     if (l < 0.00000001) {
-        return { l: 0, c: 0, h }
+        return new Lch(0, 0, h)
     }
     const mx = maxChromaForLH(l, h)
     const c = (mx / 100) * s
-    return { l, c, h }
+    return new Lch(l, c, h)
 }
 
 export function lchToHpluv({ l, c, h }: Lch): Hpluv {
@@ -395,18 +397,18 @@ export function lchToHpluv({ l, c, h }: Lch): Hpluv {
 
 export function hpluvToLch({ h, p, l }: Hpluv): Lch {
     if (l > 99.9999999) {
-        return { l: 100, c: 0, h }
+        return new Lch(100, 0, h)
     }
     if (l < 0.00000001) {
-        return { l: 0, c: 0, h }
+        return new Lch(0, 0, h)
     }
     const mx = maxSafeChromaForL(l)
     const c = (mx / 100) * p
-    return { l, c, h }
+    return new Lch(l, c, h)
 }
 
 export function luvToRgb(luv: Luv): Rgb {
-    return lchToRgb(luvToLch(luv))
+    return xyzToRgb(luvToXyz(luv))
 }
 
 export function rgbToLch(rgb: Rgb): Lch {
@@ -435,29 +437,30 @@ export function hpluvToRgb(hpluv: Hpluv): Rgb {
 
 export function xyzToLuv({ x, y, z }: Xyz): Luv {
     if (x === 0 && y === 0 && z === 0) {
-        return { l: 0, u: 0, v: 0 }
+        return new Luv(0, 0, 0)
     }
     const l = funF(y)
     if (l === 0) {
-        return { l: 0, u: 0, v: 0 }
+        return new Luv(0, 0, 0)
     }
 
-    const u = 13.0 * l * ((4.0 * x) / (x + 15.0 * y + 3.0 * z) - refU)
-    const v = 13.0 * l * ((9.0 * y) / (x + 15.0 * y + 3.0 * z) - refV)
-    return { l, u, v }
+    const u = 13 * l * ((4 * x) / (x + 15 * y + 3 * z) - refU)
+    const v = 13 * l * ((9 * y) / (x + 15 * y + 3 * z) - refV)
+    return new Luv(l, u, v)
 }
 
 export function luvToXyz({ l, u, v }: Luv): Xyz {
     if (l === 0) {
-        return { x: 0, y: 0, z: 0 }
+        return new Xyz(0, 0, 0)
     }
 
-    const y = funFInv(l) * refY
-    const initU = u / (13.0 * l) + refU
+    const initU = u / (13 * l) + refU
     const initV = v / (13 * l) + refV
-    const x = 0.0 - (9.0 * y * initU) / ((initU - 4.0) * initV - initU * initV)
-    const z = (9.0 * y - 15.0 * initV * y - initV * x) / (3.0 * initV)
-    return { x, y, z }
+
+    const y = funFInv(l) * refY
+    const x = 0 - (9 * y * initU) / ((initU - 4) * initV - initU * initV)
+    const z = (9 * y - 15 * initV * y - initV * x) / (3 * initV)
+    return new Xyz(x, y, z)
 }
 
 export function rgbToHsv({ r, g, b }: Rgb): Hsv {
@@ -567,15 +570,16 @@ function parseHexCss(css: string): Rgb | null {
         return validateRgb(r, g, b)
     }
     if (css.length === 6) {
-        const r = parseHex(css[0]) / 15
-        const r2 = parseHex(css[1]) / 255
-        const g = parseHex(css[2]) / 15
-        const g2 = parseHex(css[3]) / 255
-        const b = parseHex(css[4]) / 15
-        const b2 = parseHex(css[5]) / 255
-        return validateRgb(r + r2, g + g2, b + b2)
+        const r = parseHexPair(css[0], css[1])
+        const g = parseHexPair(css[2], css[3])
+        const b = parseHexPair(css[4], css[5])
+        return validateRgb(r, g, b)
     }
     return null
+}
+
+function parseHexPair(l: string, r: string): number {
+    return (parseHex(l) * 16 + parseHex(r)) / 255
 }
 
 function parseHex(hex: string): number {
