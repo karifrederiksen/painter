@@ -34,7 +34,6 @@ describe("Color transforms work according to the sample data", () => {
 
         for (let i = 0; i < l.length; i++) {
             if (!rgbRoughEq(l[i], r[i])) {
-                //console.log("!", l[i], r[i])
                 return false
             }
         }

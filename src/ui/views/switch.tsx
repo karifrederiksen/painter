@@ -48,7 +48,6 @@ export const Switch = withTheme(
         render(): JSX.Element {
             const { checked, color, onCheck } = this.props
             const theme = this.props.theme as Theme
-            console.log(this.props)
             const color_ = color || theme.colorPrimary.toStyle()
             return (
                 <Switch_ onClick={() => onCheck(!checked)}>
