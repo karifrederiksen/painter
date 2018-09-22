@@ -1,16 +1,5 @@
-import {
-    NonEmptyStack,
-    PushArray,
-    EmptyStack,
-    Msg,
-    T2,
-    orDefault,
-    arrUpdate,
-    arrInsert,
-    arrRemove,
-    Stack,
-    Brand,
-} from "core"
+import { Brand, orDefault, arrUpdate, arrInsert, T2, arrRemove, PushArray, Msg } from "canvas/util"
+import { NonEmptyStack, EmptyStack, Stack } from "canvas/stack"
 
 export type LayerId = Brand<number, "LayerId">
 

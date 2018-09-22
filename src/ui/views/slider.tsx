@@ -1,7 +1,6 @@
 import * as React from "react"
-import styled from "styled-components"
-import { Hsv } from "core"
-import { CSS_COLOR_DEFAULT, CSS_COLOR_PRIMARY, Rem } from "ui/css"
+import styled, { Rem } from "../styled"
+import { Hsv } from "canvas/color"
 
 // Generic slider
 
@@ -27,7 +26,7 @@ const BaseLine = styled.div`
     height: 2px;
     top: 50%;
     transform: translate(0, -50%);
-    background-color: ${CSS_COLOR_DEFAULT};
+    background-color: ${p => p.theme.colorDefault.toStyle()};
     z-index: 0;
 `
 
@@ -37,7 +36,7 @@ const FilledLineClass = styled.div`
     height: 2px;
     top: 50%;
     transform: translate(0, -50%);
-    background-color: ${CSS_COLOR_PRIMARY};
+    background-color: ${p => p.theme.colorPrimary.toStyle()};
     z-index: 1;
 `
 
@@ -48,7 +47,7 @@ const ButtonClass = styled.div`
     width: 0.75rem;
     height: 0.75rem;
     transform: translate(0, -50%);
-    background-color: ${CSS_COLOR_PRIMARY};
+    background-color: ${p => p.theme.colorPrimary.toStyle()};
     z-index: 2;
     box-shadow: 0 1px 5px 0 rgba(0, 0, 0, 0.2), 0 2px 2px 0 rgba(0, 0, 0, 0.14),
         0 3px 1px -2px rgba(0, 0, 0, 0.12);
@@ -66,7 +65,7 @@ export class Slider extends React.Component<SliderProps> {
 
     render(): JSX.Element {
         const props = this.props
-        const color = props.color !== undefined ? props.color.toRgb().toCss() : undefined
+        const color = props.color !== undefined ? props.color.toStyle() : undefined
         const percentage = Math.max(0, Math.min(1, props.percentage))
         return (
             <Container>

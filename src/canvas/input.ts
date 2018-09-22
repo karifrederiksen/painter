@@ -1,3 +1,8 @@
+export interface DragState {
+    readonly clickPoint: PointerInput
+    readonly prevPoint: PointerInput
+}
+
 declare global {
     interface Window {
         PointerEvent: typeof PointerEvent

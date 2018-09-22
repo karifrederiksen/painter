@@ -1,7 +1,8 @@
 import { Renderer } from "./renderer"
 import { Texture } from "./texture"
-import { Rgb, Vec4 } from "core"
-import { getUniformLocation, createProgram } from "core/web-gl"
+import { getUniformLocation, createProgram } from "canvas/web-gl"
+import { Rgb } from "canvas/color"
+import { Vec4 } from "canvas/util"
 
 const VERT_SRC = `
 precision highp float;

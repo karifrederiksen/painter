@@ -1,6 +1,6 @@
 export { BrushTool } from "./brushtool"
-export { Camera } from "./cameratools"
-import { T2, Case } from "core"
+export { Camera } from "canvas/tools/cameratools"
+import { T2, Case, Msg } from "../util"
 import { DragState, PointerInput } from "../input"
 import {
     update as brushUpdate,
@@ -12,6 +12,9 @@ import {
     onDrag as brushOnDrag,
     onRelease as brushOnRelease,
     onFrame as brushOnFrame,
+    BrushMessageSender,
+    BrushMsg,
+    createBrushSender,
 } from "./brushtool"
 import {
     Camera,
@@ -20,11 +23,40 @@ import {
     moveToolUpdate,
     zoomToolUpdate,
     rotateToolUpdate,
-} from "./cameratools"
+    CameraMessageSender,
+    CameraMsg,
+    createCameraSender,
+} from "canvas/tools/cameratools"
 import { BrushPoint } from "../rendering/brushShader"
-import { ToolMsgType, ToolMsg } from "./messages"
 
-export { ToolMsgType, ToolMsg } from "./messages"
+export const enum ToolMsgType {
+    SetTool,
+    BrushMsg,
+    EraserMsg,
+    CameraMsg,
+}
+
+export type ToolMsg =
+    | Msg<ToolMsgType.SetTool, ToolType>
+    | Msg<ToolMsgType.BrushMsg, BrushMsg>
+    | Msg<ToolMsgType.EraserMsg, BrushMsg>
+    | Msg<ToolMsgType.CameraMsg, CameraMsg>
+
+export interface ToolMessageSender {
+    readonly brush: BrushMessageSender
+    readonly camera: CameraMessageSender
+    setTool(type: ToolType): void
+}
+
+export function createToolSender(sendMessage: (msg: ToolMsg) => void): ToolMessageSender {
+    return {
+        brush: createBrushSender(msg => sendMessage({ type: ToolMsgType.BrushMsg, payload: msg })),
+        camera: createCameraSender(msg =>
+            sendMessage({ type: ToolMsgType.CameraMsg, payload: msg })
+        ),
+        setTool: type => sendMessage({ type: ToolMsgType.SetTool, payload: type }),
+    }
+}
 
 export const enum ToolType {
     Brush,
@@ -251,7 +283,11 @@ export function onFrame(tool: Tool, currentTime: number): T2<Tool, ReadonlyArray
     switch (current.type) {
         case ToolType.Brush: {
             const [state, brushPoints] = brushOnFrame(tool.brush, current.state, currentTime)
-            return [{ ...tool, current: { type: ToolType.Brush, state } }, brushPoints]
+            if (state === current.state && brushPoints.length === 0) {
+                return [tool, brushPoints]
+            } else {
+                return [{ ...tool, current: { type: ToolType.Brush, state } }, brushPoints]
+            }
         }
         case ToolType.Eraser: {
             throw "todo"

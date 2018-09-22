@@ -1,7 +1,7 @@
 import { LeafLayer, LayerId } from "canvas/layers"
 import { Texture, TextureManager, TextureId } from "canvas/rendering/texture"
 import { Renderer } from "canvas/rendering/renderer"
-import { Vec2, Vec4 } from "core"
+import { Vec2, Vec4 } from "canvas/util"
 
 // I need a layerManager that keeps track of mappings between layerIds and textures
 // combinedLayers can be a component of that manager

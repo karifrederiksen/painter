@@ -1,6 +1,7 @@
 import * as React from "react"
-import styled from "styled-components"
-import { CSS_COLOR_DEFAULT_HIGHLIGHT, CSS_COLOR_PRIMARY, CSS_COLOR_DEFAULT } from "ui/css"
+import styled from "../styled"
+import { withTheme } from "../styled"
+import { Theme } from "canvas/theme"
 
 export type SwitchProps = {
     readonly checked: boolean
@@ -33,7 +34,7 @@ const SwitchButton = styled.span`
 `
 
 const SwitchBar = styled.span`
-    background-color: ${CSS_COLOR_DEFAULT};
+    background-color: ${p => p.theme.colorDefault.toStyle()};
     display: block;
     width: 1.75rem;
     height: 0.75rem;
@@ -42,24 +43,33 @@ const SwitchBar = styled.span`
     transition: 150ms background-color, 150ms opacity;
 `
 
-export function Switch({ checked, color, onCheck }: SwitchProps): JSX.Element {
-    const color_ = color || CSS_COLOR_PRIMARY
-    return (
-        <Switch_ onClick={() => onCheck(!checked)}>
-            <SwitchButtonContainer
-                style={{
-                    transform: checked
-                        ? "translate(0.75rem, -0.125rem)"
-                        : "translate(0, -0.125rem)",
-                }}
-            >
-                <SwitchButton
-                    style={{
-                        backgroundColor: checked ? color_ : CSS_COLOR_DEFAULT_HIGHLIGHT,
-                    }}
-                />
-            </SwitchButtonContainer>
-            <SwitchBar />
-        </Switch_>
-    )
-}
+export const Switch = withTheme(
+    class UnwrappedSwitch extends React.PureComponent<SwitchProps & { readonly theme: Theme }> {
+        render(): JSX.Element {
+            const { checked, color, onCheck } = this.props
+            const theme = this.props.theme as Theme
+            console.log(this.props)
+            const color_ = color || theme.colorPrimary.toStyle()
+            return (
+                <Switch_ onClick={() => onCheck(!checked)}>
+                    <SwitchButtonContainer
+                        style={{
+                            transform: checked
+                                ? "translate(0.75rem, -0.125rem)"
+                                : "translate(0, -0.125rem)",
+                        }}
+                    >
+                        <SwitchButton
+                            style={{
+                                backgroundColor: checked
+                                    ? color_
+                                    : theme.colorDefaultLight.toStyle(),
+                            }}
+                        />
+                    </SwitchButtonContainer>
+                    <SwitchBar />
+                </Switch_>
+            )
+        }
+    }
+)

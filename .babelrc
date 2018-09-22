@@ -1,8 +1,0 @@
-{
-    "presets": [["env", { "modules": false }], "react"],
-    "plugins": [
-        ["styled-components", { "displayName": true }],
-        ["transform-inline-environment-variables", { "include": ["NODE_ENV"] }],
-        "transform-runtime"
-    ]
-}

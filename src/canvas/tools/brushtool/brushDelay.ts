@@ -1,4 +1,4 @@
-import { T2 } from "core"
+import { T2 } from "canvas/util"
 
 export interface DelayConfig {
     readonly easing: (pct: number) => number

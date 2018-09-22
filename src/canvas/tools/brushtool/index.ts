@@ -1,11 +1,59 @@
-import { T2, Vec2, Hsv, LinearRgb } from "core"
 import { InterpolatorState, InputPoint, interpolate, init as interpInit } from "./interpolation"
 import { DelayState, BrushInput, DelayConfig } from "./brushDelay"
 import * as brushDelay from "./brushDelay"
 import { BrushPoint } from "../../rendering/brushShader"
-import { Camera } from "../cameratools"
+import { Camera } from "canvas/tools/cameratools"
 import { PointerInput } from "../../input"
-import { BrushMsg, BrushMsgType } from "./messages"
+import { Hsv, RgbLinear } from "canvas/color"
+import { T2, Msg, Vec2 } from "canvas/util"
+
+export const enum BrushMsgType {
+    SetDiameter,
+    SetOpacity,
+    SetColor,
+    SetSpacing,
+    SetPressureAffectsOpacity,
+    SetPressureAffectsSize,
+    SwapColorFrom,
+    SetDelay,
+}
+
+export type BrushMsg =
+    | Msg<BrushMsgType.SetDiameter, number>
+    | Msg<BrushMsgType.SetOpacity, number>
+    | Msg<BrushMsgType.SetColor, Hsv>
+    | Msg<BrushMsgType.SetSpacing, number>
+    | Msg<BrushMsgType.SetPressureAffectsOpacity, boolean>
+    | Msg<BrushMsgType.SetPressureAffectsSize, boolean>
+    | Msg<BrushMsgType.SwapColorFrom, Hsv>
+    | Msg<BrushMsgType.SetDelay, number>
+
+export interface BrushMessageSender {
+    setColor(color: Hsv): void
+    setDelay(ms: number): void
+    setDiameter(px: number): void
+    setOpacity(opacity: number): void
+    setSpacing(px: number): void
+    setPressureAffectsOpacity(setPressureAffectsOpacity: boolean): void
+    setPressureAffectsSize(setPressureAffectsSize: boolean): void
+    swapColorFrom(previousColor: Hsv): void
+}
+
+export function createBrushSender(sendMessage: (msg: BrushMsg) => void): BrushMessageSender {
+    return {
+        setColor: color => sendMessage({ type: BrushMsgType.SetColor, payload: color }),
+        setDelay: ms => sendMessage({ type: BrushMsgType.SetDelay, payload: ms }),
+        setDiameter: px => sendMessage({ type: BrushMsgType.SetDiameter, payload: px }),
+        setOpacity: pct => sendMessage({ type: BrushMsgType.SetOpacity, payload: pct }),
+        setSpacing: px => sendMessage({ type: BrushMsgType.SetSpacing, payload: px }),
+        setPressureAffectsOpacity: x =>
+            sendMessage({ type: BrushMsgType.SetPressureAffectsOpacity, payload: x }),
+        setPressureAffectsSize: x =>
+            sendMessage({ type: BrushMsgType.SetPressureAffectsSize, payload: x }),
+        swapColorFrom: prevColor =>
+            sendMessage({ type: BrushMsgType.SwapColorFrom, payload: prevColor }),
+    }
+}
 
 export type BrushTempState = {
     readonly interpState: InterpolatorState
@@ -33,8 +81,8 @@ export function init(): BrushTool {
     return {
         diameterPx: 30,
         flowPct: 0.15,
-        color: Hsv.make(0.73, 1, 0.16),
-        colorSecondary: Hsv.make(0, 0, 1),
+        color: new Hsv(0.73, 1, 0.16),
+        colorSecondary: new Hsv(0, 0, 1),
         spacingPct: 0.05,
         pressureAffectsOpacity: false,
         pressureAffectsSize: true,
@@ -165,8 +213,11 @@ function createBrushPoint(brush: BrushTool, input: BrushInput): BrushPoint {
     const alpha = brush.flowPct * input.pressure
     const color =
         alpha === 1
-            ? brush.color.toLinearRgb()
-            : brush.color.toLinearRgb().mix(1 - alpha, LinearRgb.Black)
+            ? brush.color.toRgb().toLinear()
+            : brush.color
+                  .toRgb()
+                  .toLinear()
+                  .mix(1 - alpha, RgbLinear.Black)
     const position = new Vec2(input.x, input.y)
     return {
         alpha,
@@ -181,8 +232,11 @@ function createInputPoint(brush: BrushTool, input: BrushInput): InputPoint {
     const alpha = brush.flowPct * input.pressure
     const color =
         alpha === 1
-            ? brush.color.toLinearRgb()
-            : brush.color.toLinearRgb().mix(1 - alpha, LinearRgb.Black)
+            ? brush.color.toRgb().toLinear()
+            : brush.color
+                  .toRgb()
+                  .toLinear()
+                  .mix(1 - alpha, RgbLinear.Black)
     const position = new Vec2(input.x, input.y)
     return {
         alpha,

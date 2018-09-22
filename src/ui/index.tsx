@@ -1,22 +1,23 @@
 import * as React from "react"
-import styled from "styled-components"
+import styled from "./styled"
+import { ThemeProvider } from "./styled"
+import { init } from "canvas/theme"
 
+import { FrameStream, CancelFrameStream } from "canvas/frameStream"
+import { ToolBar, ToolBarTransientState } from "./toolbar"
+import { Layers } from "ui/layers"
 import {
-    Canvas,
+    defaultState,
     CanvasState,
     RemoveListeners,
-    listenToPointers,
-    PointerInput,
-    update as canvasUpate,
+    Canvas,
     MessageSender,
     createSender,
-    defaultState,
+    PointerInput,
+    update as canvasUpdate,
 } from "canvas"
-import { FrameStream, CancelFrameStream } from "core/frameStream"
-import { SetOnce } from "core"
-import { ToolBar, ToolBarTransientState } from "./toolbar"
-import { Layers } from "./layers"
-import { CssVars } from "ui/css"
+import { listen as listenToPointers } from "canvas/input"
+import { SetOnce } from "canvas/util"
 
 export function start(frameStream: FrameStream): JSX.Element {
     const state = defaultState()
@@ -29,7 +30,7 @@ export type PainterProps = {
     //readonly messageStream: (handler: (msg: CanvasMsg) => void) => void
 }
 
-const Wrapper = styled(CssVars)`
+const Wrapper = styled.div`
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -78,7 +79,7 @@ class Painter extends React.Component<PainterProps, PainterState> {
             console.log("Message of type ", msg.type, "with payload", msg.payload)
             this.setState((state: PainterState) => ({
                 ...state,
-                persistent: canvasUpate(state.persistent, msg),
+                persistent: canvasUpdate(state.persistent, msg),
             }))
         })
         this.htmlCanvas = null
@@ -90,23 +91,25 @@ class Painter extends React.Component<PainterProps, PainterState> {
     render() {
         const state = this.state as PainterState
         return (
-            <Wrapper>
-                <ToolBar
-                    tool={state.persistent.tool}
-                    transientState={state.transient.toolBar}
-                    messageSender={this.sender}
-                />
-                <canvas
-                    width="800"
-                    height="800"
-                    key="muh-canvas"
-                    ref={x => (this.htmlCanvas = x)}
-                    style={{ cursor: "crosshair" }}
-                />
-                <div style={{ width: "14rem" }}>
-                    <Layers layers={state.persistent.layers} sender={this.sender.layer} />
-                </div>
-            </Wrapper>
+            <ThemeProvider theme={init}>
+                <Wrapper>
+                    <ToolBar
+                        tool={state.persistent.tool}
+                        transientState={state.transient.toolBar}
+                        messageSender={this.sender}
+                    />
+                    <canvas
+                        width="800"
+                        height="800"
+                        key="muh-canvas"
+                        ref={x => (this.htmlCanvas = x)}
+                        style={{ cursor: "crosshair" }}
+                    />
+                    <div style={{ width: "14rem" }}>
+                        <Layers layers={state.persistent.layers} sender={this.sender.layer} />
+                    </div>
+                </Wrapper>
+            </ThemeProvider>
         )
     }
 
@@ -173,6 +176,7 @@ class Painter extends React.Component<PainterProps, PainterState> {
     private onFrame = (time: number): void => {
         const state = this.state as PainterState
         const tool = this.canvas.value.onFrame(state.persistent.tool, time)
+        if (tool === state.persistent.tool) return
         const persistent = { ...state.persistent, tool }
         const newState: PainterState = { ...state, persistent }
         this.canvas.value.endFrame(persistent)

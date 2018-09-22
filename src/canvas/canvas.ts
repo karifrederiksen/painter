@@ -1,9 +1,8 @@
 import { Renderer } from "./rendering/renderer"
-import { Rgb, Vec4, Msg } from "core"
 import { BrushPoint } from "./rendering/brushShader"
 import { LayerState, LayersMsg, createLayerSender, LayerMessageSender } from "./layers"
 import { RenderStats, Stats } from "./renderStats"
-import { PointerInput } from "./input/inputListener"
+import { PointerInput } from "./input"
 import {
     Tool,
     ToolMsg,
@@ -15,11 +14,12 @@ import {
     onFrame as toolsOnFrame,
 } from "./tools"
 import { Stroke } from "./rendering/stroke"
-import { TextureShader } from "./rendering/textureShader"
-import { ToolMessageSender, createToolSender } from "./tools/messages"
+import { ToolMessageSender, createToolSender } from "./tools"
 import { OutputShader } from "./rendering/outputShader"
 import { Texture } from "./rendering/texture"
-import { CombinedLayers } from "canvas/rendering/combinedLayers"
+import { CombinedLayers } from "./rendering/combinedLayers"
+import { Rgb } from "canvas/color"
+import { Msg, Vec4 } from "canvas/util"
 
 export interface CanvasHooks {
     // readonly onCanvasSnapshot: (snapshot: Snapshot) => void

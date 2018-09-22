@@ -92,6 +92,33 @@ function object_<a>(decoders: ObjectProps<a>, val: any): DecodeResult<a> {
     return ok(resObj)
 }
 
+export function dictionary<a>(decoder: DecoderBlock<a>): DecoderBlock<{ [key: string]: a }> {
+    return val => dictionary_(decoder, val)
+}
+
+function dictionary_<a>(
+    decoder: DecoderBlock<a>,
+    val_: unknown
+): DecodeResult<{ [key: string]: a }> {
+    if (typeof val_ !== "object") return err()
+
+    const val = val_ as { readonly [key: string]: unknown }
+
+    const keys = Object.keys(val as object)
+
+    const res: { [key: string]: a } = {}
+
+    for (let i = 0; i < keys.length; i++) {
+        const key = keys[i]
+        const value = decoder(val[key])
+        if (!value.isOk) return err()
+
+        res[key] = value.value
+    }
+
+    return ok(res)
+}
+
 export function tuple2<a, b>(
     decoder1: DecoderBlock<a>,
     decoder2: DecoderBlock<b>
@@ -114,6 +141,35 @@ function tuple2_<a, b>(
 
     const tup: [a, b] = [first.value, second.value]
     return ok(tup)
+}
+
+function tuple3_<a, b, c>(
+    decoder1: DecoderBlock<a>,
+    decoder2: DecoderBlock<b>,
+    decoder3: DecoderBlock<c>,
+    val: unknown
+): DecodeResult<[a, b, c]> {
+    if (typeof val !== "object" || !Array.isArray(val) || val.length < 3) return err()
+
+    const first = decoder1(val[0])
+    if (!first.isOk) return err()
+
+    const second = decoder2(val[1])
+    if (!second.isOk) return err()
+
+    const third = decoder3(val[1])
+    if (!third.isOk) return err()
+
+    const tup: [a, b, c] = [first.value, second.value, third.value]
+    return ok(tup)
+}
+
+export function tuple3<a, b, c>(
+    decoder1: DecoderBlock<a>,
+    decoder2: DecoderBlock<b>,
+    decoder3: DecoderBlock<c>
+): DecoderBlock<[a, b, c]> {
+    return val => tuple3_(decoder1, decoder2, decoder3, val)
 }
 
 export function oneOf<a>(decoders: ReadonlyArray<DecoderBlock<a>>): DecoderBlock<a> {

@@ -1,4 +1,4 @@
-import { T2 } from "core"
+import { T2 } from "canvas/util"
 
 // Consider reworking this so it just sends out an array and leaves the computations to whoever receives it
 

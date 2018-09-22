@@ -1,10 +1,11 @@
 import { BrushTool } from "."
-import { Vec2, T2, LinearRgb, lerp, distance } from "core"
 import { BrushPoint } from "../../rendering/brushShader"
+import { RgbLinear } from "canvas/color"
+import { lerp, distance, T2, Vec2 } from "canvas/util"
 
 export interface InputPoint {
     readonly alpha: number
-    readonly color: LinearRgb
+    readonly color: RgbLinear
     readonly position: Vec2
     readonly pressure: number
     readonly rotation: number

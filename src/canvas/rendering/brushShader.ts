@@ -1,6 +1,7 @@
-import { createProgram, getUniformLocation } from "core/web-gl"
-import { Vec2, LinearRgb } from "core"
+import { createProgram, getUniformLocation } from "canvas/web-gl"
 import { Renderer } from "./renderer"
+import { RgbLinear } from "canvas/color"
+import { Vec2 } from "canvas/util"
 
 const INITIAL_VARRAY_SIZE = 5000
 
@@ -209,7 +210,7 @@ function addCorner(
 }
 
 export interface BrushPoint {
-    readonly color: LinearRgb
+    readonly color: RgbLinear
     readonly alpha: number
     readonly position: Readonly<Vec2>
     readonly scaledDiameter: number

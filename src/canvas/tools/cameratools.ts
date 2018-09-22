@@ -1,4 +1,5 @@
-import { Vec2, Msg } from "core"
+import { Msg, Vec2 } from "canvas/util"
+import { DragState, PointerInput } from "canvas"
 
 export interface Camera {
     readonly offsetPx: Vec2
@@ -48,4 +49,37 @@ export function createCameraSender(sendMessage: (msg: CameraMsg) => void): Camer
         setOffset: xyPct => sendMessage({ type: CameraMsgType.SetOffset, payload: xyPct }),
         setZoom: pct => sendMessage({ type: CameraMsgType.SetZoom, payload: pct }),
     }
+}
+
+export function zoomToolUpdate(
+    camera: Camera,
+    dragState: DragState,
+    input: PointerInput
+): CameraMsg {
+    const xd = input.x - dragState.prevPoint.x
+    const zoomPct = camera.zoomPct + xd / 150
+    return { type: CameraMsgType.SetZoom, payload: zoomPct }
+}
+
+export function rotateToolUpdate(
+    _camera: Camera,
+    dragState: DragState,
+    input: PointerInput
+): CameraMsg {
+    const rotationRad = Math.atan2(
+        input.y - dragState.clickPoint.y,
+        input.x - dragState.clickPoint.x
+    )
+    return { type: CameraMsgType.SetRotation, payload: rotationRad }
+}
+
+export function moveToolUpdate(
+    camera: Camera,
+    dragState: DragState,
+    input: PointerInput
+): CameraMsg {
+    const xd = input.x - dragState.prevPoint.x
+    const yd = input.y - dragState.prevPoint.y
+    const offset = new Vec2(camera.offsetPx.x + xd, camera.offsetPx.y + yd)
+    return { type: CameraMsgType.SetOffset, payload: offset }
 }

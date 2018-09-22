@@ -1,6 +1,6 @@
-import { createProgram, getUniformLocation, DEFINE_from_linear } from "core/web-gl"
-import { Vec2 } from "core"
+import { createProgram, getUniformLocation, DEFINE_from_linear } from "canvas/web-gl"
 import { Renderer } from "./renderer"
+import { Vec2 } from "canvas/util"
 
 const floatsPerVertex = 4
 const batchStride = floatsPerVertex * 4

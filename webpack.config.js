@@ -3,6 +3,15 @@ const HtmlPlugin = require("html-webpack-plugin")
 const CleanPlugin = require("clean-webpack-plugin")
 const { resolve } = require("path")
 
+const babelConfig = {
+    presets: [["@babel/preset-env", { modules: false }], "@babel/preset-react"],
+    plugins: [
+        "@babel/plugin-transform-runtime",
+        ["babel-plugin-styled-components", { displayName: true }],
+        ["babel-plugin-transform-inline-environment-variables", { include: ["NODE_ENV"] }],
+    ],
+}
+
 module.exports = {
     mode: "development",
     entry: resolve(__dirname, "src/index.ts"),
@@ -19,13 +28,14 @@ module.exports = {
     },
     module: {
         rules: [
-            // {
-            //     test: /\.js/,
-            //     loader: "babel-loader",
-            // },
+            {
+                test: /\.js/,
+                exclude: /node_modules/,
+                use: [{ loader: "babel-loader", options: babelConfig }],
+            },
             {
                 test: /\.tsx?$/,
-                loader: "babel-loader!ts-loader",
+                use: [{ loader: "babel-loader", options: babelConfig }, { loader: "ts-loader" }],
             },
         ],
     },

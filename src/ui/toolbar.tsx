@@ -1,7 +1,6 @@
 import * as React from "react"
 
-import styled from "styled-components"
-import { Tool, MessageSender, ToolType } from "canvas"
+import styled from "./styled"
 import { SinkableButton } from "./views/buttons"
 import { Labeled } from "./views/labeled"
 import { Slider } from "./views/slider"
@@ -9,9 +8,9 @@ import { Switch } from "./views/switch"
 import { InlineLabeled } from "./views/inlineLabeled"
 import { ColorDisplay } from "./views/colorDisplay"
 import { YPadded } from "./views/padded"
-import { ColorWheel } from "./views/colorWheel"
-import { Rgb, toHsv } from "core"
-import { CSS_COLOR_TEXT_LIGHT, CSS_COLOR_BG_LEVEL_0, CSS_COLOR_BG_LEVEL_1 } from "ui/css"
+import { ColorWheel } from "ui/views/colorWheel"
+import { MessageSender, Tool, ToolType } from "canvas"
+import { Rgb, rgbToHsv } from "canvas/color"
 
 export interface ToolBarProps {
     readonly messageSender: MessageSender
@@ -34,8 +33,8 @@ const LeftBar = styled.div`
 
 const ToolBarContainer = styled.div`
     display: flex;
-    background-color: ${CSS_COLOR_BG_LEVEL_1};
-    color: ${CSS_COLOR_TEXT_LIGHT};
+    background-color: ${p => p.theme.colorBg2.toStyle()};
+    color: ${p => p.theme.colorTextLight.toStyle()};
 `
 
 export function ToolBar(props: ToolBarProps): JSX.Element {
@@ -81,7 +80,7 @@ const Details = styled.div`
     flex-direction: column;
     width: 12rem;
     padding: 0.5rem 0.75rem;
-    border-left: 0.25rem solid ${CSS_COLOR_BG_LEVEL_0};
+    border-left: 0.25rem solid ${p => p.theme.colorBg1.toStyle()};
 `
 
 export function BrushDetails(props: ToolBarProps): JSX.Element {
@@ -102,13 +101,13 @@ export function BrushDetails(props: ToolBarProps): JSX.Element {
             <YPadded y={0.5}>
                 <input
                     type="text"
-                    value={brush.color.toRgb().toCss()}
+                    value={brush.color.toStyle()}
                     style={{ width: "100%" }}
                     onChange={text => {
                         const rgb = Rgb.fromCss((text.target as any).value)
                         if (rgb === null) return
 
-                        sender.setColor(toHsv(rgb))
+                        sender.setColor(rgbToHsv(rgb))
                     }}
                 />
             </YPadded>
@@ -125,22 +124,13 @@ export function BrushDetails(props: ToolBarProps): JSX.Element {
                 <Slider percentage={brush.spacingPct} onChange={sender.setSpacing} />
             </Labeled>
             <Labeled label="Hue" value={color.h.toFixed(2)}>
-                <Slider
-                    percentage={color.h}
-                    onChange={pct => sender.setColor(color.with({ h: pct }))}
-                />
+                <Slider percentage={color.h} onChange={pct => sender.setColor(color.withH(pct))} />
             </Labeled>
             <Labeled label="Saturation" value={color.s.toFixed(2)}>
-                <Slider
-                    percentage={color.s}
-                    onChange={pct => sender.setColor(color.with({ s: pct }))}
-                />
+                <Slider percentage={color.s} onChange={pct => sender.setColor(color.withS(pct))} />
             </Labeled>
             <Labeled label="Value" value={color.v.toFixed(2)}>
-                <Slider
-                    percentage={color.v}
-                    onChange={pct => sender.setColor(color.with({ v: pct }))}
-                />
+                <Slider percentage={color.v} onChange={pct => sender.setColor(color.withV(pct))} />
             </Labeled>
             <InlineLabeled label="Pressure-Opacity">
                 <Switch

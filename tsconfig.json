@@ -28,8 +28,6 @@
         "moduleResolution": "node" /* Specify module resolution strategy: 'node' (Node.js) or 'classic' (TypeScript pre-1.6). */,
         "baseUrl": "." /* Base directory to resolve non-absolute module names. */,
         "paths": {
-            "core": ["src/core/index.ts"],
-            "core/*": ["src/core/*"],
             "canvas": ["src/canvas/index.ts"],
             "canvas/*": ["src/canvas/*"],
             "ui/*": ["src/ui/*"]
@@ -50,6 +48,8 @@
         /* Experimental Options */
         // "experimentalDecorators": true,        /* Enables experimental support for ES7 decorators. */
         // "emitDecoratorMetadata": true,         /* Enables experimental support for emitting type metadata for decorators. */
+
+        //"plugins": [{ "name": "tslint-language-service" }]
     },
     "include": ["src/**/*.ts", "src/**/*.tsx"],
     "exclude": ["dist", ".cache"]

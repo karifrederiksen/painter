@@ -1,6 +1,6 @@
 import * as React from "react"
-import { Hsv } from "core"
-import styled from "styled-components"
+import styled from "../styled"
+import { Hsv } from "canvas/color"
 
 export type ColorDisplay = {
     readonly color: Hsv
@@ -40,12 +40,12 @@ export function ColorDisplay({ color, colorSecondary, onClick }: ColorDisplay): 
         <Container onClick={onClick}>
             <Secondary
                 style={{
-                    backgroundColor: colorSecondary.toRgb().toCss(),
+                    backgroundColor: colorSecondary.toStyle(),
                 }}
             />
             <Primary
                 style={{
-                    backgroundColor: color.toRgb().toCss(),
+                    backgroundColor: color.toStyle(),
                 }}
             />
         </Container>

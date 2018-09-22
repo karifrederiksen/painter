@@ -1,9 +1,10 @@
 import { BlendMode, blendModeMap } from "./blendMode"
 import { BrushShader } from "./brushShader"
-import { Rgb, T2, Vec4, Vec2 } from "core"
 import { BrushTextureGenerator } from "./brushTextureGenerator"
 import { TextureManager, Texture } from "./texture"
 import { TextureShader } from "canvas/rendering/textureShader"
+import { Rgb } from "canvas/color"
+import { T2, Vec2, Vec4 } from "canvas/util"
 
 const contextAttributes: WebGLContextAttributes = {
     antialias: false,
