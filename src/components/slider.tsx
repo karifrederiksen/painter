@@ -1,6 +1,6 @@
 import * as React from "react"
 import styled, { Rem } from "../styled"
-import { Hsv } from "canvas/color"
+import { Hsv } from "../color"
 
 // Generic slider
 

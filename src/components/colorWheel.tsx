@@ -1,8 +1,8 @@
 import * as React from "react"
 import styled from "../styled"
-import { DEFINE_TAU, createProgram, DEFINE_hsluv_etc, DEFINE_hsvToRgb } from "canvas/web-gl"
-import * as Color from "canvas/color"
-import { ColorType } from "canvas/tools/brushTool"
+import { DEFINE_TAU, createProgram, DEFINE_hsluv_etc, DEFINE_hsvToRgb } from "../web-gl"
+import * as Color from "../color"
+import { ColorType } from "../tools/brushTool"
 
 export type ColorWheelProps = {
     readonly color: Color.Hsluv

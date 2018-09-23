@@ -7,8 +7,8 @@ import * as Stroke from "./rendering/stroke"
 import * as OutputShader from "./rendering/outputShader"
 import * as Texture from "./rendering/texture"
 import * as CombinedLayers from "./rendering/combinedLayers"
-import * as Color from "canvas/color"
-import { Action, Vec4 } from "canvas/util"
+import * as Color from "./color"
+import { Action, Vec4 } from "./util"
 
 export interface Hooks {
     // readonly onCanvasSnapshot: (snapshot: Snapshot) => void

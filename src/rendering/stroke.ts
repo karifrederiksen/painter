@@ -14,8 +14,8 @@
 import * as Texture from "./texture"
 import * as BrushShader from "./brushShader"
 import * as Renderer from "./renderer"
-import * as Color from "canvas/color"
-import { Vec2 } from "canvas/util"
+import * as Color from "../color"
+import { Vec2 } from "../util"
 
 export interface Area {
     readonly x0: number

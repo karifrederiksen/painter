@@ -1,7 +1,7 @@
 import * as Renderer from "./renderer"
-import * as Color from "canvas/color"
-import { createProgram, getUniformLocation } from "canvas/web-gl"
-import { Vec2 } from "canvas/util"
+import * as Color from "../color"
+import { createProgram, getUniformLocation } from "../web-gl"
+import { Vec2 } from "../util"
 
 const INITIAL_VARRAY_SIZE = 5000
 

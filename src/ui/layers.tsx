@@ -1,12 +1,12 @@
 import * as React from "react"
-import styled from "./styled"
-import { Row } from "ui/views/row"
-import { Slider } from "ui/views/slider"
-import { Labeled } from "ui/views/labeled"
-import { InlineLabeled } from "ui/views/inlineLabeled"
-import { Switch } from "ui/views/switch"
-import * as Layers from "canvas/layers"
-import { DefaultButton } from "ui/views/buttons"
+import styled from "../styled"
+import * as Layers from "../layers"
+import { Row } from "../components/row"
+import { Slider } from "../components/slider"
+import { Labeled } from "../components/labeled"
+import { InlineLabeled } from "../components/inlineLabeled"
+import { Switch } from "../components/switch"
+import { DefaultButton } from "../components/buttons"
 
 export interface LayersViewProps {
     readonly layers: Layers.State

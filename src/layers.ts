@@ -1,14 +1,5 @@
-import {
-    Brand,
-    orDefault,
-    arrUpdate,
-    arrInsert,
-    T2,
-    arrRemove,
-    PushArray,
-    Action,
-} from "canvas/util"
-import * as Stack from "canvas/stack"
+import { Brand, orDefault, arrUpdate, arrInsert, T2, arrRemove, PushArray, Action } from "./util"
+import * as Stack from "./stack"
 
 export type Id = Brand<number, "LayerId">
 

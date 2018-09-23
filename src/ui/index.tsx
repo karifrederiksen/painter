@@ -1,13 +1,13 @@
 import * as React from "react"
-import styled from "./styled"
-import { ThemeProvider } from "./styled"
-import * as Theme from "canvas/theme"
+import styled from "../styled"
+import { ThemeProvider } from "../styled"
+import * as Theme from "../theme"
 
 import * as Toolbar from "./toolbar"
-import * as Layers from "ui/layers"
-import * as Input from "canvas/input"
-import * as Canvas from "canvas/canvas"
-import { SetOnce, FrameStream, CancelFrameStream } from "canvas/util"
+import * as Layers from "./layers"
+import * as Input from "../input"
+import * as Canvas from "../canvas"
+import { SetOnce, FrameStream, CancelFrameStream } from "../util"
 
 export function start(): JSX.Element {
     const state = Canvas.initState()

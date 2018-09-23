@@ -1,5 +1,5 @@
 import * as Color from "./color"
-import * as Rng from "canvas/rng"
+import * as Rng from "./rng"
 
 export interface Theme {
     readonly colorPrimary: Color.Hsluv

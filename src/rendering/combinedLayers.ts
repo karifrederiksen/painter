@@ -1,7 +1,7 @@
-import * as Layers from "canvas/layers"
-import * as Texture from "canvas/rendering/texture"
-import * as Renderer from "canvas/rendering/renderer"
-import { Vec2, Vec4 } from "canvas/util"
+import * as Layers from "../layers"
+import * as Texture from "./texture"
+import * as Renderer from "./renderer"
+import { Vec2, Vec4 } from "../util"
 
 // I need a layerManager that keeps track of mappings between layerIds and textures
 // combinedLayers can be a component of that manager

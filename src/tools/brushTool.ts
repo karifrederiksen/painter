@@ -1,10 +1,10 @@
-import * as Interp from "canvas/tools/interpolation"
-import * as BrushDelay from "canvas/tools/brushDelay"
-import * as BrushShader from "canvas/rendering/brushShader"
-import * as Camera from "canvas/tools/cameratools"
-import * as Input from "canvas/input"
-import * as Color from "canvas/color"
-import { T2, Action, Vec2 } from "canvas/util"
+import * as Interp from "./interpolation"
+import * as BrushDelay from "./brushDelay"
+import * as BrushShader from "../rendering/brushShader"
+import * as Camera from "./cameratools"
+import * as Input from "../input"
+import * as Color from "../color"
+import { T2, Action, Vec2 } from "../util"
 
 export const enum BrushMsgType {
     SetDiameter,

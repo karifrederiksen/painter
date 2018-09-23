@@ -1,6 +1,6 @@
 import * as Input from "../input"
-import * as Brush from "canvas/tools/brushTool"
-import * as Camera from "canvas/tools/cameratools"
+import * as Brush from "./brushTool"
+import * as Camera from "./cameratools"
 import * as BrushShader from "../rendering/brushShader"
 import { T2, Case, Action } from "../util"
 

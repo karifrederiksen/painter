@@ -1,5 +1,5 @@
 import * as Renderer from "./renderer"
-import { Brand, Vec2 } from "canvas/util"
+import { Brand, Vec2 } from "../util"
 
 // texture
 

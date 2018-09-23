@@ -1,7 +1,7 @@
-import * as Brush from "canvas/tools/brushTool"
-import * as BrushShader from "canvas/rendering/brushShader"
-import * as Color from "canvas/color"
-import { lerp, distance, T2, Vec2 } from "canvas/util"
+import * as Brush from "./brushTool"
+import * as BrushShader from "../rendering/brushShader"
+import * as Color from "../color"
+import { lerp, distance, T2, Vec2 } from "../util"
 
 export interface InputPoint {
     readonly alpha: number

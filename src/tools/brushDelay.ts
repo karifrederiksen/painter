@@ -1,4 +1,4 @@
-import { T2 } from "canvas/util"
+import { T2 } from "../util"
 
 export interface Config {
     readonly easing: (pct: number) => number

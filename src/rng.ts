@@ -1,4 +1,4 @@
-import { T2, T3 } from "canvas/util"
+import { T2, T3 } from "./util"
 
 /*
   Pseudo-random number generator

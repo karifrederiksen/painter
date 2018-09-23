@@ -1,4 +1,4 @@
-import { Vec3, Vec2, lerp } from "canvas/util"
+import { Vec3, Vec2, lerp } from "./util"
 
 /* Hsluv vs Hsl:
     http://www.hsluv.org/comparison/

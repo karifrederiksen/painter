@@ -1,6 +1,6 @@
 import * as Renderer from "./renderer"
-import { createProgram, getUniformLocation } from "canvas/web-gl"
-import { Vec2 } from "canvas/util"
+import { createProgram, getUniformLocation, DEFINE_from_linear } from "../web-gl"
+import { Vec2 } from "../util"
 
 const floatsPerVertex = 4
 const batchStride = floatsPerVertex * 4
@@ -26,13 +26,15 @@ void main() {
 const FRAG_SRC = `
 precision highp float;
 
+${DEFINE_from_linear}
+
 varying vec2 v_tex_coords;
 
 uniform sampler2D u_texture;
 
 void main() {
     vec4 pixel = texture2D(u_texture, v_tex_coords);
-    gl_FragColor = pixel;
+    gl_FragColor = vec4(from_linear(pixel.rgb), pixel.a);
 }
 `
 
@@ -46,7 +48,8 @@ export interface Args {
 }
 
 export class Shader {
-    static create(gl: WebGLRenderingContext): Shader | null {
+    static create(renderer: Renderer.Renderer): Shader | null {
+        const gl = renderer.gl
         const program = createProgram(gl, VERT_SRC, FRAG_SRC)
         if (program === null) return null
 

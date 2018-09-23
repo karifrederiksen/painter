@@ -1,7 +1,7 @@
 import * as React from "react"
 import styled from "../styled"
 import { withTheme } from "../styled"
-import { Theme } from "canvas/theme"
+import { Theme } from "../theme"
 
 export type SwitchProps = {
     readonly checked: boolean
