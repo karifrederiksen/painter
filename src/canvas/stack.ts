@@ -1,12 +1,13 @@
 // Very basic and efficient immutable stack
 
 export interface Stack<a> {
-    isEmpty(): this is EmptyStack<a>
-    isNonEmpty(): this is NonEmptyStack<a>
-    cons(value: a): NonEmptyStack<a>
+    isEmpty(): this is Empty<a>
+    isNonEmpty(): this is NonEmpty<a>
+    cons(value: a): NonEmpty<a>
+    foldl<b>(f: (val: b, next: a) => b, initial: b): b
 }
 
-export class EmptyStack<a> implements Stack<a> {
+export class Empty<a> implements Stack<a> {
     isEmpty(): true {
         return true
     }
@@ -15,8 +16,12 @@ export class EmptyStack<a> implements Stack<a> {
         return false
     }
 
-    cons(value: a): NonEmptyStack<a> {
-        return new NonEmptyStack(value, this)
+    cons(value: a): NonEmpty<a> {
+        return new NonEmpty(value, this)
+    }
+
+    foldl<b>(_: (val: b, next: a) => b, initial: b): b {
+        return initial
     }
 
     toArray(): Array<a> {
@@ -24,13 +29,13 @@ export class EmptyStack<a> implements Stack<a> {
     }
 
     toString(): string {
-        return "Empty"
+        return "Nil"
     }
 }
 
-export class NonEmptyStack<a> implements Stack<a> {
-    static of<a>(value: a): NonEmptyStack<a> {
-        return new NonEmptyStack(value, new EmptyStack())
+export class NonEmpty<a> implements Stack<a> {
+    static of<a>(value: a): NonEmpty<a> {
+        return new NonEmpty(value, new Empty())
     }
 
     constructor(readonly head: a, readonly tail: Stack<a>) {}
@@ -43,8 +48,18 @@ export class NonEmptyStack<a> implements Stack<a> {
         return true
     }
 
-    cons(value: a): NonEmptyStack<a> {
-        return new NonEmptyStack(value, this)
+    cons(value: a): NonEmpty<a> {
+        return new NonEmpty(value, this)
+    }
+
+    foldl<b>(f: (val: b, next: a) => b, initial: b): b {
+        let stack: Stack<a> = this
+        let state = initial
+        while (stack.isNonEmpty()) {
+            state = f(state, stack.head)
+            stack = stack.tail
+        }
+        return state
     }
 
     toArray(): Array<a> {

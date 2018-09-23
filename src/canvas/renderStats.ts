@@ -10,13 +10,13 @@ export interface Stats {
     readonly maxFrameTime: number
 }
 
-export interface RenderStatsArgs {
+export interface Args {
     readonly maxSamples: number
     readonly outputFrequency: number
     readonly onStats: (stats: Stats) => void
 }
 
-export class RenderStats {
+export class StatsCapture {
     private readonly maxSamples: number
     private readonly outputFrequency: number
     private readonly onStats: (stats: Stats) => void
@@ -24,7 +24,7 @@ export class RenderStats {
     private sampleCount: number
     private nextIndex: number
 
-    constructor(args: RenderStatsArgs) {
+    constructor(args: Args) {
         this.maxSamples = args.maxSamples
         this.outputFrequency = args.outputFrequency
         this.onStats = args.onStats

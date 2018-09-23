@@ -1,11 +1,11 @@
 import { T2 } from "canvas/util"
 
-export interface DelayConfig {
+export interface Config {
     readonly easing: (pct: number) => number
     readonly duration: number
 }
 
-export const noDelay: DelayConfig = {
+export const noDelay: Config = {
     easing: x => x,
     duration: 0,
 }
@@ -18,38 +18,38 @@ function easing(x: number): number {
     return x ** 0.92
 }
 
-export function delay(duration: number): DelayConfig {
+export function delay(duration: number): Config {
     return { easing, duration }
 }
 
-export interface BrushInput {
+export interface Input {
     readonly x: number
     readonly y: number
     readonly pressure: number
 }
 
-export interface DelayState {
+export interface State {
     readonly startTime: number
-    readonly start: BrushInput
-    readonly end: BrushInput
+    readonly start: Input
+    readonly end: Input
 }
 
-export function init(currentTime: number, start: BrushInput): DelayState {
+export function init(currentTime: number, start: Input): State {
     return { startTime: currentTime, start, end: start }
 }
 
 export function updateWithInput(
-    config: DelayConfig,
-    state: DelayState,
+    config: Config,
+    state: State,
     currentTime: number,
-    end: BrushInput
-): T2<DelayState, BrushInput> {
+    end: Input
+): T2<State, Input> {
     if (config.duration <= 0) return [state, end]
 
     const deltaTime = currentTime - state.startTime
     const pct = config.easing(Math.min(deltaTime / config.duration, 1))
     const start = state.start
-    const output: BrushInput = {
+    const output: Input = {
         x: start.x + (end.x - start.x) * pct,
         y: start.y + (end.y - start.y) * pct,
         pressure: start.pressure + (end.pressure - start.pressure) * pct,
@@ -57,11 +57,7 @@ export function updateWithInput(
     return [{ startTime: currentTime, start: output, end }, output]
 }
 
-export function update(
-    config: DelayConfig,
-    state: DelayState,
-    currentTime: number
-): T2<DelayState, BrushInput> {
+export function update(config: Config, state: State, currentTime: number): T2<State, Input> {
     if (config.duration <= 0) return [state, state.end]
 
     const deltaTime = currentTime - state.startTime
@@ -69,7 +65,7 @@ export function update(
 
     const pct = config.easing(Math.min(deltaTime / config.duration, 1))
     const { start, end } = state
-    const output: BrushInput = {
+    const output: Input = {
         x: start.x + (end.x - start.x) * pct,
         y: start.y + (end.y - start.y) * pct,
         pressure: start.pressure + (end.pressure - start.pressure) * pct,

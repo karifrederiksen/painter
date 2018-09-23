@@ -1,38 +1,44 @@
-import { Color, Hsluv } from "./color"
+import * as Color from "./color"
+import * as Rng from "canvas/rng"
 
 export interface Theme {
-    readonly colorPrimary: Color
-    readonly colorDefaultLight: Color
-    readonly colorDefault: Color
-    readonly colorTextLightest: Color
-    readonly colorTextLight: Color
-    readonly colorTextDark: Color
-    readonly colorBg1: Color
-    readonly colorBg2: Color
-    readonly colorBg3: Color
+    readonly colorPrimary: Color.Hsluv
+    readonly colorDefaultLight: Color.Hsluv
+    readonly colorDefault: Color.Hsluv
+    readonly colorTextLightest: Color.Hsluv
+    readonly colorTextLight: Color.Hsluv
+    readonly colorTextDark: Color.Hsluv
+    readonly colorBg1: Color.Hsluv
+    readonly colorBg2: Color.Hsluv
+    readonly colorBg3: Color.Hsluv
 }
 
-export const init: Theme = {
-    colorPrimary: new Hsluv(0, 50, 70),
-    colorDefaultLight: new Hsluv(0, 0, 77),
-    colorDefault: new Hsluv(0, 0, 70),
-    colorTextLightest: new Hsluv(0, 0, 92),
-    colorTextLight: new Hsluv(0, 0, 85),
-    colorTextDark: new Hsluv(0, 0, 4),
-    colorBg1: new Hsluv(0, 0, 35),
-    colorBg2: new Hsluv(0, 0, 30),
-    colorBg3: new Hsluv(0, 0, 23),
+const init_: Theme = {
+    colorPrimary: new Color.Hsluv(0, 50, 70),
+    colorDefaultLight: new Color.Hsluv(0, 0, 77),
+    colorDefault: new Color.Hsluv(0, 0, 60),
+    colorTextLightest: new Color.Hsluv(0, 0, 96),
+    colorTextLight: new Color.Hsluv(0, 0, 90),
+    colorTextDark: new Color.Hsluv(0, 0, 4),
+    colorBg1: new Color.Hsluv(0, 0, 46),
+    colorBg2: new Color.Hsluv(0, 0, 38),
+    colorBg3: new Color.Hsluv(0, 0, 23),
 }
 
-const CssVars = `
-    --color-primary: rgb(191, 151, 255);
-    --color-primary-highlight: rgb(255, 159, 255);
-    --color-default: rgb(135, 135, 135);
-    --color-default-highlight: rgb(190, 190, 190);
-    --color-text-light: rgb(223, 223, 223);
-    --color-text-lightest: rgb(255, 255, 255);
-    --color-text-dark: rgb(51, 51, 51);
-    --color-bg-level-0: rgb(63, 63, 63);
-    --color-bg-level-1: rgb(87, 87, 87);
-    --color-bg-level-2: rgb(100, 100, 100);
-`
+function randomizeColors(rng: Rng.RngState, initialTheme: Theme): Theme {
+    const theme: any = {}
+    const keys = Object.keys(initialTheme) as (keyof Theme)[]
+    for (let i = 0; i < keys.length; i++) {
+        const key = keys[i]
+        const color = initialTheme[key]
+
+        const [s, h, nextState] = Rng.next2(rng)
+        rng = nextState
+
+        theme[key] = color.withS(10 + s * 50).withH(h * 360)
+    }
+
+    return theme
+}
+
+export const init = randomizeColors(Rng.seed(/*114*/ 12372), init_)

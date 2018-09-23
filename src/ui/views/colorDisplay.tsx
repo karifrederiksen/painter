@@ -1,10 +1,10 @@
 import * as React from "react"
 import styled from "../styled"
-import { Hsv } from "canvas/color"
+import { Hsluv } from "canvas/color"
 
 export type ColorDisplay = {
-    readonly color: Hsv
-    readonly colorSecondary: Hsv
+    readonly color: Hsluv
+    readonly colorSecondary: Hsluv
     readonly onClick: () => void
 }
 

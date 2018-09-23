@@ -9,13 +9,14 @@ import { InlineLabeled } from "./views/inlineLabeled"
 import { ColorDisplay } from "./views/colorDisplay"
 import { YPadded } from "./views/padded"
 import { ColorWheel } from "ui/views/colorWheel"
-import { MessageSender, Tool, ToolType } from "canvas"
-import { Rgb, rgbToHsv } from "canvas/color"
+import * as Tools from "canvas/tools"
+import * as Color from "canvas/color"
+import * as BrushTool from "canvas/tools/brushTool"
 
-export interface ToolBarProps {
-    readonly messageSender: MessageSender
-    readonly tool: Tool
-    readonly transientState: ToolBarTransientState
+export interface ToolbarProps {
+    readonly msgSender: Tools.MsgSender
+    readonly tool: Tools.Tool
+    readonly transientState: TransientState
 }
 
 const LeftBar = styled.div`
@@ -36,42 +37,47 @@ const ToolBarContainer = styled.div`
     background-color: ${p => p.theme.colorBg2.toStyle()};
     color: ${p => p.theme.colorTextLight.toStyle()};
 `
-
-export function ToolBar(props: ToolBarProps): JSX.Element {
+export function View(props: ToolbarProps): JSX.Element {
     const currentToolType = props.tool.current.type
-    const setTool = props.messageSender.tool.setTool
+    const setTool = props.msgSender.setTool
 
     return (
         <ToolBarContainer>
             <LeftBar>
                 <SinkableButton
                     dataKey="brush"
-                    onClick={() => setTool(ToolType.Brush)}
-                    isDown={currentToolType === ToolType.Brush}
+                    onClick={() => setTool(Tools.ToolType.Brush)}
+                    isDown={currentToolType === Tools.ToolType.Brush}
                 >
                     🖌
                 </SinkableButton>
                 <SinkableButton
                     dataKey="erase"
-                    onClick={() => setTool(ToolType.Eraser)}
-                    isDown={currentToolType === ToolType.Eraser}
+                    onClick={() => setTool(Tools.ToolType.Eraser)}
+                    isDown={currentToolType === Tools.ToolType.Eraser}
                 >
                     🔥
                 </SinkableButton>
                 <SinkableButton
                     dataKey="zoom"
-                    onClick={() => setTool(ToolType.Zoom)}
-                    isDown={currentToolType === ToolType.Zoom}
+                    onClick={() => setTool(Tools.ToolType.Zoom)}
+                    isDown={currentToolType === Tools.ToolType.Zoom}
                 >
                     🔍
                 </SinkableButton>
             </LeftBar>
-            {props.transientState.isDetailsExpanded ? <BrushDetails {...props} /> : null}
+            {props.transientState.isDetailsExpanded ? (
+                <BrushDetails
+                    messageSender={props.msgSender}
+                    tool={props.tool}
+                    transientState={props.transientState}
+                />
+            ) : null}
         </ToolBarContainer>
     )
 }
 
-export interface ToolBarTransientState {
+export interface TransientState {
     readonly isDetailsExpanded: boolean
 }
 
@@ -83,14 +89,24 @@ const Details = styled.div`
     border-left: 0.25rem solid ${p => p.theme.colorBg1.toStyle()};
 `
 
-export function BrushDetails(props: ToolBarProps): JSX.Element {
-    const sender = props.messageSender.tool.brush
+interface BrushDetailsProps {
+    readonly messageSender: Tools.MsgSender
+    readonly tool: Tools.Tool
+    readonly transientState: TransientState
+}
+
+function BrushDetails(props: BrushDetailsProps): JSX.Element {
+    const sender = props.messageSender.brush
     const brush = props.tool.brush
     const color = brush.color
 
     return (
         <Details>
-            <ColorWheel color={brush.color} onChange={sender.setColor} />
+            <ColorWheel
+                color={brush.color}
+                colorType={brush.colorType}
+                onChange={sender.setColor}
+            />
             <YPadded y={0.5}>
                 <ColorDisplay
                     color={brush.color}
@@ -104,10 +120,10 @@ export function BrushDetails(props: ToolBarProps): JSX.Element {
                     value={brush.color.toStyle()}
                     style={{ width: "100%" }}
                     onChange={text => {
-                        const rgb = Rgb.fromCss((text.target as any).value)
+                        const rgb = Color.Rgb.fromCss((text.target as any).value)
                         if (rgb === null) return
 
-                        sender.setColor(rgbToHsv(rgb))
+                        sender.setColor(Color.rgbToHsluv(rgb))
                     }}
                 />
             </YPadded>
@@ -123,15 +139,7 @@ export function BrushDetails(props: ToolBarProps): JSX.Element {
             <Labeled label="Spacing" value={brush.spacingPct.toFixed(2) + "%"}>
                 <Slider percentage={brush.spacingPct} onChange={sender.setSpacing} />
             </Labeled>
-            <Labeled label="Hue" value={color.h.toFixed(2)}>
-                <Slider percentage={color.h} onChange={pct => sender.setColor(color.withH(pct))} />
-            </Labeled>
-            <Labeled label="Saturation" value={color.s.toFixed(2)}>
-                <Slider percentage={color.s} onChange={pct => sender.setColor(color.withS(pct))} />
-            </Labeled>
-            <Labeled label="Value" value={color.v.toFixed(2)}>
-                <Slider percentage={color.v} onChange={pct => sender.setColor(color.withV(pct))} />
-            </Labeled>
+            <ColorSliders sender={sender} color={color} colorType={brush.colorType} />
             <InlineLabeled label="Pressure-Opacity">
                 <Switch
                     checked={brush.pressureAffectsOpacity}
@@ -151,5 +159,50 @@ export function BrushDetails(props: ToolBarProps): JSX.Element {
                 />
             </Labeled>
         </Details>
+    )
+}
+
+function ColorSliders({
+    sender,
+    color,
+    colorType,
+}: Readonly<{
+    sender: BrushTool.MsgSender
+    colorType: BrushTool.ColorType
+    color: Color.Hsluv
+}>): JSX.Element {
+    switch (colorType) {
+        case BrushTool.ColorType.Hsluv:
+            return HsluvSliders({ sender, color })
+        default:
+            return <></>
+    }
+}
+
+function HsluvSliders({
+    sender,
+    color,
+}: Readonly<{ sender: BrushTool.MsgSender; color: Color.Hsluv }>): JSX.Element {
+    return (
+        <>
+            <Labeled label="Hue" value={color.h.toFixed(2)}>
+                <Slider
+                    percentage={color.h / 360}
+                    onChange={pct => sender.setColor(color.withH(pct * 360))}
+                />
+            </Labeled>
+            <Labeled label="Saturation" value={color.s.toFixed(2)}>
+                <Slider
+                    percentage={color.s / 100}
+                    onChange={pct => sender.setColor(color.withS(pct * 100))}
+                />
+            </Labeled>
+            <Labeled label="Luminosity" value={color.l.toFixed(2)}>
+                <Slider
+                    percentage={color.l / 100}
+                    onChange={pct => sender.setColor(color.withL(pct * 100))}
+                />
+            </Labeled>
+        </>
     )
 }

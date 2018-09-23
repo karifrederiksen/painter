@@ -1,13 +1,13 @@
-import { Renderer } from "./renderer"
+import * as Renderer from "./renderer"
 import { Brand, Vec2 } from "canvas/util"
 
 // texture
 
-export type TextureId = Brand<number, "TextureId">
+export type Id = Brand<number, "TextureId">
 
 export class Texture {
     constructor(
-        readonly id: TextureId,
+        readonly id: Id,
         readonly texture: WebGLTexture,
         readonly framebuffer: WebGLFramebuffer,
         private __size: Vec2
@@ -17,7 +17,7 @@ export class Texture {
         return this.__size
     }
 
-    updateSize(renderer: Renderer, newSize: Vec2, textureIndex: number): void {
+    updateSize(renderer: Renderer.Renderer, newSize: Vec2, textureIndex: number): void {
         const gl = renderer.gl
         this.__size = newSize
 
@@ -61,20 +61,20 @@ export class Texture {
 
 export interface Binding {
     readonly time: number
-    readonly textureId: TextureId
+    readonly textureId: Id
 }
 
 export interface Bindings {
     [index: number]: Binding | null
 }
 
-const getNextTextureId: () => TextureId = (() => {
+const getNextTextureId: () => Id = (() => {
     let nextTextureId = 1
-    return () => nextTextureId++ as TextureId
+    return () => nextTextureId++ as Id
 })()
 
 export class TextureManager {
-    readonly textures: Map<TextureId, Texture>
+    readonly textures: Map<Id, Texture>
     readonly bindings: Bindings
 
     constructor(readonly textureSlots: number) {
@@ -82,10 +82,10 @@ export class TextureManager {
         for (let i = 0; i < textureSlots; i++) bindings[i] = null
 
         this.bindings = bindings
-        this.textures = new Map<TextureId, Texture>()
+        this.textures = new Map<Id, Texture>()
     }
 
-    createTexture(renderer: Renderer, size: Vec2): Texture {
+    createTexture(renderer: Renderer.Renderer, size: Vec2): Texture {
         const gl = renderer.gl
         const webglTex = gl.createTexture()
         if (webglTex === null) throw "Failed to create texture"
@@ -177,7 +177,7 @@ export class TextureManager {
         return oldestIndex
     }
 
-    private unbindTexture(id: TextureId): void {
+    private unbindTexture(id: Id): void {
         const { bindings, textureSlots } = this
         for (let i = 0; i < textureSlots; i++) {
             const binding = bindings[i]

@@ -1,22 +1,31 @@
-import { Brand, orDefault, arrUpdate, arrInsert, T2, arrRemove, PushArray, Msg } from "canvas/util"
-import { NonEmptyStack, EmptyStack, Stack } from "canvas/stack"
+import {
+    Brand,
+    orDefault,
+    arrUpdate,
+    arrInsert,
+    T2,
+    arrRemove,
+    PushArray,
+    Action,
+} from "canvas/util"
+import * as Stack from "canvas/stack"
 
-export type LayerId = Brand<number, "LayerId">
+export type Id = Brand<number, "LayerId">
 
 export interface CollectedLayer {
-    readonly id: LayerId
+    readonly id: Id
     readonly name: string
     readonly opacity: number
     readonly isHidden: boolean
 }
 
 export class LeafLayer {
-    static init(id: LayerId): LeafLayer {
+    static init(id: Id): LeafLayer {
         return new LeafLayer(id, "", 1, false)
     }
 
     private constructor(
-        readonly id: LayerId,
+        readonly id: Id,
         readonly name: string,
         readonly opacity: number,
         readonly isHidden: boolean
@@ -39,12 +48,12 @@ export class LeafLayer {
 }
 
 export class GroupLayer {
-    static init(id: LayerId): GroupLayer {
+    static init(id: Id): GroupLayer {
         return new GroupLayer(id, "", 1, false, [])
     }
 
     private constructor(
-        readonly id: LayerId,
+        readonly id: Id,
         readonly name: string,
         readonly opacity: number,
         readonly isHidden: boolean,
@@ -73,7 +82,7 @@ export class GroupLayer {
         return new GroupLayer(this.id, this.name, this.opacity, this.isHidden, children)
     }
 
-    get(selectedPath: NonEmptyStack<number>): Layer {
+    get(selectedPath: Stack.NonEmpty<number>): Layer {
         const index = selectedPath.head
         const selected = this.children[index]
 
@@ -87,7 +96,7 @@ export class GroupLayer {
     }
 
     getWithContext(
-        selectedPath: NonEmptyStack<number>,
+        selectedPath: Stack.NonEmpty<number>,
         context: CollectLeavesContext
     ): CollectedLayer {
         const index = selectedPath.head
@@ -110,13 +119,13 @@ export class GroupLayer {
         }
     }
 
-    findPath(id: LayerId): NonEmptyStack<number> | null {
+    findPath(id: Id): Stack.NonEmpty<number> | null {
         const children = this.children
 
         for (let i = 0; i < this.children.length; i++) {
             const child = children[i]
             if (child.isLeaf) {
-                if (child.id === id) return new EmptyStack<number>().cons(i)
+                if (child.id === id) return new Stack.Empty<number>().cons(i)
             } else {
                 const path = child.findPath(id)
                 if (path !== null) return path.cons(i)
@@ -126,7 +135,7 @@ export class GroupLayer {
         return null
     }
 
-    insert(selectedPath: NonEmptyStack<number>, leaf: LeafLayer): GroupLayer {
+    insert(selectedPath: Stack.NonEmpty<number>, leaf: LeafLayer): GroupLayer {
         const index = selectedPath.head
         const selected = this.children[index]
 
@@ -141,7 +150,7 @@ export class GroupLayer {
         }
     }
 
-    remove(selectedPath: NonEmptyStack<number>): T2<GroupLayer, Stack<number>> {
+    remove(selectedPath: Stack.NonEmpty<number>): T2<GroupLayer, Stack.Stack<number>> {
         const index = selectedPath.head
         const selected = this.children[index]
 
@@ -153,16 +162,16 @@ export class GroupLayer {
             return [this.withChildren(newChildren), newSelectedPath.cons(index)]
         } else {
             const newChildren = this.withChildren(arrRemove(this.children, index))
-            if (newChildren.children.length === 0) return [newChildren, new EmptyStack()]
+            if (newChildren.children.length === 0) return [newChildren, new Stack.Empty()]
 
             const newIndex = this.children.length === index + 1 ? index - 1 : index
-            const newSelectedPath = index === newIndex ? selectedPath : NonEmptyStack.of(newIndex)
+            const newSelectedPath = index === newIndex ? selectedPath : Stack.NonEmpty.of(newIndex)
             return [newChildren, newSelectedPath]
         }
     }
 
     update<a extends Layer>(
-        selectedPath: NonEmptyStack<number>,
+        selectedPath: Stack.NonEmpty<number>,
         updateFn: (layer: a) => a
     ): GroupLayer {
         const index = selectedPath.head
@@ -223,22 +232,22 @@ export enum LayersMsgType {
     SetHidden,
 }
 
-export type LayersMsg =
-    | Msg<LayersMsgType.NewLayer, LayerId>
-    | Msg<LayersMsgType.Remove, LayerId>
-    | Msg<LayersMsgType.Select, LayerId>
-    | Msg<LayersMsgType.SetOpacity, T2<LayerId, number>>
-    | Msg<LayersMsgType.SetHidden, T2<LayerId, boolean>>
+export type Msg =
+    | Action<LayersMsgType.NewLayer, Id>
+    | Action<LayersMsgType.Remove, Id>
+    | Action<LayersMsgType.Select, Id>
+    | Action<LayersMsgType.SetOpacity, T2<Id, number>>
+    | Action<LayersMsgType.SetHidden, T2<Id, boolean>>
 
-export interface LayerMessageSender {
-    newLayer(id: LayerId): void
-    removeLayer(id: LayerId): void
-    selectLayer(id: LayerId): void
-    setOpacity(id: LayerId, opacity: number): void
-    setHidden(id: LayerId, isHidden: boolean): void
+export interface MsgSender {
+    newLayer(id: Id): void
+    removeLayer(id: Id): void
+    selectLayer(id: Id): void
+    setOpacity(id: Id, opacity: number): void
+    setHidden(id: Id, isHidden: boolean): void
 }
 
-export function createLayerSender(sendMessage: (msg: LayersMsg) => void): LayerMessageSender {
+export function createSender(sendMessage: (msg: Msg) => void): MsgSender {
     return {
         newLayer: id => sendMessage({ type: LayersMsgType.NewLayer, payload: id }),
         removeLayer: id => sendMessage({ type: LayersMsgType.Remove, payload: id }),
@@ -250,25 +259,25 @@ export function createLayerSender(sendMessage: (msg: LayersMsg) => void): LayerM
     }
 }
 
-export class LayerState {
-    static init(): LayerState {
+export class State {
+    static init(): State {
         const leaf = LeafLayer.init(getNextLayerId())
         const group = GroupLayer.init(getNextLayerId()).withChildren([leaf])
-        return new LayerState(group, new EmptyStack<number>().cons(0))
+        return new State(group, new Stack.Empty<number>().cons(0))
     }
 
     private splitLayers: SplitLayers | null = null
 
     private constructor(
         readonly layers: GroupLayer,
-        readonly selectedPath: NonEmptyStack<number>
+        readonly selectedPath: Stack.NonEmpty<number>
     ) {}
 
     current(): Layer {
         return this.layers.get(this.selectedPath)
     }
 
-    update(msg: LayersMsg): LayerState {
+    update(msg: Msg): State {
         switch (msg.type) {
             case LayersMsgType.NewLayer:
                 return this.current().id === msg.payload ? this.newLayer() : this
@@ -334,40 +343,40 @@ export class LayerState {
         return this.splitLayers
     }
 
-    private select(id: LayerId): LayerState {
+    private select(id: Id): State {
         const path = this.layers.findPath(id)
         if (path === null) return this
 
-        return new LayerState(this.layers, path)
+        return new State(this.layers, path)
     }
 
-    private newLayer(): LayerState {
+    private newLayer(): State {
         const layers = this.layers.insert(this.selectedPath, LeafLayer.init(getNextLayerId()))
 
-        return new LayerState(layers, this.selectedPath)
+        return new State(layers, this.selectedPath)
     }
 
     // newGroup(): LayerState {
     //     throw "todo"
     // }
 
-    private removeCurrent(): LayerState {
+    private removeCurrent(): State {
         const current = this.current()
         const [newLayers, newSelectedPath] = this.layers.remove(this.selectedPath)
 
-        if (newSelectedPath.isNonEmpty()) return new LayerState(newLayers, newSelectedPath)
+        if (newSelectedPath.isNonEmpty()) return new State(newLayers, newSelectedPath)
 
         const oldIndex = this.selectedPath.head
         const newIndex = newLayers.children.length <= oldIndex ? oldIndex : oldIndex - 1
-        return new LayerState(newLayers, NonEmptyStack.of(newIndex))
+        return new State(newLayers, Stack.NonEmpty.of(newIndex))
     }
 
-    private updateCurrent<a extends Layer>(updateFn: (layer: a) => a): LayerState {
-        return new LayerState(this.layers.update(this.selectedPath, updateFn), this.selectedPath)
+    private updateCurrent<a extends Layer>(updateFn: (layer: a) => a): State {
+        return new State(this.layers.update(this.selectedPath, updateFn), this.selectedPath)
     }
 }
 
-const getNextLayerId: () => LayerId = (() => {
+const getNextLayerId: () => Id = (() => {
     let layerId = 1
-    return () => layerId++ as LayerId
+    return () => layerId++ as Id
 })()

@@ -1,34 +1,29 @@
-import { BrushTool } from "."
-import { BrushPoint } from "../../rendering/brushShader"
-import { RgbLinear } from "canvas/color"
+import * as Brush from "canvas/tools/brushTool"
+import * as BrushShader from "canvas/rendering/brushShader"
+import * as Color from "canvas/color"
 import { lerp, distance, T2, Vec2 } from "canvas/util"
 
 export interface InputPoint {
     readonly alpha: number
-    readonly color: RgbLinear
+    readonly color: Color.RgbLinear
     readonly position: Vec2
     readonly pressure: number
     readonly rotation: number
 }
 
-export interface InterpolatorState {
+export interface State {
     readonly prevPoint: InputPoint
 }
 
-export function init(prevPoint: InputPoint): InterpolatorState {
+export function init(prevPoint: InputPoint): State {
     return { prevPoint }
 }
 
-export interface InterpolationResult {
-    readonly brushPoints: ReadonlyArray<BrushPoint>
-    readonly state: InterpolatorState
-}
-
 export function interpolate(
-    brush: BrushTool,
-    state: InterpolatorState,
+    brush: Brush.State,
+    state: State,
     end: InputPoint
-): T2<InterpolatorState, ReadonlyArray<BrushPoint>> {
+): T2<State, ReadonlyArray<BrushShader.BrushPoint>> {
     if (state === null) {
         const brushPoint = {
             alpha: end.alpha,
@@ -57,7 +52,7 @@ export function interpolate(
     const rotationIsEq = start.rotation === end.rotation
 
     const pctsLen = pcts.length
-    const brushPoints = new Array<BrushPoint>(pctsLen)
+    const brushPoints = new Array<BrushShader.BrushPoint>(pctsLen)
     for (let i = 0; i < pctsLen; i++) {
         const pct = pcts[i]
 

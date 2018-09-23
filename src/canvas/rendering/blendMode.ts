@@ -1,25 +1,24 @@
-export const enum BlendMode {
+export const enum Mode {
     Normal,
-    Erase
+    Erase,
 }
 
-export interface BlendModeArgs {
+export interface Args {
     readonly sfact: number
     readonly dfact: number
 }
 
-export interface BlendModeMap {
-    readonly [BlendMode.Normal]: BlendModeArgs
-    readonly [BlendMode.Erase]: BlendModeArgs
-    
+export interface ModeMap {
+    readonly [Mode.Normal]: Args
+    readonly [Mode.Erase]: Args
 }
 
-export const blendModeMap: BlendModeMap = {
-    [BlendMode.Normal]: {
+export const modeMap: ModeMap = {
+    [Mode.Normal]: {
         sfact: WebGLRenderingContext.ONE,
         dfact: WebGLRenderingContext.ONE_MINUS_SRC_ALPHA,
     },
-    [BlendMode.Erase]: {
+    [Mode.Erase]: {
         sfact: WebGLRenderingContext.ZERO,
         dfact: WebGLRenderingContext.ONE_MINUS_SRC_ALPHA,
     },

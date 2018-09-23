@@ -11,10 +11,10 @@
  * 
  */
 
-import { Texture } from "./texture"
-import { BrushPoint, BrushShader } from "./brushShader"
-import { Renderer } from "./renderer"
-import { Rgb } from "canvas/color"
+import * as Texture from "./texture"
+import * as BrushShader from "./brushShader"
+import * as Renderer from "./renderer"
+import * as Color from "canvas/color"
 import { Vec2 } from "canvas/util"
 
 export interface Area {
@@ -32,8 +32,8 @@ export interface AreaBuilder {
 }
 
 export class Stroke {
-    static create(renderer: Renderer): Stroke | null {
-        const shader = BrushShader.create(renderer.gl)
+    static create(renderer: Renderer.Renderer): Stroke | null {
+        const shader = BrushShader.Shader.create(renderer.gl)
         if (shader === null) return null
 
         const texture = renderer.createTexture(renderer.getCanvasResolution())
@@ -55,32 +55,30 @@ export class Stroke {
         return new Stroke(shader, texture, brushTexture)
     }
 
-    private affectedArea: AreaBuilder | null
+    private affectedArea: AreaBuilder | null = null
 
     private constructor(
-        readonly shader: BrushShader,
-        readonly texture: Texture,
-        readonly brushTexture: Texture
-    ) {
-        this.affectedArea = null
-    }
+        readonly shader: BrushShader.Shader,
+        readonly texture: Texture.Texture,
+        readonly brushTexture: Texture.Texture
+    ) {}
 
-    addPoints(brushPoints: ReadonlyArray<BrushPoint>): void {
+    addPoints(brushPoints: ReadonlyArray<BrushShader.BrushPoint>): void {
         this.shader.addPoints(brushPoints)
         // TODO: calculate affected area
     }
 
-    render(renderer: Renderer): void {
+    render(renderer: Renderer.Renderer): void {
         const resolution = renderer.getCanvasResolution()
         const textureIndex = renderer.bindTexture(this.brushTexture)
         renderer.setFramebuffer(this.texture.framebuffer)
         this.shader.flush(renderer, { resolution, textureIndex })
     }
 
-    clear(renderer: Renderer): void {
+    clear(renderer: Renderer.Renderer): void {
         this.affectedArea = null
         renderer.setFramebuffer(this.texture.framebuffer)
-        renderer.setClearColor(Rgb.Black, 0)
+        renderer.setClearColor(Color.Rgb.Black, 0)
         renderer.clear()
     }
 

@@ -1,5 +1,5 @@
+import * as Renderer from "./renderer"
 import { createProgram, getUniformLocation } from "canvas/web-gl"
-import { Renderer } from "./renderer"
 import { Vec2 } from "canvas/util"
 
 const floatsPerVertex = 4
@@ -36,7 +36,7 @@ void main() {
 }
 `
 
-export interface TextureArgs {
+export interface Args {
     readonly resolution: Vec2
     readonly textureIndex: number
     readonly x0: number
@@ -45,8 +45,8 @@ export interface TextureArgs {
     readonly y1: number
 }
 
-export class TextureShader {
-    static create(gl: WebGLRenderingContext): TextureShader | null {
+export class Shader {
+    static create(gl: WebGLRenderingContext): Shader | null {
         const program = createProgram(gl, VERT_SRC, FRAG_SRC)
         if (program === null) return null
 
@@ -59,7 +59,7 @@ export class TextureShader {
         const resolutionUniform = getUniformLocation(gl, program, "u_resolution")
         if (resolutionUniform === null) return null
 
-        return new TextureShader(gl, program, textureUniform, resolutionUniform)
+        return new Shader(gl, program, textureUniform, resolutionUniform)
     }
 
     private readonly buffer: WebGLBuffer
@@ -90,7 +90,7 @@ export class TextureShader {
         array[21] = 1
     }
 
-    render(renderer: Renderer, args: TextureArgs): void {
+    render(renderer: Renderer.Renderer, args: Args): void {
         renderer.setProgram(this.program)
         const gl = renderer.gl
         const array = this.array

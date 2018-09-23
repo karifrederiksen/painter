@@ -1,5 +1,5 @@
 import * as styledComponents from "styled-components"
-import { Theme } from "canvas/theme"
+import { Theme } from "../canvas/theme"
 
 const {
     default: styled,

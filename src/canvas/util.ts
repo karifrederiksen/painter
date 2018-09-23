@@ -4,6 +4,11 @@ export const enum Order {
     GT = 1,
 }
 
+export interface T0 extends Iterable<never> {
+    readonly length: 0
+    [Symbol.iterator](): Iterator<never>
+}
+
 export interface T1<a> extends Iterable<a> {
     readonly length: 1
     readonly [0]: a
@@ -39,7 +44,7 @@ export interface Case<identifier, state> {
     readonly state: state
 }
 
-export interface Msg<type, payload = undefined> {
+export interface Action<type, payload = undefined> {
     readonly type: type
     readonly payload: payload
 }
@@ -156,23 +161,25 @@ export class Vec4 {
         return this.x === other.x && this.y === other.y && this.z === other.z && this.w === other.w
     }
 }
+export interface FrameStream {
+    (fn: (time: number) => void): CancelFrameStream
+}
 
-export class Dispatcher<a> {
-    constructor(readonly callback: (action: a) => void) {}
+export interface CancelFrameStream {
+    (): void
+}
 
-    f0(action: a): () => void {
-        return () => this.callback(action)
-    }
-
-    f1<b>(fn: (arg0: b) => a): (arg0: b) => void {
-        return arg0 => this.callback(fn(arg0))
-    }
-
-    f2<b, c>(fn: (arg0: b, arg1: c) => a): (arg0: b, arg1: c) => void {
-        return (arg0, arg1) => this.callback(fn(arg0, arg1))
-    }
-
-    map<b>(fn: (action: b) => a): Dispatcher<b> {
-        return new Dispatcher<b>(action => this.callback(fn(action)))
-    }
+export const FrameStream = {
+    make: (fn: (time: number) => void): CancelFrameStream => {
+        const callback = () => {
+            try {
+                fn(performance.now())
+            } catch (e) {
+                console.error(e)
+            }
+            requestId = requestAnimationFrame(callback)
+        }
+        let requestId = requestAnimationFrame(callback)
+        return () => cancelAnimationFrame(requestId)
+    },
 }

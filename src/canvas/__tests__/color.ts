@@ -1,20 +1,20 @@
-import * as decode from "../decode"
-import * as color from "../color"
+import * as Decode from "../decode"
+import * as Color from "../color"
 
 describe("Color transforms work according to the sample data", () => {
-    const threeNumbers = decode.tuple3(decode.number, decode.number, decode.number)
+    const threeNumbers = Decode.tuple3(Decode.number, Decode.number, Decode.number)
 
-    const colorSample = decode.object({
-        rgb: decode.map(threeNumbers, ([r, g, b]) => new color.Rgb(r, g, b)),
-        lch: decode.map(threeNumbers, ([l, c, h]) => new color.Lch(l, c, h)),
-        luv: decode.map(threeNumbers, ([l, u, v]) => new color.Luv(l, u, v)),
-        xyz: decode.map(threeNumbers, ([x, y, z]) => new color.Xyz(x, y, z)),
-        hpluv: decode.map(threeNumbers, ([h, p, l]) => new color.Hpluv(h, p, l)),
-        hsluv: decode.map(threeNumbers, ([h, s, l]) => new color.Hsluv(h, s, l)),
+    const colorSample = Decode.object({
+        rgb: Decode.map(threeNumbers, ([r, g, b]) => new Color.Rgb(r, g, b)),
+        lch: Decode.map(threeNumbers, ([l, c, h]) => new Color.Lch(l, c, h)),
+        luv: Decode.map(threeNumbers, ([l, u, v]) => new Color.Luv(l, u, v)),
+        xyz: Decode.map(threeNumbers, ([x, y, z]) => new Color.Xyz(x, y, z)),
+        hpluv: Decode.map(threeNumbers, ([h, p, l]) => new Color.Hpluv(h, p, l)),
+        hsluv: Decode.map(threeNumbers, ([h, s, l]) => new Color.Hsluv(h, s, l)),
     })
 
     /* tslint:disable-next-line */
-    const colorSamplesResults = decode.dictionary(colorSample)(require("./color-samples.json"))
+    const colorSamplesResults = Decode.dictionary(colorSample)(require("./color-samples.json"))
 
     test("All samples are successfully extracted from the json blob", () => {
         expect(colorSamplesResults.isOk).toBe(true)
@@ -26,10 +26,10 @@ describe("Color transforms work according to the sample data", () => {
         return d < marginOfError && d > -marginOfError
     }
 
-    const rgbRoughEq = (l: color.Rgb, r: color.Rgb) =>
+    const rgbRoughEq = (l: Color.Rgb, r: Color.Rgb) =>
         roughEq(l.r, r.r) && roughEq(l.g, r.g) && roughEq(l.b, r.b)
 
-    const samplesRoughEq = (l: ReadonlyArray<color.Rgb>, r: ReadonlyArray<color.Rgb>) => {
+    const samplesRoughEq = (l: ReadonlyArray<Color.Rgb>, r: ReadonlyArray<Color.Rgb>) => {
         if (l.length !== r.length) return false
 
         for (let i = 0; i < l.length; i++) {
@@ -45,7 +45,7 @@ describe("Color transforms work according to the sample data", () => {
     const rgbSamples = keys.map(key => colorSamples[key].rgb)
 
     test("Hex samples transform to the correct RGB", () => {
-        const hexSamplesRaw = keys.map(color.Rgb.fromCss)
+        const hexSamplesRaw = keys.map(Color.Rgb.fromCss)
         expect(hexSamplesRaw.every(x => x !== null)).toBe(true)
 
         const hexSamples = hexSamplesRaw.map(x => x!)
@@ -53,27 +53,27 @@ describe("Color transforms work according to the sample data", () => {
     })
 
     test("XYZ samples transform to the correct RGB", () => {
-        const xyzSamples = keys.map(key => color.xyzToRgb(colorSamples[key].xyz))
+        const xyzSamples = keys.map(key => Color.xyzToRgb(colorSamples[key].xyz))
         expect(samplesRoughEq(rgbSamples, xyzSamples)).toBe(true)
     })
 
     test("LUV samples transform to the correct RGB", () => {
-        const luvSamples = keys.map(key => color.luvToRgb(colorSamples[key].luv))
+        const luvSamples = keys.map(key => Color.luvToRgb(colorSamples[key].luv))
         expect(samplesRoughEq(rgbSamples, luvSamples)).toBe(true)
     })
 
     test("LCH samples transform to the correct RGB", () => {
-        const lchSamples = keys.map(key => color.lchToRgb(colorSamples[key].lch))
+        const lchSamples = keys.map(key => Color.lchToRgb(colorSamples[key].lch))
         expect(samplesRoughEq(rgbSamples, lchSamples)).toBe(true)
     })
 
     test("HSLuv samples transform to the correct RGB", () => {
-        const hsluvSamples = keys.map(key => color.hsluvToRgb(colorSamples[key].hsluv))
+        const hsluvSamples = keys.map(key => Color.hsluvToRgb(colorSamples[key].hsluv))
         expect(samplesRoughEq(rgbSamples, hsluvSamples)).toBe(true)
     })
 
     test("HPLuv samples transform to the correct RGB", () => {
-        const hpluvSamples = keys.map(key => color.hpluvToRgb(colorSamples[key].hpluv))
+        const hpluvSamples = keys.map(key => Color.hpluvToRgb(colorSamples[key].hpluv))
         expect(samplesRoughEq(rgbSamples, hpluvSamples)).toBe(true)
     })
 })

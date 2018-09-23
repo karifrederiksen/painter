@@ -1,31 +1,21 @@
 import * as React from "react"
 import styled from "./styled"
 import { ThemeProvider } from "./styled"
-import { init } from "canvas/theme"
+import * as Theme from "canvas/theme"
 
-import { FrameStream, CancelFrameStream } from "canvas/frameStream"
-import { ToolBar, ToolBarTransientState } from "./toolbar"
-import { Layers } from "ui/layers"
-import {
-    defaultState,
-    CanvasState,
-    RemoveListeners,
-    Canvas,
-    MessageSender,
-    createSender,
-    PointerInput,
-    update as canvasUpdate,
-} from "canvas"
-import { listen as listenToPointers } from "canvas/input"
-import { SetOnce } from "canvas/util"
+import * as Toolbar from "./toolbar"
+import * as Layers from "ui/layers"
+import * as Input from "canvas/input"
+import * as Canvas from "canvas/canvas"
+import { SetOnce, FrameStream, CancelFrameStream } from "canvas/util"
 
-export function start(frameStream: FrameStream): JSX.Element {
-    const state = defaultState()
-    return <Painter state={state} frameStream={frameStream} />
+export function start(): JSX.Element {
+    const state = Canvas.initState()
+    return <Painter state={state} frameStream={FrameStream.make} />
 }
 
 export type PainterProps = {
-    readonly state: CanvasState
+    readonly state: Canvas.State
     readonly frameStream: FrameStream
     //readonly messageStream: (handler: (msg: CanvasMsg) => void) => void
 }
@@ -47,12 +37,12 @@ const Wrapper = styled.div`
 `
 
 interface PainterState {
-    readonly persistent: CanvasState
+    readonly persistent: Canvas.State
     readonly transient: TransientState
 }
 
 interface TransientState {
-    readonly toolBar: ToolBarTransientState
+    readonly toolBar: Toolbar.TransientState
 }
 
 function initTransient(): TransientState {
@@ -62,12 +52,12 @@ function initTransient(): TransientState {
 }
 
 class Painter extends React.Component<PainterProps, PainterState> {
-    private removeInputListeners: SetOnce<RemoveListeners>
+    private removeInputListeners: SetOnce<Input.RemoveListeners>
     private cancelFrameStream: SetOnce<CancelFrameStream>
-    private canvas: SetOnce<Canvas>
+    private canvas: SetOnce<Canvas.Canvas>
     private htmlCanvas: HTMLCanvasElement | null
     private transientState: TransientState
-    private sender: MessageSender
+    private readonly sender: Canvas.MsgSender
 
     constructor(props: PainterProps) {
         super(props)
@@ -75,11 +65,11 @@ class Painter extends React.Component<PainterProps, PainterState> {
         this.removeInputListeners = new SetOnce()
         this.cancelFrameStream = new SetOnce()
         this.canvas = new SetOnce()
-        this.sender = createSender(msg => {
-            console.log("Message of type ", msg.type, "with payload", msg.payload)
+        this.sender = Canvas.createSender(msg => {
+            //console.log("Message of type ", msg.type, "with payload", msg.payload)
             this.setState((state: PainterState) => ({
                 ...state,
-                persistent: canvasUpdate(state.persistent, msg),
+                persistent: Canvas.update(state.persistent, msg),
             }))
         })
         this.htmlCanvas = null
@@ -91,12 +81,12 @@ class Painter extends React.Component<PainterProps, PainterState> {
     render() {
         const state = this.state as PainterState
         return (
-            <ThemeProvider theme={init}>
+            <ThemeProvider theme={Theme.init}>
                 <Wrapper>
-                    <ToolBar
+                    <Toolbar.View
                         tool={state.persistent.tool}
                         transientState={state.transient.toolBar}
-                        messageSender={this.sender}
+                        msgSender={this.sender.tool}
                     />
                     <canvas
                         width="800"
@@ -106,7 +96,10 @@ class Painter extends React.Component<PainterProps, PainterState> {
                         style={{ cursor: "crosshair" }}
                     />
                     <div style={{ width: "14rem" }}>
-                        <Layers layers={state.persistent.layers} sender={this.sender.layer} />
+                        <Layers.LayersView
+                            layers={state.persistent.layers}
+                            sender={this.sender.layer}
+                        />
                     </div>
                 </Wrapper>
             </ThemeProvider>
@@ -118,7 +111,7 @@ class Painter extends React.Component<PainterProps, PainterState> {
         const htmlCanvas = this.htmlCanvas
         if (htmlCanvas == null) throw "Canvas not found"
 
-        const canvas = Canvas.create(htmlCanvas, {
+        const canvas = Canvas.Canvas.create(htmlCanvas, {
             onStats: stats => {
                 console.log(stats)
             },
@@ -128,7 +121,7 @@ class Painter extends React.Component<PainterProps, PainterState> {
         this.canvas.set(canvas)
 
         this.removeInputListeners.set(
-            listenToPointers(htmlCanvas, {
+            Input.listen(htmlCanvas, {
                 click: this.onClick,
                 release: this.onRelease,
                 move: this.onMove,
@@ -145,7 +138,7 @@ class Painter extends React.Component<PainterProps, PainterState> {
         console.log("Painter unmounted")
     }
 
-    private onClick = (input: PointerInput): void => {
+    private onClick = (input: Input.PointerInput): void => {
         const state = this.state as PainterState
         const tool = this.canvas.value.onClick(state.persistent.tool, input)
         const persistent = { ...state.persistent, tool }
@@ -153,7 +146,7 @@ class Painter extends React.Component<PainterProps, PainterState> {
         this.setState(newState)
     }
 
-    private onRelease = (input: PointerInput): void => {
+    private onRelease = (input: Input.PointerInput): void => {
         const state = this.state as PainterState
         const tool = this.canvas.value.onRelease(state.persistent.tool, input)
         const persistent = { ...state.persistent, tool }
@@ -161,11 +154,11 @@ class Painter extends React.Component<PainterProps, PainterState> {
         this.setState(newState)
     }
 
-    private onMove = (_input: PointerInput): void => {
+    private onMove = (_input: Input.PointerInput): void => {
         //
     }
 
-    private onDrag = (input: PointerInput): void => {
+    private onDrag = (input: Input.PointerInput): void => {
         const state = this.state as PainterState
         const tool = this.canvas.value.onDrag(state.persistent.tool, input)
         const persistent = { ...state.persistent, tool }

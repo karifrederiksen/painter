@@ -1,7 +1,7 @@
-import { Renderer } from "./renderer"
-import { Texture } from "./texture"
+import * as Renderer from "./renderer"
+import * as Texture from "./texture"
+import * as Color from "canvas/color"
 import { getUniformLocation, createProgram } from "canvas/web-gl"
-import { Rgb } from "canvas/color"
 import { Vec4 } from "canvas/util"
 
 const VERT_SRC = `
@@ -35,13 +35,13 @@ void main() {
 }
 `
 
-export interface BrushTextureArgs {
+export interface Args {
     readonly softness: number
     readonly gamma: number
 }
 
-export class BrushTextureGenerator {
-    static create(gl: WebGLRenderingContext): BrushTextureGenerator | null {
+export class Generator {
+    static create(gl: WebGLRenderingContext): Generator | null {
         const program = createProgram(gl, VERT_SRC, FRAG_SRC)
         if (program === null) return null
 
@@ -54,7 +54,7 @@ export class BrushTextureGenerator {
         const gammaUniform = getUniformLocation(gl, program, "u_gamma")
         if (gammaUniform === null) return null
 
-        return new BrushTextureGenerator(gl, program, softnessUniform, gammaUniform)
+        return new Generator(gl, program, softnessUniform, gammaUniform)
     }
 
     private readonly buffer: WebGLBuffer
@@ -88,10 +88,10 @@ export class BrushTextureGenerator {
         this.array = array
     }
 
-    generateBrushTexture(renderer: Renderer, args: BrushTextureArgs, texture: Texture): void {
+    generateBrushTexture(renderer: Renderer.Renderer, args: Args, texture: Texture.Texture): void {
         renderer.setViewport(new Vec4(0, 0, texture.size.x, texture.size.y))
         renderer.setFramebuffer(texture.framebuffer)
-        renderer.setClearColor(Rgb.Black, 0)
+        renderer.setClearColor(Color.Rgb.Black, 0)
         renderer.clear()
         renderer.setProgram(this.program)
 

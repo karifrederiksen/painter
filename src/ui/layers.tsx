@@ -5,12 +5,12 @@ import { Slider } from "ui/views/slider"
 import { Labeled } from "ui/views/labeled"
 import { InlineLabeled } from "ui/views/inlineLabeled"
 import { Switch } from "ui/views/switch"
-import { LayerState, LayerMessageSender, LayerId, Layer } from "canvas/layers"
+import * as Layers from "canvas/layers"
 import { DefaultButton } from "ui/views/buttons"
 
-export interface LayersProps {
-    readonly layers: LayerState
-    readonly sender: LayerMessageSender
+export interface LayersViewProps {
+    readonly layers: Layers.State
+    readonly sender: Layers.MsgSender
 }
 
 const LayersWrapper = styled.div`
@@ -36,7 +36,7 @@ const LayersControlsWrapper = styled.div`
     padding-right: 0.5rem;
 `
 
-export function Layers({ layers, sender }: LayersProps): JSX.Element {
+export function LayersView({ layers, sender }: LayersViewProps): JSX.Element {
     const topLayers = layers.layers.children
     const current = layers.current()
 
@@ -82,9 +82,9 @@ export function Layers({ layers, sender }: LayersProps): JSX.Element {
 }
 
 export interface LayerViewProps {
-    readonly selectedId: LayerId
-    readonly layer: Layer
-    readonly onClick: (id: LayerId) => void
+    readonly selectedId: Layers.Id
+    readonly layer: Layers.Layer
+    readonly onClick: (id: Layers.Id) => void
 }
 
 const LayerWrapper = styled.div`

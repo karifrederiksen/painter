@@ -1,9 +1,9 @@
-import { BlendMode, blendModeMap } from "./blendMode"
-import { BrushShader } from "./brushShader"
-import { BrushTextureGenerator } from "./brushTextureGenerator"
-import { TextureManager, Texture } from "./texture"
-import { TextureShader } from "canvas/rendering/textureShader"
-import { Rgb } from "canvas/color"
+import * as BlendMode from "./blendMode"
+import * as BrushShader from "./brushShader"
+import * as BrushTextureShader from "./brushTextureGenerator"
+import * as Texture from "./texture"
+import * as TextureShader from "canvas/rendering/textureShader"
+import * as Color from "canvas/color"
 import { T2, Vec2, Vec4 } from "canvas/util"
 
 const contextAttributes: WebGLContextAttributes = {
@@ -21,8 +21,8 @@ export interface Compatibility {
 }
 
 export interface Shaders {
-    readonly brushTextureGenerator: BrushTextureGenerator
-    readonly textureShader: TextureShader
+    readonly brushTextureGenerator: BrushTextureShader.Generator
+    readonly textureShader: TextureShader.Shader
 }
 
 export class Renderer {
@@ -32,6 +32,9 @@ export class Renderer {
             console.error("Failed to initialize WebGL renderer for canvas: ", canvas)
             return null
         }
+
+        gl.enable(WebGLRenderingContext.BLEND)
+        gl.disable(WebGLRenderingContext.DEPTH_TEST)
 
         const floatLinearFiltering = gl.getExtension("OES_texture_float_linear")
         if (floatLinearFiltering === null)
@@ -50,19 +53,19 @@ export class Renderer {
             supportsHalfFloat: false,
         }
 
-        const brushShader = BrushShader.create(gl)
+        const brushShader = BrushShader.Shader.create(gl)
         if (brushShader === null) {
             console.error("Failed to initialize BrushShader")
             return null
         }
 
-        const brushTextureGenerator = BrushTextureGenerator.create(gl)
+        const brushTextureGenerator = BrushTextureShader.Generator.create(gl)
         if (brushTextureGenerator === null) {
             console.error("Failed to initialize BrushTextureGenerator")
             return null
         }
 
-        const textureShader = TextureShader.create(gl)
+        const textureShader = TextureShader.Shader.create(gl)
         if (textureShader === null) {
             console.error("Failed to initialize TextureShader")
             return null
@@ -73,25 +76,23 @@ export class Renderer {
         return new Renderer(gl, compat, shaders, initState(gl))
     }
 
-    private readonly textureManager: TextureManager
+    private readonly textureManager: Texture.TextureManager
 
     private constructor(
         readonly gl: WebGLRenderingContext,
         readonly compatibility: Compatibility,
         readonly shaders: Shaders,
-        private readonly state: RenderState
+        private readonly state: GlState
     ) {
-        gl.enable(WebGLRenderingContext.BLEND)
-        gl.disable(WebGLRenderingContext.DEPTH_TEST)
-        this.textureManager = new TextureManager(compatibility.maxBoundTextures)
+        this.textureManager = new Texture.TextureManager(compatibility.maxBoundTextures)
     }
 
     getCanvasResolution(): Vec2 {
-        const canv = this.gl.canvas
-        return new Vec2(canv.width, canv.height)
+        const { width, height } = this.gl.canvas
+        return new Vec2(width, height)
     }
 
-    setBlendMode(blendMode: BlendMode): void {
+    setBlendMode(blendMode: BlendMode.Mode): void {
         if (blendMode === this.state.blendMode) return
 
         this.state.blendMode = blendMode
@@ -119,7 +120,7 @@ export class Renderer {
         applyFramebuffer(this.gl, this.state)
     }
 
-    setClearColor(rgb: Rgb, alpha: number): void {
+    setClearColor(rgb: Color.Rgb, alpha: number): void {
         if (rgb.eq(this.state.clearColor[0]) && alpha === this.state.clearColor[1]) return
 
         this.state.clearColor = [rgb, alpha]
@@ -130,11 +131,11 @@ export class Renderer {
         this.gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT)
     }
 
-    createTexture(size: Vec2): Texture {
+    createTexture(size: Vec2): Texture.Texture {
         return this.textureManager.createTexture(this, size)
     }
 
-    bindTexture(texture: Texture): number {
+    bindTexture(texture: Texture.Texture): number {
         return this.textureManager.bindTexture(this.gl, texture)
     }
 
@@ -143,22 +144,22 @@ export class Renderer {
     }
 }
 
-interface RenderState {
-    blendMode: BlendMode
+interface GlState {
+    blendMode: BlendMode.Mode
     viewport: Vec4
     program: WebGLProgram | null
     framebuffer: WebGLFramebuffer | null
-    clearColor: T2<Rgb, number>
+    clearColor: T2<Color.Rgb, number>
 }
 
-function initState(gl: WebGLRenderingContext): RenderState {
+function initState(gl: WebGLRenderingContext): GlState {
     const canvas = gl.canvas
-    const state: RenderState = {
-        blendMode: BlendMode.Normal,
+    const state: GlState = {
+        blendMode: BlendMode.Mode.Normal,
         viewport: new Vec4(0, 0, canvas.width, canvas.height),
         program: null,
         framebuffer: null,
-        clearColor: [Rgb.Black, 0],
+        clearColor: [Color.Rgb.Black, 0],
     }
     applyBlendMode(gl, state)
     applyViewport(gl, state)
@@ -168,8 +169,11 @@ function initState(gl: WebGLRenderingContext): RenderState {
     return state
 }
 
-function applyBlendMode(gl: WebGLRenderingContext, state: { readonly blendMode: BlendMode }): void {
-    const blendArgs = blendModeMap[state.blendMode]
+function applyBlendMode(
+    gl: WebGLRenderingContext,
+    state: { readonly blendMode: BlendMode.Mode }
+): void {
+    const blendArgs = BlendMode.modeMap[state.blendMode]
     gl.blendFunc(blendArgs.sfact, blendArgs.dfact)
 }
 
@@ -194,7 +198,7 @@ function applyFramebuffer(
 
 function applyClearColor(
     gl: WebGLRenderingContext,
-    state: { readonly clearColor: T2<Rgb, number> }
+    state: { readonly clearColor: T2<Color.Rgb, number> }
 ): void {
     const color = state.clearColor[0]
     const alpha = state.clearColor[1]

@@ -1,21 +1,21 @@
-import { LeafLayer, LayerId } from "canvas/layers"
-import { Texture, TextureManager, TextureId } from "canvas/rendering/texture"
-import { Renderer } from "canvas/rendering/renderer"
+import * as Layers from "canvas/layers"
+import * as Texture from "canvas/rendering/texture"
+import * as Renderer from "canvas/rendering/renderer"
 import { Vec2, Vec4 } from "canvas/util"
 
 // I need a layerManager that keeps track of mappings between layerIds and textures
 // combinedLayers can be a component of that manager
 
 export interface FlattenedLayers {
-    readonly above: ReadonlyArray<LeafLayer>
-    readonly current: LeafLayer | null
-    readonly below: ReadonlyArray<LeafLayer>
+    readonly above: ReadonlyArray<Layers.LeafLayer>
+    readonly current: Layers.LeafLayer | null
+    readonly below: ReadonlyArray<Layers.LeafLayer>
 }
 
 export interface UpdateArgs {
-    readonly layerTextureMap: Map<LayerId, TextureId>
-    readonly textureManager: TextureManager
-    readonly renderer: Renderer
+    readonly layerTextureMap: Map<Layers.Id, Texture.Id>
+    readonly textureManager: Texture.TextureManager
+    readonly renderer: Renderer.Renderer
     readonly flattened: FlattenedLayers
     readonly size: Vec2
 }
@@ -23,15 +23,15 @@ export interface UpdateArgs {
 export class CombinedLayers {
     private previousFlattened: FlattenedLayers | null = null
     private size: Vec2
-    readonly above: Texture
-    readonly below: Texture
-    private __current: Texture | null
+    readonly above: Texture.Texture
+    readonly below: Texture.Texture
+    private __current: Texture.Texture | null
 
-    get current(): Texture | null {
+    get current(): Texture.Texture | null {
         return this.__current
     }
 
-    constructor(renderer: Renderer, size: Vec2) {
+    constructor(renderer: Renderer.Renderer, size: Vec2) {
         this.__current = null
         this.above = renderer.createTexture(size)
         this.below = renderer.createTexture(size)
@@ -98,8 +98,8 @@ export class CombinedLayers {
 
 function getTextureForLayer(
     { textureManager, layerTextureMap, renderer }: UpdateArgs,
-    layerId: LayerId
-): Texture {
+    layerId: Layers.Id
+): Texture.Texture {
     const currentTextureId = layerTextureMap.get(layerId)
 
     if (currentTextureId === undefined) {

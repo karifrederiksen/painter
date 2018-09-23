@@ -1,5 +1,5 @@
+import * as Renderer from "./renderer"
 import { createProgram, getUniformLocation, DEFINE_from_linear } from "canvas/web-gl"
-import { Renderer } from "./renderer"
 import { Vec2 } from "canvas/util"
 
 const floatsPerVertex = 4
@@ -38,7 +38,7 @@ void main() {
 }
 `
 
-export interface OutputArgs {
+export interface Args {
     readonly resolution: Vec2
     readonly textureIndex: number
     readonly x0: number
@@ -47,8 +47,8 @@ export interface OutputArgs {
     readonly y1: number
 }
 
-export class OutputShader {
-    static create(renderer: Renderer): OutputShader | null {
+export class Shader {
+    static create(renderer: Renderer.Renderer): Shader | null {
         const gl = renderer.gl
         const program = createProgram(gl, VERT_SRC, FRAG_SRC)
         if (program === null) return null
@@ -62,7 +62,7 @@ export class OutputShader {
         const resolutionUniform = getUniformLocation(gl, program, "u_resolution")
         if (resolutionUniform === null) return null
 
-        return new OutputShader(gl, program, textureUniform, resolutionUniform)
+        return new Shader(gl, program, textureUniform, resolutionUniform)
     }
 
     private readonly buffer: WebGLBuffer
@@ -93,7 +93,7 @@ export class OutputShader {
         array[21] = 1
     }
 
-    render(renderer: Renderer, args: OutputArgs): void {
+    render(renderer: Renderer.Renderer, args: Args): void {
         renderer.setProgram(this.program)
         const gl = renderer.gl
         const array = this.array

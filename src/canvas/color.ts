@@ -15,11 +15,12 @@ import { Vec3, Vec2, lerp } from "canvas/util"
    but it would be a performance gain for multi-step transformations such as rgb -> hsluv
 */
 
-export interface Color {
+export interface IColor {
     toRgb(): Rgb
     toStyle(): string
 }
-export class Rgb implements Color {
+
+export class Rgb implements IColor {
     static White = new Rgb(1, 1, 1)
     static Black = new Rgb(0, 0, 0)
 
@@ -74,13 +75,25 @@ export class Luv {
     constructor(readonly l: number, readonly u: number, readonly v: number) {}
 }
 
-export class Hsluv implements Color {
+export class Hsluv implements IColor {
     private __cachedRgb: Rgb | null = null
 
     constructor(readonly h: number, readonly s: number, readonly l: number) {}
 
     eq(other: Hsluv): boolean {
         return this.h === other.h && this.s === other.s && this.l === other.l
+    }
+
+    withH(h: number): Hsluv {
+        return new Hsluv(h, this.s, this.l)
+    }
+
+    withS(s: number): Hsluv {
+        return new Hsluv(this.h, s, this.l)
+    }
+
+    withL(l: number): Hsluv {
+        return new Hsluv(this.h, this.s, l)
     }
 
     toRgb(): Rgb {
@@ -96,7 +109,7 @@ export class Hsluv implements Color {
     }
 }
 
-export class Hpluv implements Color {
+export class Hpluv implements IColor {
     private __cachedRgb: Rgb | null = null
 
     constructor(readonly h: number, readonly p: number, readonly l: number) {}
@@ -125,7 +138,7 @@ export class Xyz {
     constructor(readonly x: number, readonly y: number, readonly z: number) {}
 }
 
-export class Hsv implements Color {
+export class Hsv implements IColor {
     private __cachedRgb: Rgb | null = null
 
     constructor(readonly h: number, readonly s: number, readonly v: number) {}
@@ -583,40 +596,25 @@ function parseHexPair(l: string, r: string): number {
 }
 
 function parseHex(hex: string): number {
-    switch (hex.toLowerCase()) {
-        case "0":
-            return 0
-        case "1":
-            return 1
-        case "2":
-            return 2
-        case "3":
-            return 3
-        case "4":
-            return 4
-        case "5":
-            return 5
-        case "6":
-            return 6
-        case "7":
-            return 7
-        case "8":
-            return 8
-        case "9":
-            return 9
-        case "a":
-            return 10
-        case "b":
-            return 11
-        case "c":
-            return 12
-        case "d":
-            return 13
-        case "e":
-            return 14
-        case "f":
-            return 15
-        default:
-            return NaN
-    }
+    const lcHex = hex.toLowerCase()
+    return lcHex in hexMap ? hexMap[lcHex] : NaN
+}
+
+const hexMap: { readonly [key: string]: number } = {
+    "0": 0,
+    "1": 1,
+    "2": 2,
+    "3": 3,
+    "4": 4,
+    "5": 5,
+    "6": 6,
+    "7": 7,
+    "8": 8,
+    "9": 9,
+    a: 10,
+    b: 11,
+    c: 12,
+    d: 13,
+    e: 14,
+    f: 15,
 }

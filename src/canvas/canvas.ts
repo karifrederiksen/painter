@@ -1,80 +1,60 @@
-import { Renderer } from "./rendering/renderer"
-import { BrushPoint } from "./rendering/brushShader"
-import { LayerState, LayersMsg, createLayerSender, LayerMessageSender } from "./layers"
-import { RenderStats, Stats } from "./renderStats"
-import { PointerInput } from "./input"
-import {
-    Tool,
-    ToolMsg,
-    update as toolsUpdate,
-    init as toolsInit,
-    onClick as toolsOnClick,
-    onRelease as toolsOnRelease,
-    onDrag as toolsOnDrag,
-    onFrame as toolsOnFrame,
-} from "./tools"
-import { Stroke } from "./rendering/stroke"
-import { ToolMessageSender, createToolSender } from "./tools"
-import { OutputShader } from "./rendering/outputShader"
-import { Texture } from "./rendering/texture"
-import { CombinedLayers } from "./rendering/combinedLayers"
-import { Rgb } from "canvas/color"
-import { Msg, Vec4 } from "canvas/util"
+import * as Renderer from "./rendering/renderer"
+import * as Layers from "./layers"
+import * as Stats from "./renderStats"
+import * as Tools from "./tools"
+import * as Input from "./input"
+import * as Stroke from "./rendering/stroke"
+import * as OutputShader from "./rendering/outputShader"
+import * as Texture from "./rendering/texture"
+import * as CombinedLayers from "./rendering/combinedLayers"
+import * as Color from "canvas/color"
+import { Action, Vec4 } from "canvas/util"
 
-export interface CanvasHooks {
+export interface Hooks {
     // readonly onCanvasSnapshot: (snapshot: Snapshot) => void
     // readonly onLayerSnapshot: (snapshot: Snapshot, layerId: number) => void
-    readonly onStats: (stats: Stats) => void
+    readonly onStats: (stats: Stats.Stats) => void
 }
 
-export interface CanvasState {
-    readonly tool: Tool
-    readonly layers: LayerState
+export interface State {
+    readonly tool: Tools.Tool
+    readonly layers: Layers.State
 }
 
-export function defaultState(): CanvasState {
+export function initState(): State {
     return {
-        tool: toolsInit(),
-        layers: LayerState.init(),
+        tool: Tools.init(),
+        layers: Layers.State.init(),
     }
 }
 
-export const enum CanvasMsgType {
+export const enum MsgType {
     ToolMsg,
     LayersMsg,
 }
 
 export type CanvasMsg =
-    | Msg<CanvasMsgType.ToolMsg, ToolMsg>
-    | Msg<CanvasMsgType.LayersMsg, LayersMsg>
+    | Action<MsgType.ToolMsg, Tools.ToolMsg>
+    | Action<MsgType.LayersMsg, Layers.Msg>
 
-export function update(state: CanvasState, msg: CanvasMsg): CanvasState {
+export function update(state: State, msg: CanvasMsg): State {
     switch (msg.type) {
-        case CanvasMsgType.ToolMsg:
-            return { ...state, tool: toolsUpdate(state.tool, msg.payload) }
-        case CanvasMsgType.LayersMsg:
+        case MsgType.ToolMsg:
+            return { ...state, tool: Tools.update(state.tool, msg.payload) }
+        case MsgType.LayersMsg:
             return { ...state, layers: state.layers.update(msg.payload) }
     }
 }
 
-export const enum InternalMsgType {
-    BrushPoints,
-    EndFrame,
-}
-
-export type InternalMsg =
-    | Msg<InternalMsgType.BrushPoints, ReadonlyArray<BrushPoint>>
-    | Msg<InternalMsgType.EndFrame, CanvasState>
-
 export class Canvas {
-    static create(canvas: HTMLCanvasElement, hooks: CanvasHooks): Canvas | null {
-        const renderer = Renderer.create(canvas)
+    static create(canvas: HTMLCanvasElement, hooks: Hooks): Canvas | null {
+        const renderer = Renderer.Renderer.create(canvas)
         if (renderer === null) return null
 
-        const stroke = Stroke.create(renderer)
+        const stroke = Stroke.Stroke.create(renderer)
         if (stroke === null) return null
 
-        const outputShader = OutputShader.create(renderer)
+        const outputShader = OutputShader.Shader.create(renderer)
         if (outputShader === null) return null
 
         const outputTexture = renderer.createTexture(renderer.getCanvasResolution())
@@ -82,51 +62,54 @@ export class Canvas {
         return new Canvas(canvas, renderer, stroke, hooks, outputTexture, outputShader)
     }
 
-    private readonly renderWrapper: RenderStats
-    private readonly combineLayers: CombinedLayers
+    private readonly renderWrapper: Stats.StatsCapture
+    private readonly combineLayers: CombinedLayers.CombinedLayers
     private hasRendered: boolean = false
 
     private constructor(
         readonly canvasElement: HTMLCanvasElement,
-        private readonly renderer: Renderer,
-        private readonly stroke: Stroke,
-        private readonly hooks: CanvasHooks,
-        private readonly outputTexture: Texture,
-        private readonly outputShader: OutputShader
+        private readonly renderer: Renderer.Renderer,
+        private readonly stroke: Stroke.Stroke,
+        private readonly hooks: Hooks,
+        private readonly outputTexture: Texture.Texture,
+        private readonly outputShader: OutputShader.Shader
     ) {
-        this.renderWrapper = new RenderStats({
+        this.renderWrapper = new Stats.StatsCapture({
             maxSamples: 200,
             outputFrequency: 100,
             onStats: this.hooks.onStats,
         })
-        this.combineLayers = new CombinedLayers(renderer, renderer.getCanvasResolution())
+        this.combineLayers = new CombinedLayers.CombinedLayers(
+            renderer,
+            renderer.getCanvasResolution()
+        )
     }
 
-    onClick(tool: Tool, input: PointerInput): Tool {
-        const [newTool, brushPoints] = toolsOnClick(tool, input)
+    onClick(tool: Tools.Tool, input: Input.PointerInput): Tools.Tool {
+        const [newTool, brushPoints] = Tools.onClick(tool, input)
         this.stroke.addPoints(brushPoints)
         return newTool
     }
 
-    onRelease(tool: Tool, input: PointerInput): Tool {
-        const [newTool, brushPoints] = toolsOnRelease(tool, input)
+    onRelease(tool: Tools.Tool, input: Input.PointerInput): Tools.Tool {
+        const [newTool, brushPoints] = Tools.onRelease(tool, input)
         this.stroke.addPoints(brushPoints)
         return newTool
     }
 
-    onDrag(tool: Tool, input: PointerInput): Tool {
-        const [newTool, brushPoints] = toolsOnDrag(tool, input)
+    onDrag(tool: Tools.Tool, input: Input.PointerInput): Tools.Tool {
+        const [newTool, brushPoints] = Tools.onDrag(tool, input)
         this.stroke.addPoints(brushPoints)
         return newTool
     }
 
-    onFrame(tool: Tool, currentTime: number): Tool {
-        const [newTool, brushPoints] = toolsOnFrame(tool, currentTime)
+    onFrame(tool: Tools.Tool, currentTime: number): Tools.Tool {
+        const [newTool, brushPoints] = Tools.onFrame(tool, currentTime)
         this.stroke.addPoints(brushPoints)
         return newTool
     }
 
-    endFrame(state: CanvasState): void {
+    endFrame(state: State): void {
         if (!this.needsRender()) return
 
         this.renderWrapper.timedRender(state, this.endFrame_)
@@ -140,7 +123,7 @@ export class Canvas {
         return this.stroke.shader.canFlush
     }
 
-    private endFrame_ = (_state: CanvasState): void => {
+    private endFrame_ = (_state: State): void => {
         const { renderer, stroke, outputTexture, outputShader, combineLayers } = this
         if (stroke.shader.canFlush) {
             stroke.render(renderer)
@@ -153,7 +136,7 @@ export class Canvas {
         outputTexture.updateSize(renderer, resolution, outputTextureIdx)
         renderer.setFramebuffer(this.outputTexture.framebuffer)
         renderer.setViewport(new Vec4(0, 0, resolution.x, resolution.y))
-        renderer.setClearColor(Rgb.White, 1.0)
+        renderer.setClearColor(Color.Rgb.White, 1.0)
         renderer.clear()
 
         const textureIndex = renderer.bindTexture(stroke.texture)
@@ -183,16 +166,14 @@ export class Canvas {
         this.renderer.dispose()
     }
 }
-export interface MessageSender {
-    readonly tool: ToolMessageSender
-    readonly layer: LayerMessageSender
+export interface MsgSender {
+    readonly tool: Tools.MsgSender
+    readonly layer: Layers.MsgSender
 }
 
-export function createSender(sendMessage: (msg: CanvasMsg) => void): MessageSender {
+export function createSender(sendMessage: (msg: CanvasMsg) => void): MsgSender {
     return {
-        tool: createToolSender(msg => sendMessage({ type: CanvasMsgType.ToolMsg, payload: msg })),
-        layer: createLayerSender(msg =>
-            sendMessage({ type: CanvasMsgType.LayersMsg, payload: msg })
-        ),
+        tool: Tools.createSender(msg => sendMessage({ type: MsgType.ToolMsg, payload: msg })),
+        layer: Layers.createSender(msg => sendMessage({ type: MsgType.LayersMsg, payload: msg })),
     }
 }

@@ -1,6 +1,6 @@
+import * as Renderer from "./renderer"
+import * as Color from "canvas/color"
 import { createProgram, getUniformLocation } from "canvas/web-gl"
-import { Renderer } from "./renderer"
-import { RgbLinear } from "canvas/color"
 import { Vec2 } from "canvas/util"
 
 const INITIAL_VARRAY_SIZE = 5000
@@ -45,8 +45,8 @@ void main() {
 
 // TODO: Use elements array!
 
-export class BrushShader {
-    static create(gl: WebGLRenderingContext): BrushShader | null {
+export class Shader {
+    static create(gl: WebGLRenderingContext): Shader | null {
         const program = createProgram(gl, VERT_SRC, FRAG_SRC)
         if (program === null) return null
 
@@ -60,7 +60,7 @@ export class BrushShader {
         const resolutionUniform = getUniformLocation(gl, program, "u_resolution")
         if (resolutionUniform === null) return null
 
-        return new BrushShader(gl, program, textureUniform, resolutionUniform)
+        return new Shader(gl, program, textureUniform, resolutionUniform)
     }
 
     private readonly buffer: WebGLBuffer
@@ -98,7 +98,7 @@ export class BrushShader {
         this.offset = offset
     }
 
-    flush(renderer: Renderer, uniforms: BrushUniforms): void {
+    flush(renderer: Renderer.Renderer, uniforms: Uniforms): void {
         renderer.setProgram(this.program)
         const gl = renderer.gl
 
@@ -210,14 +210,14 @@ function addCorner(
 }
 
 export interface BrushPoint {
-    readonly color: RgbLinear
+    readonly color: Color.RgbLinear
     readonly alpha: number
     readonly position: Readonly<Vec2>
     readonly scaledDiameter: number
     readonly rotation: number
 }
 
-export interface BrushUniforms {
+export interface Uniforms {
     readonly resolution: Readonly<Vec2>
     readonly textureIndex: number
 }

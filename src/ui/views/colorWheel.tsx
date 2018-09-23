@@ -1,11 +1,13 @@
 import * as React from "react"
 import styled from "../styled"
-import { DEFINE_TAU, DEFINE_hsv2rgb, createProgram } from "canvas/web-gl"
-import { Hsv } from "canvas/color"
+import { DEFINE_TAU, createProgram, DEFINE_hsluv_etc, DEFINE_hsvToRgb } from "canvas/web-gl"
+import * as Color from "canvas/color"
+import { ColorType } from "canvas/tools/brushTool"
 
 export type ColorWheelProps = {
-    readonly color: Hsv
-    readonly onChange: (color: Hsv) => void
+    readonly color: Color.Hsluv
+    readonly colorType: ColorType
+    readonly onChange: (color: Color.Hsluv) => void
 }
 
 const Container = styled.div`
@@ -81,8 +83,8 @@ export class ColorWheel extends React.Component<ColorWheelProps> {
     private renderGL() {
         this.gl!.clearColor(0, 0, 0, 0)
         this.gl!.clear(WebGLRenderingContext.COLOR_BUFFER_BIT)
-        this.ringRenderer!.render()
-        this.satValRenderer!.render(this.props.color)
+        this.ringRenderer!.render(this.props.colorType, this.props.color)
+        this.satValRenderer!.render(this.props.colorType, this.props.color)
     }
 
     private onDown = (ev: WithClientXY): void => {
@@ -136,8 +138,7 @@ export class ColorWheel extends React.Component<ColorWheelProps> {
         const hue = rad / (Math.PI * 2) + 0.5
 
         const prevColor = this.props.color
-        const color = new Hsv(hue, prevColor.s, prevColor.v)
-        this.props.onChange(color)
+        this.props.onChange(prevColor.withH(hue * 360))
     }
 
     private signalInner(ev: WithClientXY): void {
@@ -154,8 +155,23 @@ export class ColorWheel extends React.Component<ColorWheelProps> {
         const pctX = x / width
         const pctY = 1 - y / height
 
-        const color = new Hsv(this.props.color.h, pctX, pctY)
-        this.props.onChange(color)
+        const hue = this.props.color.h
+
+        switch (this.props.colorType) {
+            case ColorType.Hsv:
+                this.props.onChange(
+                    Color.rgbToHsluv(Color.hsvToRgb(new Color.Hsv(hue, pctX, pctY)))
+                )
+                break
+            case ColorType.Hsluv:
+                this.props.onChange(new Color.Hsluv(hue, pctX * 100, pctY * 100))
+                break
+            case ColorType.Hpluv:
+                this.props.onChange(
+                    Color.lchToHsluv(Color.hpluvToLch(new Color.Hpluv(hue, pctX * 100, pctY * 100)))
+                )
+                break
+        }
     }
 }
 
@@ -181,41 +197,63 @@ void main() {
 }
 `
 
-const RING_FRAG_SRC = `
-precision highp float;
+function makeRingFragSrc(DEFINE_toRgb: string) {
+    return `
+    precision highp float;
+    
+    ${DEFINE_TAU}
 
-varying vec2 v_position;
-
-${DEFINE_TAU}
-
-${DEFINE_hsv2rgb}
-
-#define INNER_RAD1 0.83
-#define INNER_RAD2 0.85
-#define OUTER_RAD1 0.98
-#define OUTER_RAD2 1.00
-
-void main() {
-    vec2 pos = v_position * vec2(1.0, -1.0);
-    float dist = sqrt(dot(pos, pos));
-
-    float a = smoothstep(INNER_RAD1, INNER_RAD2, dist) - smoothstep(OUTER_RAD1, OUTER_RAD2, dist);
-
-    float radians = atan(pos.y, pos.x);
-    float hue = (radians / TAU) + 0.5;
-
-    vec3 hsv = vec3(hue, 1.0, a);
-
-    gl_FragColor = vec4(hsv2rgb(hsv), a);
+    ${DEFINE_toRgb}
+    
+    #define INNER_RAD1 0.83
+    #define INNER_RAD2 0.85
+    #define OUTER_RAD1 0.98
+    #define OUTER_RAD2 1.00
+    
+    varying vec2 v_position;
+    
+    uniform vec3 u_color;
+    
+    void main() {
+        vec2 pos = v_position * vec2(1.0, -1.0);
+        float dist = sqrt(dot(pos, pos));
+    
+        float a = smoothstep(INNER_RAD1, INNER_RAD2, dist) - smoothstep(OUTER_RAD1, OUTER_RAD2, dist);
+    
+        float radians = atan(pos.y, pos.x);
+        float hue = (radians / TAU) + 0.5;
+    
+        vec3 hsluv = vec3(hue, 1.0, a);
+    
+        gl_FragColor = vec4(toRgb(u_color, hsluv) * a, a);
+    }
+    `
 }
-`
+
+const RING_FRAG_SRC_HSV = makeRingFragSrc(`
+${DEFINE_hsvToRgb}
+
+vec3 toRgb(vec3 color, vec3 xyz) {
+    return hsvToRgb(xyz);
+}
+`)
+
+const RING_FRAG_SRC_HSLUV = makeRingFragSrc(`
+${DEFINE_hsluv_etc}
+
+vec3 toRgb(vec3 color, vec3 xyz) {
+    return hsluvToRgb(xyz * vec3(360.0, color.y, color.z));
+}
+`)
 
 export class RingRenderer {
-    private readonly program: WebGLProgram
     private readonly buffer: WebGLBuffer
+    private program: WebGLProgram | null = null
+    private colorLocation: WebGLUniformLocation | null = null
+    private prevColorType: ColorType | null = null
+    private prevColor: Color.Hsluv | null = null
 
     constructor(private readonly gl: WebGLRenderingContext) {
-        this.program = createProgram(gl, RING_VERT_SRC, RING_FRAG_SRC)!
         this.buffer = gl.createBuffer()!
         gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.buffer)
         gl.bufferData(
@@ -223,16 +261,54 @@ export class RingRenderer {
             new Float32Array([1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, -1.0]),
             WebGLRenderingContext.STATIC_DRAW
         )
-        gl.bindAttribLocation(this.program, 0, "a_position")
     }
 
-    render(): void {
+    render(colorType: ColorType, color: Color.Hsluv): void {
         const gl = this.gl
+
+        if (!this.program || this.prevColorType !== colorType) {
+            if (this.program) {
+                gl.deleteProgram(this.program)
+            }
+
+            switch (colorType) {
+                case ColorType.Hsv:
+                    this.program = createProgram(gl, RING_VERT_SRC, RING_FRAG_SRC_HSV)!
+                    break
+                case ColorType.Hsluv:
+                    this.program = createProgram(gl, RING_VERT_SRC, RING_FRAG_SRC_HSLUV)!
+                    break
+                case ColorType.Hpluv:
+                    throw "todo"
+            }
+            gl.bindAttribLocation(this.program, 0, "a_position")
+            this.colorLocation = gl.getUniformLocation(this.program, "u_color")!
+            this.prevColorType = colorType
+        }
+
         gl.useProgram(this.program)
         gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.buffer)
 
         gl.vertexAttribPointer(0, 2, WebGLRenderingContext.FLOAT, false, 0, 0)
         gl.enableVertexAttribArray(0)
+
+        switch (colorType) {
+            case ColorType.Hsv: {
+                const hsv = Color.rgbToHsv(Color.hsluvToRgb(color))
+                this.gl.uniform3f(this.colorLocation, hsv.h, hsv.s, hsv.v)
+                break
+            }
+            case ColorType.Hsluv: {
+                this.gl.uniform3f(this.colorLocation, color.h, color.s, color.l)
+                break
+            }
+            case ColorType.Hpluv: {
+                const hpluv = Color.lchToHsluv(Color.hsluvToLch(color))
+                this.gl.uniform3f(this.colorLocation, hpluv.h, hpluv.s, hpluv.l)
+                break
+            }
+        }
+        this.prevColor = color
 
         gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, 4)
     }
@@ -260,33 +336,54 @@ void main() {
 }
 `
 
-const SATVAL_FRAG_SRC = `
-precision highp float;
+function makeSatValFragSrc(DEFINE_toRgb: string): string {
+    return `
+    precision highp float;
 
-${DEFINE_hsv2rgb}
-
-varying vec2 v_tex_position;
-
-uniform float u_hue;
-
-void main() {
-    // mix saturation from left to right [0, 1]
-    // mix value from bottom to top: [0, 1]
-    float s = v_tex_position.x;
-    float v = v_tex_position.y;
-    vec3 color = hsv2rgb(vec3(u_hue, s, v));
-
-    gl_FragColor = vec4(color, 1.0);
+    ${DEFINE_toRgb}
+    
+    varying vec2 v_tex_position;
+    
+    uniform vec3 u_color;
+    
+    void main() {
+        // mix saturation from left to right [0, 1]
+        // mix value from bottom to top: [0, 1]
+        float x = v_tex_position.x;
+        float y = v_tex_position.y;
+    
+        gl_FragColor = vec4(
+            toRgb(u_color.x, x, y),
+            1.0
+        );
+    }
+    `
 }
-`
+
+const SATVAL_FRAG_SRC_HSV = makeSatValFragSrc(`
+${DEFINE_hsvToRgb}
+
+vec3 toRgb(float hue, float x, float y) {
+    return hsvToRgb(vec3(hue, x, y));
+}
+`)
+
+const SATVAL_FRAG_SRC_HSLUV = makeSatValFragSrc(`
+${DEFINE_hsluv_etc}
+
+vec3 toRgb(float hue, float x, float y) {
+    return hsluvToRgb(vec3(hue, x * 100.0, y * 100.0));
+}
+`)
 
 export class SatValRenderer {
-    private readonly program: WebGLProgram
     private readonly buffer: WebGLBuffer
-    private readonly colorLocation: WebGLUniformLocation
+    private colorLocation: WebGLUniformLocation | null = null
+    private program: WebGLProgram | null = null
+    private prevColorType: ColorType | null = null
+    private prevColor: Color.Hsluv | null = null
 
     constructor(private readonly gl: WebGLRenderingContext) {
-        this.program = createProgram(gl, SATVAL_VERT_SRC, SATVAL_FRAG_SRC)!
         this.buffer = gl.createBuffer()!
         gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.buffer)
         gl.bufferData(
@@ -313,13 +410,30 @@ export class SatValRenderer {
             ]),
             WebGLRenderingContext.STATIC_DRAW
         )
-        gl.bindAttribLocation(this.program, 0, "a_position")
-
-        this.colorLocation = gl.getUniformLocation(this.program, "u_hue")!
     }
 
-    render(color: Hsv): void {
+    render(colorType: ColorType, color: Color.Hsluv): void {
         const gl = this.gl
+
+        if (!this.program || this.prevColor!.eq(color)) {
+            if (this.program) {
+                gl.deleteProgram(this.program)
+            }
+
+            switch (colorType) {
+                case ColorType.Hsv:
+                    this.program = createProgram(gl, SATVAL_VERT_SRC, SATVAL_FRAG_SRC_HSV)!
+                    break
+                case ColorType.Hsluv:
+                    this.program = createProgram(gl, SATVAL_VERT_SRC, SATVAL_FRAG_SRC_HSLUV)!
+                    break
+                case ColorType.Hpluv:
+                    throw "todo"
+            }
+            gl.bindAttribLocation(this.program, 0, "a_position")
+            this.colorLocation = gl.getUniformLocation(this.program, "u_color")!
+            this.prevColorType = colorType
+        }
 
         gl.useProgram(this.program)
         gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.buffer)
@@ -327,7 +441,23 @@ export class SatValRenderer {
         gl.vertexAttribPointer(0, 2, WebGLRenderingContext.FLOAT, false, 0, 0)
         gl.enableVertexAttribArray(0)
 
-        gl.uniform1f(this.colorLocation, color.h)
+        switch (colorType) {
+            case ColorType.Hsv: {
+                const hsv = Color.rgbToHsv(Color.hsluvToRgb(color))
+                this.gl.uniform3f(this.colorLocation, hsv.h, hsv.s, hsv.v)
+                break
+            }
+            case ColorType.Hsluv: {
+                this.gl.uniform3f(this.colorLocation, color.h, color.s, color.l)
+                break
+            }
+            case ColorType.Hpluv: {
+                const hsl = Color.lchToHsluv(Color.hsluvToLch(color))
+                this.gl.uniform3f(this.colorLocation, hsl.h, hsl.s, hsl.l)
+                break
+            }
+        }
+        this.prevColor = color
 
         gl.drawArrays(WebGLRenderingContext.TRIANGLES, 0, 6)
     }

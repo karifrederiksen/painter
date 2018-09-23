@@ -1,33 +1,8 @@
-export { BrushTool } from "./brushtool"
-export { Camera } from "canvas/tools/cameratools"
-import { T2, Case, Msg } from "../util"
-import { DragState, PointerInput } from "../input"
-import {
-    update as brushUpdate,
-    BrushTool,
-    init as brushInit,
-    BrushTempState,
-    initTempState as brushInitTempState,
-    onClick as brushOnClick,
-    onDrag as brushOnDrag,
-    onRelease as brushOnRelease,
-    onFrame as brushOnFrame,
-    BrushMessageSender,
-    BrushMsg,
-    createBrushSender,
-} from "./brushtool"
-import {
-    Camera,
-    update as cameraUpdate,
-    init as cameraInit,
-    moveToolUpdate,
-    zoomToolUpdate,
-    rotateToolUpdate,
-    CameraMessageSender,
-    CameraMsg,
-    createCameraSender,
-} from "canvas/tools/cameratools"
-import { BrushPoint } from "../rendering/brushShader"
+import * as Input from "../input"
+import * as Brush from "canvas/tools/brushTool"
+import * as Camera from "canvas/tools/cameratools"
+import * as BrushShader from "../rendering/brushShader"
+import { T2, Case, Action } from "../util"
 
 export const enum ToolMsgType {
     SetTool,
@@ -37,21 +12,23 @@ export const enum ToolMsgType {
 }
 
 export type ToolMsg =
-    | Msg<ToolMsgType.SetTool, ToolType>
-    | Msg<ToolMsgType.BrushMsg, BrushMsg>
-    | Msg<ToolMsgType.EraserMsg, BrushMsg>
-    | Msg<ToolMsgType.CameraMsg, CameraMsg>
+    | Action<ToolMsgType.SetTool, ToolType>
+    | Action<ToolMsgType.BrushMsg, Brush.Msg>
+    | Action<ToolMsgType.EraserMsg, Brush.Msg>
+    | Action<ToolMsgType.CameraMsg, Camera.Msg>
 
-export interface ToolMessageSender {
-    readonly brush: BrushMessageSender
-    readonly camera: CameraMessageSender
+export interface MsgSender {
+    readonly brush: Brush.MsgSender
+    readonly camera: Camera.MsgSender
     setTool(type: ToolType): void
 }
 
-export function createToolSender(sendMessage: (msg: ToolMsg) => void): ToolMessageSender {
+export function createSender(sendMessage: (msg: ToolMsg) => void): MsgSender {
     return {
-        brush: createBrushSender(msg => sendMessage({ type: ToolMsgType.BrushMsg, payload: msg })),
-        camera: createCameraSender(msg =>
+        brush: Brush.createBrushSender(msg =>
+            sendMessage({ type: ToolMsgType.BrushMsg, payload: msg })
+        ),
+        camera: Camera.createSender(msg =>
             sendMessage({ type: ToolMsgType.CameraMsg, payload: msg })
         ),
         setTool: type => sendMessage({ type: ToolMsgType.SetTool, payload: type }),
@@ -67,24 +44,24 @@ export const enum ToolType {
 }
 
 export interface Tool {
-    readonly brush: BrushTool
-    readonly eraser: BrushTool
-    readonly camera: Camera
+    readonly brush: Brush.State
+    readonly eraser: Brush.State
+    readonly camera: Camera.State
     readonly current: CurrentTool
 }
 
 export type CurrentTool =
-    | Case<ToolType.Brush, BrushTempState>
-    | Case<ToolType.Eraser, BrushTempState>
-    | Case<ToolType.Move, DragState | null>
-    | Case<ToolType.Zoom, DragState | null>
-    | Case<ToolType.Rotate, DragState | null>
+    | Case<ToolType.Brush, Brush.TempState>
+    | Case<ToolType.Eraser, Brush.TempState>
+    | Case<ToolType.Move, Input.DragState | null>
+    | Case<ToolType.Zoom, Input.DragState | null>
+    | Case<ToolType.Rotate, Input.DragState | null>
 
 export function init(): Tool {
     return {
-        brush: brushInit(),
-        eraser: brushInit(),
-        camera: cameraInit(),
+        brush: Brush.init(),
+        eraser: Brush.init(),
+        camera: Camera.init(),
         current: brushToolInit(),
     }
 }
@@ -92,14 +69,14 @@ export function init(): Tool {
 function brushToolInit(): CurrentTool {
     return {
         type: ToolType.Brush,
-        state: brushInitTempState(),
+        state: Brush.initTempState(),
     }
 }
 
 function eraserToolInit(): CurrentTool {
     return {
         type: ToolType.Eraser,
-        state: brushInitTempState(),
+        state: Brush.initTempState(),
     }
 }
 
@@ -143,19 +120,22 @@ export function update(tool: Tool, msg: ToolMsg): Tool {
             }
         }
         case ToolMsgType.BrushMsg:
-            return { ...tool, brush: brushUpdate(tool.brush, msg.payload) }
+            return { ...tool, brush: Brush.update(tool.brush, msg.payload) }
         case ToolMsgType.EraserMsg:
-            return { ...tool, eraser: brushUpdate(tool.eraser, msg.payload) }
+            return { ...tool, eraser: Brush.update(tool.eraser, msg.payload) }
         case ToolMsgType.CameraMsg:
-            return { ...tool, camera: cameraUpdate(tool.camera, msg.payload) }
+            return { ...tool, camera: Camera.update(tool.camera, msg.payload) }
     }
 }
 
-export function onClick(tool: Tool, pointer: PointerInput): T2<Tool, ReadonlyArray<BrushPoint>> {
+export function onClick(
+    tool: Tool,
+    pointer: Input.PointerInput
+): T2<Tool, ReadonlyArray<BrushShader.BrushPoint>> {
     const { current } = tool
     switch (current.type) {
         case ToolType.Brush: {
-            const [state, brushPoint] = brushOnClick(tool.camera, tool.brush, pointer)
+            const [state, brushPoint] = Brush.onClick(tool.camera, tool.brush, pointer)
             return [{ ...tool, current: { type: ToolType.Brush, state } }, [brushPoint]]
         }
         case ToolType.Eraser: {
@@ -164,38 +144,41 @@ export function onClick(tool: Tool, pointer: PointerInput): T2<Tool, ReadonlyArr
         case ToolType.Move: {
             if (current.state !== null) return [tool, []]
 
-            const dragState: DragState = { clickPoint: pointer, prevPoint: pointer }
+            const dragState: Input.DragState = { clickPoint: pointer, prevPoint: pointer }
 
-            const cameraMsg = moveToolUpdate(tool.camera, dragState, pointer)
-            const camera = cameraUpdate(tool.camera, cameraMsg)
+            const cameraMsg = Camera.moveToolUpdate(tool.camera, dragState, pointer)
+            const camera = Camera.update(tool.camera, cameraMsg)
             return [{ ...tool, camera, current: { type: ToolType.Move, state: dragState } }, []]
         }
         case ToolType.Zoom: {
             if (current.state !== null) return [tool, []]
 
-            const dragState: DragState = { clickPoint: pointer, prevPoint: pointer }
+            const dragState: Input.DragState = { clickPoint: pointer, prevPoint: pointer }
 
-            const cameraMsg = zoomToolUpdate(tool.camera, dragState, pointer)
-            const camera = cameraUpdate(tool.camera, cameraMsg)
+            const cameraMsg = Camera.zoomToolUpdate(tool.camera, dragState, pointer)
+            const camera = Camera.update(tool.camera, cameraMsg)
             return [{ ...tool, camera, current: { type: ToolType.Zoom, state: dragState } }, []]
         }
         case ToolType.Rotate: {
             if (current.state !== null) return [tool, []]
 
-            const dragState: DragState = { clickPoint: pointer, prevPoint: pointer }
+            const dragState: Input.DragState = { clickPoint: pointer, prevPoint: pointer }
 
-            const cameraMsg = rotateToolUpdate(tool.camera, dragState, pointer)
-            const camera = cameraUpdate(tool.camera, cameraMsg)
+            const cameraMsg = Camera.rotateToolUpdate(tool.camera, dragState, pointer)
+            const camera = Camera.update(tool.camera, cameraMsg)
             return [{ ...tool, camera, current: { type: ToolType.Rotate, state: dragState } }, []]
         }
     }
 }
 
-export function onDrag(tool: Tool, pointer: PointerInput): T2<Tool, ReadonlyArray<BrushPoint>> {
+export function onDrag(
+    tool: Tool,
+    pointer: Input.PointerInput
+): T2<Tool, ReadonlyArray<BrushShader.BrushPoint>> {
     const { current } = tool
     switch (current.type) {
         case ToolType.Brush: {
-            const [state, brushPoints] = brushOnDrag(
+            const [state, brushPoints] = Brush.onDrag(
                 tool.camera,
                 tool.brush,
                 current.state,
@@ -209,9 +192,9 @@ export function onDrag(tool: Tool, pointer: PointerInput): T2<Tool, ReadonlyArra
         case ToolType.Move: {
             if (current.state === null) return [tool, []]
 
-            const cameraMsg = moveToolUpdate(tool.camera, current.state, pointer)
-            const camera = cameraUpdate(tool.camera, cameraMsg)
-            const dragState: DragState = {
+            const cameraMsg = Camera.moveToolUpdate(tool.camera, current.state, pointer)
+            const camera = Camera.update(tool.camera, cameraMsg)
+            const dragState: Input.DragState = {
                 clickPoint: current.state.clickPoint,
                 prevPoint: pointer,
             }
@@ -220,9 +203,9 @@ export function onDrag(tool: Tool, pointer: PointerInput): T2<Tool, ReadonlyArra
         case ToolType.Zoom: {
             if (current.state === null) return [tool, []]
 
-            const cameraMsg = zoomToolUpdate(tool.camera, current.state, pointer)
-            const camera = cameraUpdate(tool.camera, cameraMsg)
-            const dragState: DragState = {
+            const cameraMsg = Camera.zoomToolUpdate(tool.camera, current.state, pointer)
+            const camera = Camera.update(tool.camera, cameraMsg)
+            const dragState: Input.DragState = {
                 clickPoint: current.state.clickPoint,
                 prevPoint: pointer,
             }
@@ -231,9 +214,9 @@ export function onDrag(tool: Tool, pointer: PointerInput): T2<Tool, ReadonlyArra
         case ToolType.Rotate: {
             if (current.state === null) return [tool, []]
 
-            const cameraMsg = rotateToolUpdate(tool.camera, current.state, pointer)
-            const camera = cameraUpdate(tool.camera, cameraMsg)
-            const dragState: DragState = {
+            const cameraMsg = Camera.rotateToolUpdate(tool.camera, current.state, pointer)
+            const camera = Camera.update(tool.camera, cameraMsg)
+            const dragState: Input.DragState = {
                 clickPoint: current.state.clickPoint,
                 prevPoint: pointer,
             }
@@ -242,11 +225,14 @@ export function onDrag(tool: Tool, pointer: PointerInput): T2<Tool, ReadonlyArra
     }
 }
 
-export function onRelease(tool: Tool, pointer: PointerInput): T2<Tool, ReadonlyArray<BrushPoint>> {
+export function onRelease(
+    tool: Tool,
+    pointer: Input.PointerInput
+): T2<Tool, ReadonlyArray<BrushShader.BrushPoint>> {
     const { current } = tool
     switch (current.type) {
         case ToolType.Brush: {
-            const [state, brushPoints] = brushOnRelease(
+            const [state, brushPoints] = Brush.onRelease(
                 tool.camera,
                 tool.brush,
                 current.state,
@@ -259,30 +245,33 @@ export function onRelease(tool: Tool, pointer: PointerInput): T2<Tool, ReadonlyA
         }
         case ToolType.Move: {
             if (current.state === null) return [tool, []]
-            const cameraMsg = moveToolUpdate(tool.camera, current.state, pointer)
-            const camera = cameraUpdate(tool.camera, cameraMsg)
+            const cameraMsg = Camera.moveToolUpdate(tool.camera, current.state, pointer)
+            const camera = Camera.update(tool.camera, cameraMsg)
             return [{ ...tool, camera, current: { type: ToolType.Move, state: null } }, []]
         }
         case ToolType.Zoom: {
             if (current.state === null) return [tool, []]
-            const cameraMsg = zoomToolUpdate(tool.camera, current.state, pointer)
-            const camera = cameraUpdate(tool.camera, cameraMsg)
+            const cameraMsg = Camera.zoomToolUpdate(tool.camera, current.state, pointer)
+            const camera = Camera.update(tool.camera, cameraMsg)
             return [{ ...tool, camera, current: { type: ToolType.Zoom, state: null } }, []]
         }
         case ToolType.Rotate: {
             if (current.state === null) return [tool, []]
-            const cameraMsg = rotateToolUpdate(tool.camera, current.state, pointer)
-            const camera = cameraUpdate(tool.camera, cameraMsg)
+            const cameraMsg = Camera.rotateToolUpdate(tool.camera, current.state, pointer)
+            const camera = Camera.update(tool.camera, cameraMsg)
             return [{ ...tool, camera, current: { type: ToolType.Rotate, state: null } }, []]
         }
     }
 }
 
-export function onFrame(tool: Tool, currentTime: number): T2<Tool, ReadonlyArray<BrushPoint>> {
+export function onFrame(
+    tool: Tool,
+    currentTime: number
+): T2<Tool, ReadonlyArray<BrushShader.BrushPoint>> {
     const { current } = tool
     switch (current.type) {
         case ToolType.Brush: {
-            const [state, brushPoints] = brushOnFrame(tool.brush, current.state, currentTime)
+            const [state, brushPoints] = Brush.onFrame(tool.brush, current.state, currentTime)
             if (state === current.state && brushPoints.length === 0) {
                 return [tool, brushPoints]
             } else {

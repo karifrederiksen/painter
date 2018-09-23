@@ -1,11 +1,10 @@
-import { InterpolatorState, InputPoint, interpolate, init as interpInit } from "./interpolation"
-import { DelayState, BrushInput, DelayConfig } from "./brushDelay"
-import * as brushDelay from "./brushDelay"
-import { BrushPoint } from "../../rendering/brushShader"
-import { Camera } from "canvas/tools/cameratools"
-import { PointerInput } from "../../input"
-import { Hsv, RgbLinear } from "canvas/color"
-import { T2, Msg, Vec2 } from "canvas/util"
+import * as Interp from "canvas/tools/interpolation"
+import * as BrushDelay from "canvas/tools/brushDelay"
+import * as BrushShader from "canvas/rendering/brushShader"
+import * as Camera from "canvas/tools/cameratools"
+import * as Input from "canvas/input"
+import * as Color from "canvas/color"
+import { T2, Action, Vec2 } from "canvas/util"
 
 export const enum BrushMsgType {
     SetDiameter,
@@ -14,32 +13,32 @@ export const enum BrushMsgType {
     SetSpacing,
     SetPressureAffectsOpacity,
     SetPressureAffectsSize,
-    SwapColorFrom,
+    SwapColor,
     SetDelay,
 }
 
-export type BrushMsg =
-    | Msg<BrushMsgType.SetDiameter, number>
-    | Msg<BrushMsgType.SetOpacity, number>
-    | Msg<BrushMsgType.SetColor, Hsv>
-    | Msg<BrushMsgType.SetSpacing, number>
-    | Msg<BrushMsgType.SetPressureAffectsOpacity, boolean>
-    | Msg<BrushMsgType.SetPressureAffectsSize, boolean>
-    | Msg<BrushMsgType.SwapColorFrom, Hsv>
-    | Msg<BrushMsgType.SetDelay, number>
+export type Msg =
+    | Action<BrushMsgType.SetDiameter, number>
+    | Action<BrushMsgType.SetOpacity, number>
+    | Action<BrushMsgType.SetColor, Color.Hsluv>
+    | Action<BrushMsgType.SetSpacing, number>
+    | Action<BrushMsgType.SetPressureAffectsOpacity, boolean>
+    | Action<BrushMsgType.SetPressureAffectsSize, boolean>
+    | Action<BrushMsgType.SwapColor>
+    | Action<BrushMsgType.SetDelay, number>
 
-export interface BrushMessageSender {
-    setColor(color: Hsv): void
+export interface MsgSender {
+    setColor(color: Color.Hsluv): void
     setDelay(ms: number): void
     setDiameter(px: number): void
     setOpacity(opacity: number): void
     setSpacing(px: number): void
     setPressureAffectsOpacity(setPressureAffectsOpacity: boolean): void
     setPressureAffectsSize(setPressureAffectsSize: boolean): void
-    swapColorFrom(previousColor: Hsv): void
+    swapColorFrom(previousColor: Color.Hsluv): void
 }
 
-export function createBrushSender(sendMessage: (msg: BrushMsg) => void): BrushMessageSender {
+export function createBrushSender(sendMessage: (msg: Msg) => void): MsgSender {
     return {
         setColor: color => sendMessage({ type: BrushMsgType.SetColor, payload: color }),
         setDelay: ms => sendMessage({ type: BrushMsgType.SetDelay, payload: ms }),
@@ -50,104 +49,116 @@ export function createBrushSender(sendMessage: (msg: BrushMsg) => void): BrushMe
             sendMessage({ type: BrushMsgType.SetPressureAffectsOpacity, payload: x }),
         setPressureAffectsSize: x =>
             sendMessage({ type: BrushMsgType.SetPressureAffectsSize, payload: x }),
-        swapColorFrom: prevColor =>
-            sendMessage({ type: BrushMsgType.SwapColorFrom, payload: prevColor }),
+        swapColorFrom: () => sendMessage({ type: BrushMsgType.SwapColor, payload: undefined }),
     }
 }
 
-export type BrushTempState = {
-    readonly interpState: InterpolatorState
-    readonly delayState: DelayState
+export const swapColorMsg: Msg = {
+    type: BrushMsgType.SwapColor,
+    payload: undefined,
+}
+
+export type TempState = {
+    readonly interpState: Interp.State
+    readonly delayState: BrushDelay.State
 } | null
 
-export function initTempState(): BrushTempState {
+export function initTempState(): TempState {
     return null
 }
 
-export interface BrushTool {
+export const enum ColorType {
+    Hsv,
+    Hsluv,
+    Hpluv,
+}
+
+export interface State {
     readonly diameterPx: number
     readonly flowPct: number
-    readonly color: Hsv
-    readonly colorSecondary: Hsv
+    readonly colorType: ColorType
+    readonly color: Color.Hsluv
+    readonly colorSecondary: Color.Hsluv
     readonly spacingPct: number
     // TODO: I'll want more fine-grained control over _how_ pressure affects things
     //       for that, I'll want some extra stuff: [min, max, interpFunc]
     readonly pressureAffectsOpacity: boolean
     readonly pressureAffectsSize: boolean
-    readonly delay: DelayConfig
+    readonly delay: BrushDelay.Config
 }
 
-export function init(): BrushTool {
+export function init(): State {
     return {
-        diameterPx: 30,
-        flowPct: 0.15,
-        color: new Hsv(0.73, 1, 0.16),
-        colorSecondary: new Hsv(0, 0, 1),
+        diameterPx: 15,
+        flowPct: 0.3,
+        colorType: ColorType.Hsluv,
+        color: new Color.Hsluv(73, 100, 16),
+        colorSecondary: new Color.Hsluv(0, 0, 100),
         spacingPct: 0.05,
         pressureAffectsOpacity: false,
         pressureAffectsSize: true,
-        delay: brushDelay.delay(50),
+        delay: BrushDelay.delay(5),
     }
 }
 
-export function update(state: BrushTool, msg: BrushMsg): BrushTool {
+export function update(state: State, msg: Msg): State {
     switch (msg.type) {
         case BrushMsgType.SetDiameter:
             return { ...state, diameterPx: msg.payload }
         case BrushMsgType.SetOpacity:
             return { ...state, flowPct: msg.payload }
-        case BrushMsgType.SetColor:
+        case BrushMsgType.SetColor: {
             return { ...state, color: msg.payload }
+        }
         case BrushMsgType.SetSpacing:
             return { ...state, spacingPct: msg.payload }
         case BrushMsgType.SetPressureAffectsOpacity:
             return { ...state, pressureAffectsOpacity: msg.payload }
         case BrushMsgType.SetPressureAffectsSize:
             return { ...state, pressureAffectsSize: msg.payload }
-        case BrushMsgType.SwapColorFrom:
-            if (msg.payload.eq(state.color))
-                return {
-                    ...state,
-                    color: state.colorSecondary,
-                    colorSecondary: state.color,
-                }
-            else return state
+        case BrushMsgType.SwapColor: {
+            return {
+                ...state,
+                color: state.colorSecondary,
+                colorSecondary: state.color,
+            }
+        }
         case BrushMsgType.SetDelay:
-            return { ...state, delay: brushDelay.delay(msg.payload) }
+            return { ...state, delay: BrushDelay.delay(msg.payload) }
     }
 }
 
 export function onClick(
-    camera: Camera,
-    brush: BrushTool,
-    input: PointerInput
-): T2<BrushTempState, BrushPoint> {
+    camera: Camera.State,
+    brush: State,
+    input: Input.PointerInput
+): T2<TempState, BrushShader.BrushPoint> {
     const brushInput = pointerToBrushInput(camera, input)
-    const interpState = interpInit(createInputPoint(brush, brushInput))
-    const delayState = brushDelay.init(input.time, brushInput)
+    const interpState = Interp.init(createInputPoint(brush, brushInput))
+    const delayState = BrushDelay.init(input.time, brushInput)
     return [{ interpState, delayState }, createBrushPoint(brush, brushInput)]
 }
 
 export function onDrag(
-    camera: Camera,
-    brush: BrushTool,
-    state: BrushTempState,
-    input: PointerInput
-): T2<BrushTempState, ReadonlyArray<BrushPoint>> {
+    camera: Camera.State,
+    brush: State,
+    state: TempState,
+    input: Input.PointerInput
+): T2<TempState, ReadonlyArray<BrushShader.BrushPoint>> {
     if (state === null) {
         const res = onClick(camera, brush, input)
         return [res[0], [res[1]]]
     }
 
     const brushInput = pointerToBrushInput(camera, input)
-    const [delayState, newBrushInput] = brushDelay.updateWithInput(
+    const [delayState, newBrushInput] = BrushDelay.updateWithInput(
         brush.delay,
         state.delayState,
         input.time,
         brushInput
     )
 
-    const [interpState, brushPoints] = interpolate(
+    const [interpState, brushPoints] = Interp.interpolate(
         brush,
         state.interpState,
         createInputPoint(brush, newBrushInput)
@@ -157,20 +168,20 @@ export function onDrag(
 }
 
 export function onFrame(
-    brush: BrushTool,
-    state: BrushTempState,
+    brush: State,
+    state: TempState,
     currentTime: number
-): T2<BrushTempState, ReadonlyArray<BrushPoint>> {
+): T2<TempState, ReadonlyArray<BrushShader.BrushPoint>> {
     if (state === null) return [null, []]
     if (brush.delay.duration <= 0) return [null, []]
 
-    const [delayState, newBrushInput] = brushDelay.update(
+    const [delayState, newBrushInput] = BrushDelay.update(
         brush.delay,
         state.delayState,
         currentTime
     )
 
-    const [interpState, brushPoints] = interpolate(
+    const [interpState, brushPoints] = Interp.interpolate(
         brush,
         state.interpState,
         createInputPoint(brush, newBrushInput)
@@ -180,11 +191,11 @@ export function onFrame(
 }
 
 export function onRelease(
-    camera: Camera,
-    brush: BrushTool,
-    state: BrushTempState,
-    input: PointerInput
-): T2<BrushTempState, ReadonlyArray<BrushPoint>> {
+    camera: Camera.State,
+    brush: State,
+    state: TempState,
+    input: Input.PointerInput
+): T2<TempState, ReadonlyArray<BrushShader.BrushPoint>> {
     if (state === null) return [null, []]
 
     // const brushInput = pointerToBrushInput(camera, input)
@@ -204,12 +215,12 @@ export function onRelease(
     return [null, []]
 }
 
-function pointerToBrushInput(_camera: Camera, input: PointerInput): BrushInput {
+function pointerToBrushInput(_camera: Camera.State, input: Input.PointerInput): BrushDelay.Input {
     // TODO: offset, zoom, and stuff
     return { x: input.x, y: input.y, pressure: input.pressure }
 }
 
-function createBrushPoint(brush: BrushTool, input: BrushInput): BrushPoint {
+function createBrushPoint(brush: State, input: BrushDelay.Input): BrushShader.BrushPoint {
     const alpha = brush.flowPct * input.pressure
     const color =
         alpha === 1
@@ -217,7 +228,7 @@ function createBrushPoint(brush: BrushTool, input: BrushInput): BrushPoint {
             : brush.color
                   .toRgb()
                   .toLinear()
-                  .mix(1 - alpha, RgbLinear.Black)
+                  .mix(1 - alpha, Color.RgbLinear.Black)
     const position = new Vec2(input.x, input.y)
     return {
         alpha,
@@ -228,7 +239,7 @@ function createBrushPoint(brush: BrushTool, input: BrushInput): BrushPoint {
     }
 }
 
-function createInputPoint(brush: BrushTool, input: BrushInput): InputPoint {
+function createInputPoint(brush: State, input: BrushDelay.Input): Interp.InputPoint {
     const alpha = brush.flowPct * input.pressure
     const color =
         alpha === 1
@@ -236,7 +247,7 @@ function createInputPoint(brush: BrushTool, input: BrushInput): InputPoint {
             : brush.color
                   .toRgb()
                   .toLinear()
-                  .mix(1 - alpha, RgbLinear.Black)
+                  .mix(1 - alpha, Color.RgbLinear.Black)
     const position = new Vec2(input.x, input.y)
     return {
         alpha,
