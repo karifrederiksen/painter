@@ -47,6 +47,5 @@
 
         //"plugins": [{ "name": "tslint-language-service" }]
     },
-    "include": ["src/**/*.ts", "src/**/*.tsx"],
-    "exclude": ["dist", ".cache"]
+    "include": ["src/**/*.ts", "src/**/*.tsx"]
 }

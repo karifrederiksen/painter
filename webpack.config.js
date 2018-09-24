@@ -1,4 +1,3 @@
-const TsconfigPathsPlugin = require("tsconfig-paths-webpack-plugin")
 const HtmlPlugin = require("html-webpack-plugin")
 const CleanPlugin = require("clean-webpack-plugin")
 const { resolve } = require("path")
@@ -24,7 +23,6 @@ module.exports = {
             "webpack-hot-client/client": require.resolve("webpack-hot-client/client"),
         },
         extensions: [".ts", ".tsx", ".js"],
-        plugins: [new TsconfigPathsPlugin({ configFile: resolve(__dirname, "tsconfig.json") })],
     },
     module: {
         rules: [
