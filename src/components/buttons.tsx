@@ -29,7 +29,7 @@ export const PrimaryButton = styled(ButtonCommon)`
     }
 `
 
-export const DefaultButton = styled(ButtonCommon)`
+export const SecondaryButton = styled(ButtonCommon)`
     background-color: ${p => p.theme.secondaryColor.toStyle()};
     color: ${p => p.theme.onSecondaryColor.toStyle()};
     box-shadow: 0 1px 5px 0 rgba(0, 0, 0, 0.2), 0 2px 2px 0 rgba(0, 0, 0, 0.14),

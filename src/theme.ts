@@ -1,5 +1,6 @@
 import * as Color from "./color"
 import * as Rng from "./rng"
+import { T2 } from "./util"
 
 export interface Theme {
     readonly primaryColor: Color.Hsluv
@@ -30,24 +31,23 @@ interface ThemeBuilder {
 }
 
 const makeBuilder = (): ThemeBuilder => ({
-    primaryColor: new Color.Hsluv(0, 0, 80),
-    primaryColorLight: new Color.Hsluv(0, 0, 80),
-    primaryColorDark: new Color.Hsluv(0, 0, 80),
-    secondaryColor: new Color.Hsluv(0, 0, 77),
-    secondaryColorLight: new Color.Hsluv(0, 0, 77),
-    secondaryColorDark: new Color.Hsluv(0, 0, 77),
-    bgColor: new Color.Hsluv(0, 0, 46),
-    surfaceColor: new Color.Hsluv(0, 0, 38),
-    onPrimaryColor: new Color.Hsluv(0, 0, 0),
-    onSecondaryColor: new Color.Hsluv(0, 0, 0),
-    onSurfaceColor: new Color.Hsluv(0, 0, 100),
+    primaryColor: new Color.Hsluv(0, 100, 80),
+    primaryColorLight: new Color.Hsluv(0, 100, 80),
+    primaryColorDark: new Color.Hsluv(0, 100, 80),
+    secondaryColor: new Color.Hsluv(0, 100, 77),
+    secondaryColorLight: new Color.Hsluv(0, 100, 77),
+    secondaryColorDark: new Color.Hsluv(0, 100, 77),
+    bgColor: new Color.Hsluv(0, 20, 46),
+    surfaceColor: new Color.Hsluv(0, 35, 38),
+    onPrimaryColor: new Color.Hsluv(0, 100, 0),
+    onSecondaryColor: new Color.Hsluv(0, 100, 0),
+    onSurfaceColor: new Color.Hsluv(0, 100, 100),
 })
 
-function randomizeColors(builder: ThemeBuilder): Theme {
-    const rng = new Rng.StatefulWrapper(Rng.seed(1456462772))
+function randomizeColors(rng_: Rng.State, builder: ThemeBuilder): T2<Theme, Rng.State> {
+    const rng = new Rng.StatefulWrapper(rng_)
 
-    const generate = ({ l }: Color.Hsluv) =>
-        new Color.Hsluv(rng.next() * 360, 10 + rng.next() * 50, l)
+    const generate = ({ s, l }: Color.Hsluv) => new Color.Hsluv(rng.next() * 360, rng.next() * s, l)
 
     builder.primaryColor = generate(builder.primaryColor)
     builder.primaryColorLight = generate(builder.primaryColorLight)
@@ -61,7 +61,7 @@ function randomizeColors(builder: ThemeBuilder): Theme {
     builder.onSecondaryColor = generate(builder.onSecondaryColor)
     builder.onSurfaceColor = generate(builder.onSurfaceColor)
 
-    return builder
+    return [builder, rng.state]
 }
 
-export const init = randomizeColors(makeBuilder())
+export const random = (rng: Rng.State) => randomizeColors(rng, makeBuilder())

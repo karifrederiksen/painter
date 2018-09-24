@@ -8,6 +8,8 @@ import * as OutputShader from "./rendering/outputShader"
 import * as Texture from "./rendering/texture"
 import * as CombinedLayers from "./rendering/combinedLayers"
 import * as Color from "./color"
+import * as Rng from "./rng"
+import * as Theme from "./theme"
 import { Action, Vec4 } from "./util"
 
 export interface Hooks {
@@ -17,28 +19,55 @@ export interface Hooks {
 }
 
 export interface State {
+    readonly rng: Rng.State
+    readonly theme: Theme.Theme
     readonly tool: Tools.Tool
     readonly layers: Layers.State
 }
 
 export function initState(): State {
+    const initialRng = Rng.seed(145264772)
+    const [theme, rng] = Theme.random(initialRng)
+
     return {
+        rng,
+        theme,
         tool: Tools.init(),
         layers: Layers.State.init(),
     }
 }
 
 export const enum MsgType {
+    RandomizeTheme,
     ToolMsg,
     LayersMsg,
 }
 
 export type CanvasMsg =
+    | Action<MsgType.RandomizeTheme>
     | Action<MsgType.ToolMsg, Tools.ToolMsg>
     | Action<MsgType.LayersMsg, Layers.Msg>
 
+export interface MsgSender {
+    randomizeTheme(): void
+    readonly tool: Tools.MsgSender
+    readonly layer: Layers.MsgSender
+}
+
+export function createSender(sendMessage: (msg: CanvasMsg) => void): MsgSender {
+    return {
+        randomizeTheme: () => sendMessage({ type: MsgType.RandomizeTheme, payload: undefined }),
+        tool: Tools.createSender(msg => sendMessage({ type: MsgType.ToolMsg, payload: msg })),
+        layer: Layers.createSender(msg => sendMessage({ type: MsgType.LayersMsg, payload: msg })),
+    }
+}
+
 export function update(state: State, msg: CanvasMsg): State {
     switch (msg.type) {
+        case MsgType.RandomizeTheme: {
+            const [theme, rng] = Theme.random(state.rng)
+            return { ...state, rng, theme }
+        }
         case MsgType.ToolMsg:
             return { ...state, tool: Tools.update(state.tool, msg.payload) }
         case MsgType.LayersMsg:
@@ -164,16 +193,5 @@ export class Canvas {
     dispose(): void {
         this.outputShader.dispose(this.renderer.gl)
         this.renderer.dispose()
-    }
-}
-export interface MsgSender {
-    readonly tool: Tools.MsgSender
-    readonly layer: Layers.MsgSender
-}
-
-export function createSender(sendMessage: (msg: CanvasMsg) => void): MsgSender {
-    return {
-        tool: Tools.createSender(msg => sendMessage({ type: MsgType.ToolMsg, payload: msg })),
-        layer: Layers.createSender(msg => sendMessage({ type: MsgType.LayersMsg, payload: msg })),
     }
 }

@@ -19,8 +19,8 @@ interface State {
 }
 
 const SelectedDisplay = styled.div`
-    background-color: ${p => p.theme.primaryColor.toStyle()};
-    color: ${p => p.theme.onPrimaryColor.toStyle()};
+    background-color: ${p => p.theme.secondaryColor.toStyle()};
+    color: ${p => p.theme.onSecondaryColor.toStyle()};
     width: 100%;
     padding: 0.25rem 0.5rem;
     border-radius: 0.25rem;
@@ -47,7 +47,6 @@ export class DropDown<a> extends React.Component<Props<a>, State> {
     }
 
     render(): JSX.Element {
-        console.log("dropdowns")
         const state = this.state
         const { choices, show, onSelect } = this.props
         const left = choices.getLeft().map(value =>

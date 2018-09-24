@@ -28,9 +28,6 @@ type WithClientXY = Readonly<{
     clientY: number
 }>
 
-/* tslint:disable-next-line */
-const noOp = () => {}
-
 export class ColorWheel extends React.Component<ColorWheelProps> {
     private container: HTMLDivElement | null = null
     private pointerState: PointerState = PointerState.Default
@@ -66,7 +63,7 @@ export class ColorWheel extends React.Component<ColorWheelProps> {
     }
 
     shouldComponentUpdate(prevProps: ColorWheelProps) {
-        return !this.props.color.eq(prevProps.color)
+        return !this.props.color.eq(prevProps.color) || this.props.colorType !== prevProps.colorType
     }
 
     private initialize = (canvas: HTMLCanvasElement | null): void => {
@@ -155,22 +152,26 @@ export class ColorWheel extends React.Component<ColorWheelProps> {
         const pctX = x / width
         const pctY = 1 - y / height
 
-        const hue = this.props.color.h
-
         switch (this.props.colorType) {
-            case ColorType.Hsv:
+            case ColorType.Hsv: {
+                const hue = Color.rgbToHsv(this.props.color.toRgb()).h
                 this.props.onChange(
                     Color.rgbToHsluv(Color.hsvToRgb(new Color.Hsv(hue, pctX, pctY)))
                 )
                 break
-            case ColorType.Hsluv:
+            }
+            case ColorType.Hsluv: {
+                const hue = this.props.color.h
                 this.props.onChange(new Color.Hsluv(hue, pctX * 100, pctY * 100))
                 break
-            case ColorType.Hpluv:
+            }
+            case ColorType.Hpluv: {
+                const hue = this.props.color.h
                 this.props.onChange(
                     Color.lchToHsluv(Color.hpluvToLch(new Color.Hpluv(hue, pctX * 100, pctY * 100)))
                 )
                 break
+            }
         }
     }
 }

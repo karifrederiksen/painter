@@ -1,12 +1,13 @@
 import * as React from "react"
 import styled from "../styled"
-import { ThemeProvider } from "../styled"
-import * as Theme from "../theme"
+import { ThemeProvider, injectGlobal } from "../styled"
 import * as Toolbar from "./toolbar"
 import * as Layers from "./layers"
 import * as Input from "../input"
 import * as Canvas from "../canvas"
+import * as Theme from "../theme"
 import { SetOnce, FrameStream, CancelFrameStream } from "../util"
+import { PrimaryButton } from "../components/buttons"
 
 export function start(): JSX.Element {
     return <Painter state={Canvas.initState()} frameStream={FrameStream.make} />
@@ -15,7 +16,6 @@ export function start(): JSX.Element {
 type PainterProps = {
     readonly state: Canvas.State
     readonly frameStream: FrameStream
-    //readonly messageStream: (handler: (msg: CanvasMsg) => void) => void
 }
 
 const Wrapper = styled.div`
@@ -49,6 +49,12 @@ function initTransient(): TransientState {
     }
 }
 
+const BottomLeft = styled.div`
+    position: absolute;
+    left: 0.5rem;
+    bottom: 0.5rem;
+`
+
 class Painter extends React.Component<PainterProps, PainterState> {
     private removeInputListeners: SetOnce<Input.RemoveListeners>
     private cancelFrameStream: SetOnce<CancelFrameStream>
@@ -56,10 +62,14 @@ class Painter extends React.Component<PainterProps, PainterState> {
     private htmlCanvas: HTMLCanvasElement | null
     private transientState: TransientState
     private readonly sender: Canvas.MsgSender
+    private currentGlobalTheme: Theme.Theme
 
     constructor(props: PainterProps) {
         super(props)
-        this.state = { persistent: props.state, transient: initTransient() }
+        this.state = {
+            persistent: props.state,
+            transient: initTransient(),
+        }
         this.removeInputListeners = new SetOnce()
         this.cancelFrameStream = new SetOnce()
         this.canvas = new SetOnce()
@@ -74,32 +84,58 @@ class Painter extends React.Component<PainterProps, PainterState> {
         this.transientState = {
             toolBar: { isDetailsExpanded: true },
         }
+        this.setGlobalTheme()
+        this.currentGlobalTheme = this.state.persistent.theme
+    }
+
+    private setGlobalTheme() {
+        const theme = this.state.persistent.theme
+        if (theme === this.currentGlobalTheme) return
+
+        // In styled-components v4, there will be a component that takes care of global css
+        // currently there is no cleanup of previous styles...
+        injectGlobal`
+            body {
+                background-color: ${theme.bgColor.toStyle()};
+            }
+        `
+        this.currentGlobalTheme = this.state.persistent.theme
     }
 
     render() {
-        const state = this.state as PainterState
+        const state = this.state
+
+        this.setGlobalTheme()
+
         return (
-            <ThemeProvider theme={Theme.init}>
-                <Wrapper>
-                    <Toolbar.View
-                        tool={state.persistent.tool}
-                        transientState={state.transient.toolBar}
-                        msgSender={this.sender.tool}
-                    />
-                    <canvas
-                        width="800"
-                        height="800"
-                        key="muh-canvas"
-                        ref={x => (this.htmlCanvas = x)}
-                        style={{ cursor: "crosshair" }}
-                    />
-                    <div style={{ width: "14rem" }}>
-                        <Layers.LayersView
-                            layers={state.persistent.layers}
-                            sender={this.sender.layer}
+            <ThemeProvider theme={state.persistent.theme}>
+                <div>
+                    <Wrapper>
+                        <Toolbar.View
+                            tool={state.persistent.tool}
+                            transientState={state.transient.toolBar}
+                            msgSender={this.sender.tool}
                         />
-                    </div>
-                </Wrapper>
+                        <canvas
+                            width="800"
+                            height="800"
+                            key="muh-canvas"
+                            ref={x => (this.htmlCanvas = x)}
+                            style={{ cursor: "crosshair" }}
+                        />
+                        <div style={{ width: "14rem" }}>
+                            <Layers.LayersView
+                                layers={state.persistent.layers}
+                                sender={this.sender.layer}
+                            />
+                        </div>
+                    </Wrapper>
+                    <BottomLeft>
+                        <PrimaryButton onClick={this.sender.randomizeTheme}>
+                            Next theme
+                        </PrimaryButton>
+                    </BottomLeft>
+                </div>
             </ThemeProvider>
         )
     }

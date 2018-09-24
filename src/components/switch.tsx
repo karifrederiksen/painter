@@ -34,7 +34,7 @@ const SwitchButton = styled.span`
 `
 
 const SwitchBar = styled.span`
-    background-color: ${p => p.theme.secondaryColor.toStyle()};
+    background-color: ${p => p.theme.secondaryColorLight.toStyle()};
     display: block;
     width: 1.75rem;
     height: 0.75rem;
@@ -60,9 +60,7 @@ export const Switch = withTheme(
                     >
                         <SwitchButton
                             style={{
-                                backgroundColor: checked
-                                    ? color_
-                                    : theme.secondaryColorLight.toStyle(),
+                                backgroundColor: checked ? color_ : theme.secondaryColor.toStyle(),
                             }}
                         />
                     </SwitchButtonContainer>

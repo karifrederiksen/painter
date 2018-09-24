@@ -26,7 +26,7 @@ const BaseLine = styled.div`
     height: 2px;
     top: 50%;
     transform: translate(0, -50%);
-    background-color: ${p => p.theme.secondaryColor.toStyle()};
+    background-color: ${p => p.theme.secondaryColorLight.toStyle()};
     z-index: 0;
 `
 
@@ -68,8 +68,8 @@ export class Slider extends React.Component<SliderProps> {
         const color = props.color !== undefined ? props.color.toStyle() : undefined
         const percentage = Math.max(0, Math.min(1, props.percentage))
         return (
-            <Container>
-                <div onMouseDown={this.onDown} ref={el => (this.container = el)}>
+            <Container onMouseDown={this.onDown}>
+                <div ref={el => (this.container = el)}>
                     <ButtonClass
                         style={{
                             left: "calc(" + percentage + " * calc(100% - 0.75rem))",

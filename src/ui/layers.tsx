@@ -6,7 +6,7 @@ import { Slider } from "../components/slider"
 import { Labeled } from "../components/labeled"
 import { InlineLabeled } from "../components/inlineLabeled"
 import { Switch } from "../components/switch"
-import { DefaultButton } from "../components/buttons"
+import { SecondaryButton } from "../components/buttons"
 
 export interface LayersViewProps {
     readonly layers: Layers.State
@@ -18,7 +18,7 @@ const LayersWrapper = styled.div`
 `
 
 const LayersListWrapper = styled.div`
-    padding: 0.5rem;
+    padding: 0.5rem 0.25rem;
 
     & > :not(:first-child) {
         margin-top: 0.25rem;
@@ -43,15 +43,15 @@ export function LayersView({ layers, sender }: LayersViewProps): JSX.Element {
         <LayersWrapper>
             <LayersControlsWrapper>
                 <Row spacing="0.25rem">
-                    <DefaultButton onClick={() => sender.newLayer(current.id)} title="New layer">
+                    <SecondaryButton onClick={() => sender.newLayer(current.id)} title="New layer">
                         New
-                    </DefaultButton>
-                    <DefaultButton
+                    </SecondaryButton>
+                    <SecondaryButton
                         onClick={() => sender.removeLayer(current.id)}
                         title="Remove layer"
                     >
                         Delete
-                    </DefaultButton>
+                    </SecondaryButton>
                 </Row>
                 <InlineLabeled label="Hidden">
                     <Switch
@@ -87,6 +87,8 @@ export interface LayerViewProps {
 }
 
 const LayerWrapper = styled.div`
+    background-color: ${p => p.theme.surfaceColor.toStyle()};
+    color: ${p => p.theme.onSurfaceColor.toStyle()};
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -99,20 +101,15 @@ const LayerWrapper = styled.div`
 
 const UnselectedLayerWrapper = styled(LayerWrapper)`
     cursor: pointer;
-    background-color: ${p => p.theme.surfaceColor.toStyle()};
-    color: ${p => p.theme.onSecondaryColor.toStyle()};
+    border: 1px solid transparent;
 
     &:hover {
-        color: ${p => p.theme.onPrimaryColor.toStyle()};
+        border: 1px solid ${p => p.theme.secondaryColorDark.toStyle()};
     }
 `
 
 const SelectedLayerWrapper = styled(LayerWrapper)`
-    background-color: ${p => p.theme.surfaceColor.toStyle()};
-    color: ${p => p.theme.onSurfaceColor.toStyle()};
-    box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.2), 0 4px 2px 0 rgba(0, 0, 0, 0.14),
-        0 6px 1px -2px rgba(0, 0, 0, 0.12);
-    margin-left: -0.25rem;
+    border: 1px solid ${p => p.theme.secondaryColor.toStyle()};
 `
 
 const LayerLeft = styled.div`
