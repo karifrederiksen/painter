@@ -5,9 +5,19 @@ export interface Stack<a> {
     isNonEmpty(): this is NonEmpty<a>
     cons(value: a): NonEmpty<a>
     foldl<b>(f: (val: b, next: a) => b, initial: b): b
+    reverse(): Stack<a>
+    toArray(): Array<a>
 }
 
 export class Empty<a> implements Stack<a> {
+    private static instance = new Empty<any>()
+
+    static make<a>(): Empty<a> {
+        return Empty.instance
+    }
+
+    private constructor() {}
+
     isEmpty(): true {
         return true
     }
@@ -17,11 +27,15 @@ export class Empty<a> implements Stack<a> {
     }
 
     cons(value: a): NonEmpty<a> {
-        return new NonEmpty(value, this)
+        return NonEmpty.make(value, this)
     }
 
     foldl<b>(_: (val: b, next: a) => b, initial: b): b {
         return initial
+    }
+
+    reverse(): Empty<a> {
+        return this
     }
 
     toArray(): Array<a> {
@@ -35,10 +49,14 @@ export class Empty<a> implements Stack<a> {
 
 export class NonEmpty<a> implements Stack<a> {
     static of<a>(value: a): NonEmpty<a> {
-        return new NonEmpty(value, new Empty())
+        return new NonEmpty(value, Empty.make())
     }
 
-    constructor(readonly head: a, readonly tail: Stack<a>) {}
+    static make<a>(head: a, tail: Stack<a>): NonEmpty<a> {
+        return new NonEmpty<a>(head, tail)
+    }
+
+    private constructor(readonly head: a, readonly tail: Stack<a>) {}
 
     isEmpty(): false {
         return false
@@ -60,6 +78,16 @@ export class NonEmpty<a> implements Stack<a> {
             stack = stack.tail
         }
         return state
+    }
+
+    reverse(): NonEmpty<a> {
+        let nonReversed = this.tail
+        let reversed = NonEmpty.of(this.head)
+        while (nonReversed.isNonEmpty()) {
+            reversed = reversed.cons(nonReversed.head)
+            nonReversed = nonReversed.tail
+        }
+        return reversed
     }
 
     toArray(): Array<a> {

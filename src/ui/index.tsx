@@ -2,7 +2,6 @@ import * as React from "react"
 import styled from "../styled"
 import { ThemeProvider } from "../styled"
 import * as Theme from "../theme"
-
 import * as Toolbar from "./toolbar"
 import * as Layers from "./layers"
 import * as Input from "../input"
@@ -10,11 +9,10 @@ import * as Canvas from "../canvas"
 import { SetOnce, FrameStream, CancelFrameStream } from "../util"
 
 export function start(): JSX.Element {
-    const state = Canvas.initState()
-    return <Painter state={state} frameStream={FrameStream.make} />
+    return <Painter state={Canvas.initState()} frameStream={FrameStream.make} />
 }
 
-export type PainterProps = {
+type PainterProps = {
     readonly state: Canvas.State
     readonly frameStream: FrameStream
     //readonly messageStream: (handler: (msg: CanvasMsg) => void) => void
@@ -169,10 +167,13 @@ class Painter extends React.Component<PainterProps, PainterState> {
     private onFrame = (time: number): void => {
         const state = this.state as PainterState
         const tool = this.canvas.value.onFrame(state.persistent.tool, time)
-        if (tool === state.persistent.tool) return
-        const persistent = { ...state.persistent, tool }
-        const newState: PainterState = { ...state, persistent }
-        this.canvas.value.endFrame(persistent)
-        this.setState(newState)
+        if (tool === state.persistent.tool) {
+            this.canvas.value.endFrame(state.persistent)
+        } else {
+            const persistent = { ...state.persistent, tool }
+            const newState: PainterState = { ...state, persistent }
+            this.canvas.value.endFrame(persistent)
+            this.setState(newState)
+        }
     }
 }

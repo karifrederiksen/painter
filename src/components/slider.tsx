@@ -26,7 +26,7 @@ const BaseLine = styled.div`
     height: 2px;
     top: 50%;
     transform: translate(0, -50%);
-    background-color: ${p => p.theme.colorDefault.toStyle()};
+    background-color: ${p => p.theme.secondaryColor.toStyle()};
     z-index: 0;
 `
 
@@ -36,7 +36,7 @@ const FilledLineClass = styled.div`
     height: 2px;
     top: 50%;
     transform: translate(0, -50%);
-    background-color: ${p => p.theme.colorPrimary.toStyle()};
+    background-color: ${p => p.theme.primaryColor.toStyle()};
     z-index: 1;
 `
 
@@ -47,7 +47,7 @@ const ButtonClass = styled.div`
     width: 0.75rem;
     height: 0.75rem;
     transform: translate(0, -50%);
-    background-color: ${p => p.theme.colorPrimary.toStyle()};
+    background-color: ${p => p.theme.primaryColor.toStyle()};
     z-index: 2;
     box-shadow: 0 1px 5px 0 rgba(0, 0, 0, 0.2), 0 2px 2px 0 rgba(0, 0, 0, 0.14),
         0 3px 1px -2px rgba(0, 0, 0, 0.12);

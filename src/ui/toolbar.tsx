@@ -12,6 +12,8 @@ import { InlineLabeled } from "../components/inlineLabeled"
 import { ColorDisplay } from "../components/colorDisplay"
 import { YPadded } from "../components/padded"
 import { ColorWheel } from "../components/colorWheel"
+import { DropDown } from "../components/dropDown"
+import { Row } from "../components/row"
 
 export interface ToolbarProps {
     readonly msgSender: Tools.MsgSender
@@ -20,9 +22,12 @@ export interface ToolbarProps {
 }
 
 const LeftBar = styled.div`
+    background-color: ${p => p.theme.surfaceColor.toStyle()};
+    color: ${p => p.theme.onSurfaceColor.toStyle()};
     display: flex;
     flex-direction: column;
     padding-top: 1rem;
+    margin-right: 0.25rem;
 
     > :not(:last-child) {
         margin-bottom: 0.125rem;
@@ -34,8 +39,6 @@ const LeftBar = styled.div`
 
 const ToolBarContainer = styled.div`
     display: flex;
-    background-color: ${p => p.theme.colorBg2.toStyle()};
-    color: ${p => p.theme.colorTextLight.toStyle()};
 `
 export function View(props: ToolbarProps): JSX.Element {
     const currentToolType = props.tool.current.type
@@ -72,7 +75,9 @@ export function View(props: ToolbarProps): JSX.Element {
                     tool={props.tool}
                     transientState={props.transientState}
                 />
-            ) : null}
+            ) : (
+                <></>
+            )}
         </ToolBarContainer>
     )
 }
@@ -82,11 +87,12 @@ export interface TransientState {
 }
 
 const Details = styled.div`
+    background-color: ${p => p.theme.surfaceColor.toStyle()};
+    color: ${p => p.theme.onSurfaceColor.toStyle()};
     display: flex;
     flex-direction: column;
     width: 12rem;
     padding: 0.5rem 0.75rem;
-    border-left: 0.25rem solid ${p => p.theme.colorBg1.toStyle()};
 `
 
 interface BrushDetailsProps {
@@ -102,9 +108,16 @@ function BrushDetails(props: BrushDetailsProps): JSX.Element {
 
     return (
         <Details>
+            <YPadded y={0.5}>
+                <DropDown
+                    choices={brush.colorMode}
+                    show={BrushTool.showColorType}
+                    onSelect={sender.setColorMode}
+                />
+            </YPadded>
             <ColorWheel
                 color={brush.color}
-                colorType={brush.colorType}
+                colorType={brush.colorMode.focus}
                 onChange={sender.setColor}
             />
             <YPadded y={0.5}>
@@ -139,7 +152,7 @@ function BrushDetails(props: BrushDetailsProps): JSX.Element {
             <Labeled label="Spacing" value={brush.spacingPct.toFixed(2) + "%"}>
                 <Slider percentage={brush.spacingPct} onChange={sender.setSpacing} />
             </Labeled>
-            <ColorSliders sender={sender} color={color} colorType={brush.colorType} />
+            <ColorSliders sender={sender} color={color} colorType={brush.colorMode.focus} />
             <InlineLabeled label="Pressure-Opacity">
                 <Switch
                     checked={brush.pressureAffectsOpacity}

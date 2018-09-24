@@ -17,6 +17,7 @@ const Container = styled.div`
 
 const Label = styled.div`
     color: inherit;
+    font-size: 0.875rem;
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;

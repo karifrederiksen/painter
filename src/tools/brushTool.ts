@@ -5,11 +5,13 @@ import * as Camera from "./cameratools"
 import * as Input from "../input"
 import * as Color from "../color"
 import { T2, Action, Vec2 } from "../util"
+import { ZipperList } from "../zipperList"
 
 export const enum BrushMsgType {
     SetDiameter,
     SetOpacity,
     SetColor,
+    SetColorMode,
     SetSpacing,
     SetPressureAffectsOpacity,
     SetPressureAffectsSize,
@@ -21,6 +23,7 @@ export type Msg =
     | Action<BrushMsgType.SetDiameter, number>
     | Action<BrushMsgType.SetOpacity, number>
     | Action<BrushMsgType.SetColor, Color.Hsluv>
+    | Action<BrushMsgType.SetColorMode, ColorType>
     | Action<BrushMsgType.SetSpacing, number>
     | Action<BrushMsgType.SetPressureAffectsOpacity, boolean>
     | Action<BrushMsgType.SetPressureAffectsSize, boolean>
@@ -29,6 +32,7 @@ export type Msg =
 
 export interface MsgSender {
     setColor(color: Color.Hsluv): void
+    setColorMode(mode: ColorType): void
     setDelay(ms: number): void
     setDiameter(px: number): void
     setOpacity(opacity: number): void
@@ -41,6 +45,7 @@ export interface MsgSender {
 export function createBrushSender(sendMessage: (msg: Msg) => void): MsgSender {
     return {
         setColor: color => sendMessage({ type: BrushMsgType.SetColor, payload: color }),
+        setColorMode: mode => sendMessage({ type: BrushMsgType.SetColorMode, payload: mode }),
         setDelay: ms => sendMessage({ type: BrushMsgType.SetDelay, payload: ms }),
         setDiameter: px => sendMessage({ type: BrushMsgType.SetDiameter, payload: px }),
         setOpacity: pct => sendMessage({ type: BrushMsgType.SetOpacity, payload: pct }),
@@ -73,10 +78,21 @@ export const enum ColorType {
     Hpluv,
 }
 
+export function showColorType(type: ColorType): string {
+    switch (type) {
+        case ColorType.Hsv:
+            return "Hsv"
+        case ColorType.Hsluv:
+            return "Hsluv"
+        case ColorType.Hpluv:
+            return "Hpluv"
+    }
+}
+
 export interface State {
     readonly diameterPx: number
     readonly flowPct: number
-    readonly colorType: ColorType
+    readonly colorMode: ZipperList<ColorType>
     readonly color: Color.Hsluv
     readonly colorSecondary: Color.Hsluv
     readonly spacingPct: number
@@ -91,7 +107,7 @@ export function init(): State {
     return {
         diameterPx: 15,
         flowPct: 0.3,
-        colorType: ColorType.Hsluv,
+        colorMode: ZipperList.fromArray([ColorType.Hsv, ColorType.Hsluv, ColorType.Hpluv])!,
         color: new Color.Hsluv(73, 100, 16),
         colorSecondary: new Color.Hsluv(0, 0, 100),
         spacingPct: 0.05,
@@ -109,6 +125,10 @@ export function update(state: State, msg: Msg): State {
             return { ...state, flowPct: msg.payload }
         case BrushMsgType.SetColor: {
             return { ...state, color: msg.payload }
+        }
+        case BrushMsgType.SetColorMode: {
+            console.log("changing color mode to", msg.payload)
+            return { ...state, colorMode: state.colorMode.focusf(x => x === msg.payload) }
         }
         case BrushMsgType.SetSpacing:
             return { ...state, spacingPct: msg.payload }

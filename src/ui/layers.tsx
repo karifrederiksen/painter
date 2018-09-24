@@ -14,10 +14,7 @@ export interface LayersViewProps {
 }
 
 const LayersWrapper = styled.div`
-    background-color: ${p => p.theme.colorBg1.toStyle()};
     height: 100%;
-    padding: 0.5rem 0;
-    color: ${p => p.theme.colorTextLight.toStyle()};
 `
 
 const LayersListWrapper = styled.div`
@@ -29,9 +26,11 @@ const LayersListWrapper = styled.div`
 `
 
 const LayersControlsWrapper = styled.div`
-    background-color: ${p => p.theme.colorBg2.toStyle()};
+    background-color: ${p => p.theme.surfaceColor.toStyle()};
+    color: ${p => p.theme.onSurfaceColor.toStyle()};
     display: flex;
     flex-direction: column;
+    padding-top: 0.5rem;
     padding-left: 0.5rem;
     padding-right: 0.5rem;
 `
@@ -100,17 +99,17 @@ const LayerWrapper = styled.div`
 
 const UnselectedLayerWrapper = styled(LayerWrapper)`
     cursor: pointer;
-    background-color: ${p => p.theme.colorBg2.toStyle()};
-    color: ${p => p.theme.colorTextLight.toStyle()};
+    background-color: ${p => p.theme.surfaceColor.toStyle()};
+    color: ${p => p.theme.onSecondaryColor.toStyle()};
 
     &:hover {
-        color: ${p => p.theme.colorTextLightest.toStyle()};
+        color: ${p => p.theme.onPrimaryColor.toStyle()};
     }
 `
 
 const SelectedLayerWrapper = styled(LayerWrapper)`
-    background-color: ${p => p.theme.colorBg2.toStyle()};
-    color: ${p => p.theme.colorTextLightest.toStyle()};
+    background-color: ${p => p.theme.surfaceColor.toStyle()};
+    color: ${p => p.theme.onSurfaceColor.toStyle()};
     box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.2), 0 4px 2px 0 rgba(0, 0, 0, 0.14),
         0 6px 1px -2px rgba(0, 0, 0, 0.12);
     margin-left: -0.25rem;

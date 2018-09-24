@@ -16,6 +16,7 @@ const Container = styled.div`
 const Label = styled.p`
     color: inherit;
     margin-bottom: 0.25rem;
+    font-size: 0.875rem;
 `
 
 const Content = styled.div`

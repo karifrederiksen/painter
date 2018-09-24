@@ -34,7 +34,7 @@ const SwitchButton = styled.span`
 `
 
 const SwitchBar = styled.span`
-    background-color: ${p => p.theme.colorDefault.toStyle()};
+    background-color: ${p => p.theme.secondaryColor.toStyle()};
     display: block;
     width: 1.75rem;
     height: 0.75rem;
@@ -48,7 +48,7 @@ export const Switch = withTheme(
         render(): JSX.Element {
             const { checked, color, onCheck } = this.props
             const theme = this.props.theme as Theme
-            const color_ = color || theme.colorPrimary.toStyle()
+            const color_ = color || theme.primaryColor.toStyle()
             return (
                 <Switch_ onClick={() => onCheck(!checked)}>
                     <SwitchButtonContainer
@@ -62,7 +62,7 @@ export const Switch = withTheme(
                             style={{
                                 backgroundColor: checked
                                     ? color_
-                                    : theme.colorDefaultLight.toStyle(),
+                                    : theme.secondaryColorLight.toStyle(),
                             }}
                         />
                     </SwitchButtonContainer>
