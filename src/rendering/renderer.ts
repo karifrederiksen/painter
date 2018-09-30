@@ -27,7 +27,7 @@ export interface Shaders {
 
 export class Renderer {
     static create(canvas: HTMLCanvasElement): Renderer | null {
-        const gl = canvas.getContext("webgl", contextAttributes)
+        const gl = canvas.getContext("webgl2", contextAttributes)
         if (gl === null) {
             console.error("Failed to initialize WebGL renderer for canvas: ", canvas)
             return null
@@ -79,7 +79,7 @@ export class Renderer {
     private readonly textureManager: Texture.TextureManager
 
     private constructor(
-        readonly gl: WebGLRenderingContext,
+        readonly gl: WebGL2RenderingContext,
         readonly compatibility: Compatibility,
         readonly shaders: Shaders,
         private readonly state: GlState
@@ -153,7 +153,7 @@ interface GlState {
     clearColor: T2<Color.Rgb, number>
 }
 
-function initState(gl: WebGLRenderingContext): GlState {
+function initState(gl: WebGL2RenderingContext): GlState {
     const canvas = gl.canvas
     const state: GlState = {
         blendMode: BlendMode.Mode.Normal,
@@ -171,34 +171,34 @@ function initState(gl: WebGLRenderingContext): GlState {
 }
 
 function applyBlendMode(
-    gl: WebGLRenderingContext,
+    gl: WebGL2RenderingContext,
     state: { readonly blendMode: BlendMode.Mode }
 ): void {
     const blendArgs = BlendMode.modeMap[state.blendMode]
     gl.blendFunc(blendArgs.sfact, blendArgs.dfact)
 }
 
-function applyViewport(gl: WebGLRenderingContext, state: { readonly viewport: Vec4 }): void {
+function applyViewport(gl: WebGL2RenderingContext, state: { readonly viewport: Vec4 }): void {
     const { viewport } = state
     gl.viewport(viewport.x, viewport.y, viewport.z, viewport.w)
 }
 
 function applyProgram(
-    gl: WebGLRenderingContext,
+    gl: WebGL2RenderingContext,
     state: { readonly program: WebGLProgram | null }
 ): void {
     gl.useProgram(state.program)
 }
 
 function applyFramebuffer(
-    gl: WebGLRenderingContext,
+    gl: WebGL2RenderingContext,
     state: { readonly framebuffer: WebGLFramebuffer | null }
 ): void {
     gl.bindFramebuffer(WebGLRenderingContext.FRAMEBUFFER, state.framebuffer)
 }
 
 function applyClearColor(
-    gl: WebGLRenderingContext,
+    gl: WebGL2RenderingContext,
     state: { readonly clearColor: T2<Color.Rgb, number> }
 ): void {
     const color = state.clearColor[0]

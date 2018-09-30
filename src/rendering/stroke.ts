@@ -82,7 +82,7 @@ export class Stroke {
         renderer.clear()
     }
 
-    dispose(gl: WebGLRenderingContext): void {
+    dispose(gl: WebGL2RenderingContext): void {
         this.shader.dispose(gl)
     }
 }

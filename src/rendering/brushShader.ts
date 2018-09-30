@@ -46,7 +46,7 @@ void main() {
 // TODO: Use elements array!
 
 export class Shader {
-    static create(gl: WebGLRenderingContext): Shader | null {
+    static create(gl: WebGL2RenderingContext): Shader | null {
         const program = createProgram(gl, VERT_SRC, FRAG_SRC)
         if (program === null) return null
 
@@ -68,7 +68,7 @@ export class Shader {
     private offset: number
 
     private constructor(
-        gl: WebGLRenderingContext,
+        gl: WebGL2RenderingContext,
         readonly program: WebGLProgram,
         private readonly textureUniform: WebGLUniformLocation,
         private readonly resolutionUniform: WebGLUniformLocation
@@ -132,7 +132,7 @@ export class Shader {
         this.offset = 0
     }
 
-    dispose(gl: WebGLRenderingContext): void {
+    dispose(gl: WebGL2RenderingContext): void {
         gl.deleteBuffer(this.buffer)
         gl.deleteProgram(this.program)
     }

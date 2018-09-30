@@ -46,7 +46,7 @@ export interface Args {
 }
 
 export class Shader {
-    static create(gl: WebGLRenderingContext): Shader | null {
+    static create(gl: WebGL2RenderingContext): Shader | null {
         const program = createProgram(gl, VERT_SRC, FRAG_SRC)
         if (program === null) return null
 
@@ -66,7 +66,7 @@ export class Shader {
     private readonly array: Float32Array
 
     private constructor(
-        gl: WebGLRenderingContext,
+        gl: WebGL2RenderingContext,
         private readonly program: WebGLProgram,
         private readonly textureUniform: WebGLUniformLocation,
         private readonly resolutionUniform: WebGLUniformLocation
@@ -128,7 +128,7 @@ export class Shader {
         gl.drawArrays(WebGLRenderingContext.TRIANGLES, 0, 6)
     }
 
-    dispose(gl: WebGLRenderingContext): void {
+    dispose(gl: WebGL2RenderingContext): void {
         gl.deleteBuffer(this.buffer)
         gl.deleteProgram(this.program)
     }

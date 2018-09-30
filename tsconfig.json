@@ -16,5 +16,5 @@
 
         //"plugins": [{ "name": "tslint-language-service" }]
     },
-    "include": ["src/**/*.ts", "src/**/*.tsx"]
+    "include": ["src/**/*.ts", "src/**/*.tsx", "@types/WebGL2.d.ts"]
 }

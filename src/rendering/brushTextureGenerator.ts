@@ -41,7 +41,7 @@ export interface Args {
 }
 
 export class Generator {
-    static create(gl: WebGLRenderingContext): Generator | null {
+    static create(gl: WebGL2RenderingContext): Generator | null {
         const program = createProgram(gl, VERT_SRC, FRAG_SRC)
         if (program === null) return null
 
@@ -61,7 +61,7 @@ export class Generator {
     private readonly array: Float32Array
 
     private constructor(
-        gl: WebGLRenderingContext,
+        gl: WebGL2RenderingContext,
         readonly program: WebGLProgram,
         private readonly softnessUniform: WebGLUniformLocation,
         private readonly gammaUniform: WebGLUniformLocation
@@ -111,7 +111,7 @@ export class Generator {
         renderer.gl.drawArrays(WebGLRenderingContext.TRIANGLES, 0, 6)
     }
 
-    dispose(gl: WebGLRenderingContext): void {
+    dispose(gl: WebGL2RenderingContext): void {
         gl.deleteBuffer(this.buffer)
         gl.deleteProgram(this.program)
     }
