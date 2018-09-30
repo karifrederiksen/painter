@@ -41,7 +41,7 @@ export interface Args {
 }
 
 export class Generator {
-    static create(gl: WebGL2RenderingContext): Generator | null {
+    static create(gl: WebGLRenderingContext): Generator | null {
         const program = createProgram(gl, VERT_SRC, FRAG_SRC)
         if (program === null) return null
 
@@ -61,7 +61,7 @@ export class Generator {
     private readonly array: Float32Array
 
     private constructor(
-        gl: WebGL2RenderingContext,
+        gl: WebGLRenderingContext,
         readonly program: WebGLProgram,
         private readonly softnessUniform: WebGLUniformLocation,
         private readonly gammaUniform: WebGLUniformLocation
@@ -91,7 +91,7 @@ export class Generator {
     generateBrushTexture(renderer: Renderer.Renderer, args: Args, texture: Texture.Texture): void {
         renderer.setViewport(new Vec4(0, 0, texture.size.x, texture.size.y))
         renderer.setFramebuffer(texture.framebuffer)
-        renderer.setClearColor(Color.Rgb.Black, 0)
+        renderer.setClearColor(Color.RgbLinear.Black, 0)
         renderer.clear()
         renderer.setProgram(this.program)
 
@@ -111,7 +111,7 @@ export class Generator {
         renderer.gl.drawArrays(WebGLRenderingContext.TRIANGLES, 0, 6)
     }
 
-    dispose(gl: WebGL2RenderingContext): void {
+    dispose(gl: WebGLRenderingContext): void {
         gl.deleteBuffer(this.buffer)
         gl.deleteProgram(this.program)
     }

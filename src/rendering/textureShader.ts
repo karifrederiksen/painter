@@ -1,4 +1,5 @@
 import * as Renderer from "./renderer"
+import * as Texture from "./texture"
 import { createProgram, getUniformLocation } from "../web-gl"
 import { Vec2 } from "../util"
 
@@ -16,7 +17,7 @@ uniform vec2 u_resolution;
 varying vec2 v_tex_coords;
 
 void main() {
-    vec2 pos = (a_position / u_resolution) * vec2(2.0) - vec2(1.0);
+    vec2 pos = (a_position / u_resolution) * 2.0 - 1.0;
     gl_Position = vec4(pos, 0.0, 1.0);
     
     v_tex_coords = a_tex_coords;
@@ -33,12 +34,13 @@ uniform sampler2D u_texture;
 void main() {
     vec4 pixel = texture2D(u_texture, v_tex_coords);
     gl_FragColor = pixel;
+    //gl_FragColor = pixel * 0.01 + vec4(1.0, 0.0, 0.0, 1.0) * 0.99;
 }
 `
 
 export interface Args {
     readonly resolution: Vec2
-    readonly textureIndex: number
+    readonly texture: Texture.Texture
     readonly x0: number
     readonly y0: number
     readonly x1: number
@@ -46,7 +48,7 @@ export interface Args {
 }
 
 export class Shader {
-    static create(gl: WebGL2RenderingContext): Shader | null {
+    static create(gl: WebGLRenderingContext): Shader | null {
         const program = createProgram(gl, VERT_SRC, FRAG_SRC)
         if (program === null) return null
 
@@ -66,7 +68,7 @@ export class Shader {
     private readonly array: Float32Array
 
     private constructor(
-        gl: WebGL2RenderingContext,
+        gl: WebGLRenderingContext,
         private readonly program: WebGLProgram,
         private readonly textureUniform: WebGLUniformLocation,
         private readonly resolutionUniform: WebGLUniformLocation
@@ -91,8 +93,9 @@ export class Shader {
     }
 
     render(renderer: Renderer.Renderer, args: Args): void {
+        const { gl } = renderer
+        args.texture.updateSize(renderer, args.resolution)
         renderer.setProgram(this.program)
-        const gl = renderer.gl
         const array = this.array
         const { x0, y0, x1, y1 } = args
 
@@ -115,7 +118,7 @@ export class Shader {
         gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, array, WebGLRenderingContext.DYNAMIC_DRAW)
 
         // update uniforms
-        gl.uniform1i(this.textureUniform, args.textureIndex)
+        gl.uniform1i(this.textureUniform, renderer.bindTexture(args.texture))
         gl.uniform2f(this.resolutionUniform, args.resolution.x, args.resolution.y)
 
         // enable attributes
@@ -128,7 +131,7 @@ export class Shader {
         gl.drawArrays(WebGLRenderingContext.TRIANGLES, 0, 6)
     }
 
-    dispose(gl: WebGL2RenderingContext): void {
+    dispose(gl: WebGLRenderingContext): void {
         gl.deleteBuffer(this.buffer)
         gl.deleteProgram(this.program)
     }

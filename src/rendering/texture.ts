@@ -17,9 +17,15 @@ export class Texture {
         return this.__size
     }
 
-    updateSize(renderer: Renderer.Renderer, newSize: Vec2, textureIndex: number): void {
+    updateSize(renderer: Renderer.Renderer, newSize: Vec2): void {
+        if (this.size.eq(newSize)) return
+        this.forceUpdateSize(renderer, newSize)
+    }
+
+    forceUpdateSize(renderer: Renderer.Renderer, newSize: Vec2): void {
         const gl = renderer.gl
         this.__size = newSize
+        const textureIndex = renderer.bindTexture(this)
 
         gl.activeTexture(WebGLRenderingContext.TEXTURE0 + textureIndex)
         gl.bindTexture(WebGLRenderingContext.TEXTURE_2D, this.texture)
@@ -78,7 +84,7 @@ export class TextureManager {
     readonly bindings: Bindings
 
     constructor(readonly textureSlots: number) {
-        const bindings: Bindings = {}
+        const bindings: Bindings = []
         for (let i = 0; i < textureSlots; i++) bindings[i] = null
 
         this.bindings = bindings
@@ -97,7 +103,7 @@ export class TextureManager {
 
         console.log("created texture with id", texture.id)
 
-        texture.updateSize(renderer, size, 0)
+        texture.forceUpdateSize(renderer, size)
         renderer.setFramebuffer(framebuf)
         renderer.gl.framebufferTexture2D(
             WebGLRenderingContext.FRAMEBUFFER,

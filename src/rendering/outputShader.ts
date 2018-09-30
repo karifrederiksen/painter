@@ -1,4 +1,5 @@
 import * as Renderer from "./renderer"
+import * as Texture from "./texture"
 import { createProgram, getUniformLocation, DEFINE_from_linear } from "../web-gl"
 import { Vec2 } from "../util"
 
@@ -35,12 +36,13 @@ uniform sampler2D u_texture;
 void main() {
     vec4 pixel = texture2D(u_texture, v_tex_coords);
     gl_FragColor = vec4(from_linear(pixel.rgb), pixel.a);
+    //gl_FragColor = vec4(0.0, 0.0, 0.0, pixel.a);
 }
 `
 
 export interface Args {
     readonly resolution: Vec2
-    readonly textureIndex: number
+    readonly texture: Texture.Texture
     readonly x0: number
     readonly y0: number
     readonly x1: number
@@ -69,7 +71,7 @@ export class Shader {
     private readonly array: Float32Array
 
     private constructor(
-        gl: WebGL2RenderingContext,
+        gl: WebGLRenderingContext,
         private readonly program: WebGLProgram,
         private readonly textureUniform: WebGLUniformLocation,
         private readonly resolutionUniform: WebGLUniformLocation
@@ -118,7 +120,7 @@ export class Shader {
         gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, array, WebGLRenderingContext.DYNAMIC_DRAW)
 
         // update uniforms
-        gl.uniform1i(this.textureUniform, args.textureIndex)
+        gl.uniform1i(this.textureUniform, renderer.bindTexture(args.texture))
         gl.uniform2f(this.resolutionUniform, args.resolution.x, args.resolution.y)
 
         // enable attributes
@@ -131,7 +133,7 @@ export class Shader {
         gl.drawArrays(WebGLRenderingContext.TRIANGLES, 0, 6)
     }
 
-    dispose(gl: WebGL2RenderingContext): void {
+    dispose(gl: WebGLRenderingContext): void {
         gl.deleteBuffer(this.buffer)
         gl.deleteProgram(this.program)
     }

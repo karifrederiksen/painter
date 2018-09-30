@@ -2,26 +2,20 @@ import * as Layers from "../layers"
 import * as Texture from "./texture"
 import * as Renderer from "./renderer"
 import { Vec2, Vec4 } from "../util"
+import { RgbLinear } from "../color"
 
 // I need a layerManager that keeps track of mappings between layerIds and textures
 // combinedLayers can be a component of that manager
 
-export interface FlattenedLayers {
-    readonly above: ReadonlyArray<Layers.LeafLayer>
-    readonly current: Layers.LeafLayer | null
-    readonly below: ReadonlyArray<Layers.LeafLayer>
-}
-
 export interface UpdateArgs {
-    readonly layerTextureMap: Map<Layers.Id, Texture.Id>
-    readonly textureManager: Texture.TextureManager
     readonly renderer: Renderer.Renderer
-    readonly flattened: FlattenedLayers
+    readonly flattened: Layers.SplitLayers
     readonly size: Vec2
 }
 
 export class CombinedLayers {
-    private previousFlattened: FlattenedLayers | null = null
+    private readonly layerTextureMap: Map<Layers.Id, Texture.Id>
+    private previousFlattened: Layers.SplitLayers = { above: [], below: [], current: null }
     private size: Vec2
     readonly above: Texture.Texture
     readonly below: Texture.Texture
@@ -32,6 +26,7 @@ export class CombinedLayers {
     }
 
     constructor(renderer: Renderer.Renderer, size: Vec2) {
+        this.layerTextureMap = new Map()
         this.__current = null
         this.above = renderer.createTexture(size)
         this.below = renderer.createTexture(size)
@@ -39,15 +34,14 @@ export class CombinedLayers {
     }
 
     update(updateArgs: UpdateArgs): void {
-        const { flattened, size, textureManager, renderer } = updateArgs
+        const { layerTextureMap } = this
+        const { flattened, size, renderer } = updateArgs
         if (this.previousFlattened === flattened && this.size.eq(size)) return
 
         this.previousFlattened = flattened
         if (!this.size.eq(size)) {
-            const aboveIdx = textureManager.bindTexture(renderer.gl, this.above)
-            this.above.updateSize(renderer, size, aboveIdx)
-            const belowIdx = textureManager.bindTexture(renderer.gl, this.below)
-            this.below.updateSize(renderer, size, belowIdx)
+            this.above.updateSize(renderer, size)
+            this.below.updateSize(renderer, size)
             this.size = size
         }
 
@@ -55,14 +49,15 @@ export class CombinedLayers {
             // re-render above
             renderer.setFramebuffer(this.above.framebuffer)
             renderer.setViewport(new Vec4(0, 0, this.above.size.x, this.above.size.y))
+            renderer.setClearColor(RgbLinear.Black, 0)
             renderer.clear()
             const fabove = flattened.above
             for (let i = fabove.length - 1; i >= 0; i--) {
-                const texture = getTextureForLayer(updateArgs, fabove[i].id)
+                const texture = getTextureForLayer(updateArgs, layerTextureMap, fabove[i].id)
 
                 renderer.shaders.textureShader.render(renderer, {
                     resolution: texture.size,
-                    textureIndex: renderer.bindTexture(texture),
+                    texture: texture,
                     x0: 0,
                     y0: 0,
                     x1: texture.size.x,
@@ -75,14 +70,15 @@ export class CombinedLayers {
             // re-render below
             renderer.setFramebuffer(this.below.framebuffer)
             renderer.setViewport(new Vec4(0, 0, this.below.size.x, this.below.size.y))
+            renderer.setClearColor(RgbLinear.Black, 0)
             renderer.clear()
             const fbelow = flattened.below
             for (let i = fbelow.length - 1; i >= 0; i--) {
-                const texture = getTextureForLayer(updateArgs, fbelow[i].id)
+                const texture = getTextureForLayer(updateArgs, layerTextureMap, fbelow[i].id)
 
                 renderer.shaders.textureShader.render(renderer, {
                     resolution: texture.size,
-                    textureIndex: renderer.bindTexture(texture),
+                    texture: texture,
                     x0: 0,
                     y0: 0,
                     x1: texture.size.x,
@@ -92,27 +88,30 @@ export class CombinedLayers {
         }
 
         this.__current =
-            flattened.current === null ? null : getTextureForLayer(updateArgs, flattened.current.id)
+            flattened.current === null
+                ? null
+                : getTextureForLayer(updateArgs, layerTextureMap, flattened.current.id)
     }
 }
 
 function getTextureForLayer(
-    { textureManager, layerTextureMap, renderer }: UpdateArgs,
+    { renderer }: UpdateArgs,
+    layerTextureMap: Map<Layers.Id, Texture.Id>,
     layerId: Layers.Id
 ): Texture.Texture {
     const currentTextureId = layerTextureMap.get(layerId)
 
     if (currentTextureId === undefined) {
-        const texture = textureManager.createTexture(renderer, new Vec2(100, 100))
+        const texture = renderer.createTexture(new Vec2(100, 100))
         layerTextureMap.set(layerId, texture.id)
         return texture
     }
     {
-        const texture = textureManager.textures.get(currentTextureId)
-        if (texture !== undefined) return texture
+        const texture = renderer.getTexture(currentTextureId)
+        if (texture !== null) return texture
     }
     {
-        const texture = textureManager.createTexture(renderer, new Vec2(100, 100))
+        const texture = renderer.createTexture(new Vec2(100, 100))
         layerTextureMap.set(layerId, texture.id)
         return texture
     }

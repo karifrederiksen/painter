@@ -10,7 +10,7 @@ import * as CombinedLayers from "./rendering/combinedLayers"
 import * as Color from "./color"
 import * as Rng from "./rng"
 import * as Theme from "./theme"
-import { Action, Vec4 } from "./util"
+import { Action, Vec4, Vec2 } from "./util"
 
 export interface Hooks {
     // readonly onCanvasSnapshot: (snapshot: Snapshot) => void
@@ -26,8 +26,7 @@ export interface State {
 }
 
 export function initState(): State {
-    const initialRng = Rng.seed(145264772)
-    const [theme, rng] = Theme.random(initialRng)
+    const [theme, rng] = Theme.random(Rng.seed(145264772))
 
     return {
         rng,
@@ -78,20 +77,20 @@ export function update(state: State, msg: CanvasMsg): State {
 export class Canvas {
     static create(canvas: HTMLCanvasElement, hooks: Hooks): Canvas | null {
         const renderer = Renderer.Renderer.create(canvas)
+        const resolution = getResolution(canvas)
         if (renderer === null) return null
 
-        const stroke = Stroke.Stroke.create(renderer)
+        const stroke = Stroke.Stroke.create(renderer, resolution)
         if (stroke === null) return null
 
         const outputShader = OutputShader.Shader.create(renderer)
         if (outputShader === null) return null
 
-        const outputTexture = renderer.createTexture(renderer.getCanvasResolution())
+        const outputTexture = renderer.createTexture(resolution)
 
         return new Canvas(canvas, renderer, stroke, hooks, outputTexture, outputShader)
     }
 
-    private readonly renderWrapper: Stats.StatsCapture
     private readonly combineLayers: CombinedLayers.CombinedLayers
     private hasRendered: boolean = false
 
@@ -103,15 +102,18 @@ export class Canvas {
         private readonly outputTexture: Texture.Texture,
         private readonly outputShader: OutputShader.Shader
     ) {
-        this.renderWrapper = new Stats.StatsCapture({
-            maxSamples: 200,
-            outputFrequency: 100,
-            onStats: this.hooks.onStats,
-        })
         this.combineLayers = new CombinedLayers.CombinedLayers(
             renderer,
-            renderer.getCanvasResolution()
+            getResolution(this.canvasElement)
         )
+    }
+
+    onUpdate(newState: State): void {
+        this.combineLayers.update({
+            flattened: newState.layers.split(),
+            renderer: this.renderer,
+            size: getResolution(this.canvasElement),
+        })
     }
 
     onClick(tool: Tools.Tool, input: Input.PointerInput): Tools.Tool {
@@ -121,8 +123,32 @@ export class Canvas {
     }
 
     onRelease(tool: Tools.Tool, input: Input.PointerInput): Tools.Tool {
+        const { stroke, combineLayers, renderer } = this
         const [newTool, brushPoints] = Tools.onRelease(tool, input)
-        this.stroke.addPoints(brushPoints)
+        const resolution = getResolution(this.canvasElement)
+
+        stroke.addPoints(brushPoints)
+        if (stroke.shader.canFlush) {
+            stroke.render(renderer, resolution)
+        }
+
+        if (combineLayers.current !== null) {
+            // render the stroke to the current layer
+            renderer.setViewport(new Vec4(0, 0, resolution.x, resolution.y))
+            renderer.setFramebuffer(combineLayers.current.framebuffer)
+            renderer.shaders.textureShader.render(renderer, {
+                resolution,
+                texture: stroke.texture,
+                x0: 0,
+                y0: 0,
+                x1: resolution.x,
+                y1: resolution.y,
+            })
+            // TODO: store the stroke in history
+        } else {
+            console.info("released with no layer selected")
+        }
+        stroke.clear(renderer)
         return newTool
     }
 
@@ -139,59 +165,87 @@ export class Canvas {
     }
 
     endFrame(state: State): void {
-        if (!this.needsRender()) return
-
-        this.renderWrapper.timedRender(state, this.endFrame_)
-    }
-
-    private needsRender(): boolean {
-        if (!this.hasRendered) {
-            this.hasRendered = true
-            return true
-        }
-        return this.stroke.shader.canFlush
-    }
-
-    private endFrame_ = (_state: State): void => {
         const { renderer, stroke, outputTexture, outputShader, combineLayers } = this
+        const resolution = getResolution(this.canvasElement)
         if (stroke.shader.canFlush) {
-            stroke.render(renderer)
+            stroke.render(renderer, resolution)
         }
 
         // render to outputTexture
-        const resolution = renderer.getCanvasResolution()
-        const outputTextureIdx = renderer.bindTexture(outputTexture)
-
-        outputTexture.updateSize(renderer, resolution, outputTextureIdx)
-        renderer.setFramebuffer(this.outputTexture.framebuffer)
+        outputTexture.updateSize(renderer, resolution)
+        renderer.setFramebuffer(outputTexture.framebuffer)
         renderer.setViewport(new Vec4(0, 0, resolution.x, resolution.y))
-        renderer.setClearColor(Color.Rgb.White, 1.0)
+        renderer.setClearColor(Color.RgbLinear.Black.mix(0.3, Color.RgbLinear.White), 1.0)
         renderer.clear()
+        {
+            // BELOW
+            renderer.setFramebuffer(outputTexture.framebuffer)
+            renderer.shaders.textureShader.render(renderer, {
+                resolution,
+                texture: combineLayers.below,
+                x0: 0,
+                y0: 0,
+                x1: resolution.x,
+                y1: resolution.y,
+            })
+        }
 
-        const textureIndex = renderer.bindTexture(stroke.texture)
-        renderer.shaders.textureShader.render(renderer, {
-            resolution,
-            textureIndex,
-            x0: 0,
-            y0: 0,
-            x1: resolution.x,
-            y1: resolution.y,
-        })
+        if (combineLayers.current !== null) {
+            // CURRENT
+            renderer.setFramebuffer(outputTexture.framebuffer)
+            renderer.shaders.textureShader.render(renderer, {
+                resolution,
+                texture: combineLayers.current,
+                x0: 0,
+                y0: 0,
+                x1: resolution.x,
+                y1: resolution.y,
+            })
+
+            // STROKE
+            renderer.setFramebuffer(outputTexture.framebuffer)
+            renderer.shaders.textureShader.render(renderer, {
+                resolution,
+                texture: stroke.texture,
+                x0: 0,
+                y0: 0,
+                x1: resolution.x,
+                y1: resolution.y,
+            })
+        }
+        {
+            // ABOVE
+            renderer.setFramebuffer(outputTexture.framebuffer)
+            renderer.shaders.textureShader.render(renderer, {
+                resolution,
+                texture: combineLayers.above,
+                x0: 0,
+                y0: 0,
+                x1: resolution.x,
+                y1: resolution.y,
+            })
+        }
 
         // outputTexture -> canvas
         renderer.setFramebuffer(null)
         outputShader.render(renderer, {
             resolution,
-            textureIndex: outputTextureIdx,
+            texture: outputTexture,
             x0: 0,
             y0: 0,
             x1: resolution.x,
             y1: resolution.y,
         })
+        renderer.gl.flush()
+        //renderer.gl.finish()
     }
 
     dispose(): void {
         this.outputShader.dispose(this.renderer.gl)
         this.renderer.dispose()
     }
+}
+
+function getResolution({ width, height }: HTMLCanvasElement) {
+    return new Vec2(width, height)
 }

@@ -176,6 +176,10 @@ class Painter extends React.Component<PainterProps, PainterState> {
         console.log("Painter unmounted")
     }
 
+    componentDidUpdate() {
+        this.canvas.value.onUpdate(this.state.persistent)
+    }
+
     private onClick = (input: Input.PointerInput): void => {
         const state = this.state as PainterState
         const tool = this.canvas.value.onClick(state.persistent.tool, input)

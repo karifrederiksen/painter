@@ -32,11 +32,11 @@ export interface AreaBuilder {
 }
 
 export class Stroke {
-    static create(renderer: Renderer.Renderer): Stroke | null {
+    static create(renderer: Renderer.Renderer, canvasSize: Vec2): Stroke | null {
         const shader = BrushShader.Shader.create(renderer.gl)
         if (shader === null) return null
 
-        const texture = renderer.createTexture(renderer.getCanvasResolution())
+        const texture = renderer.createTexture(canvasSize)
         if (texture === null) return null
 
         const brushTexture = renderer.createTexture(new Vec2(128, 128))
@@ -68,21 +68,19 @@ export class Stroke {
         // TODO: calculate affected area
     }
 
-    render(renderer: Renderer.Renderer): void {
-        const resolution = renderer.getCanvasResolution()
-        const textureIndex = renderer.bindTexture(this.brushTexture)
+    render(renderer: Renderer.Renderer, canvasSize: Vec2): void {
         renderer.setFramebuffer(this.texture.framebuffer)
-        this.shader.flush(renderer, { resolution, textureIndex })
+        this.shader.flush(renderer, { resolution: canvasSize, texture: this.brushTexture })
     }
 
     clear(renderer: Renderer.Renderer): void {
         this.affectedArea = null
         renderer.setFramebuffer(this.texture.framebuffer)
-        renderer.setClearColor(Color.Rgb.Black, 0)
+        renderer.setClearColor(Color.RgbLinear.Black, 0)
         renderer.clear()
     }
 
-    dispose(gl: WebGL2RenderingContext): void {
+    dispose(gl: WebGLRenderingContext): void {
         this.shader.dispose(gl)
     }
 }

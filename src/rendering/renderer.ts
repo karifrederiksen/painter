@@ -27,7 +27,7 @@ export interface Shaders {
 
 export class Renderer {
     static create(canvas: HTMLCanvasElement): Renderer | null {
-        const gl = canvas.getContext("webgl2", contextAttributes)
+        const gl = canvas.getContext("webgl", contextAttributes)
         if (gl === null) {
             console.error("Failed to initialize WebGL renderer for canvas: ", canvas)
             return null
@@ -49,7 +49,7 @@ export class Renderer {
 
         const compat: Compatibility = {
             maxBoundTextures: 32,
-            supportsFloat: floatLinearFiltering !== null && floatTexture !== null,
+            supportsFloat: true,
             supportsHalfFloat: false,
         }
 
@@ -79,17 +79,12 @@ export class Renderer {
     private readonly textureManager: Texture.TextureManager
 
     private constructor(
-        readonly gl: WebGL2RenderingContext,
+        readonly gl: WebGLRenderingContext,
         readonly compatibility: Compatibility,
         readonly shaders: Shaders,
         private readonly state: GlState
     ) {
         this.textureManager = new Texture.TextureManager(compatibility.maxBoundTextures)
-    }
-
-    getCanvasResolution(): Vec2 {
-        const { width, height } = this.gl.canvas
-        return new Vec2(width, height)
     }
 
     setBlendMode(blendMode: BlendMode.Mode): void {
@@ -120,8 +115,7 @@ export class Renderer {
         applyFramebuffer(this.gl, this.state)
     }
 
-    setClearColor(rgb: Color.Rgb, alpha: number): void {
-        console.log("Clear!", this.state.clearColor)
+    setClearColor(rgb: Color.RgbLinear, alpha: number): void {
         if (rgb.eq(this.state.clearColor[0]) && alpha === this.state.clearColor[1]) return
 
         this.state.clearColor = [rgb, alpha]
@@ -140,6 +134,11 @@ export class Renderer {
         return this.textureManager.bindTexture(this.gl, texture)
     }
 
+    getTexture(id: Texture.Id): Texture.Texture | null {
+        const t = this.textureManager.textures.get(id)
+        return t || null
+    }
+
     dispose(): void {
         this.shaders.brushTextureGenerator.dispose(this.gl)
     }
@@ -150,17 +149,17 @@ interface GlState {
     viewport: Vec4
     program: WebGLProgram | null
     framebuffer: WebGLFramebuffer | null
-    clearColor: T2<Color.Rgb, number>
+    clearColor: T2<Color.RgbLinear, number>
 }
 
-function initState(gl: WebGL2RenderingContext): GlState {
+function initState(gl: WebGLRenderingContext): GlState {
     const canvas = gl.canvas
     const state: GlState = {
         blendMode: BlendMode.Mode.Normal,
         viewport: new Vec4(0, 0, canvas.width, canvas.height),
         program: null,
         framebuffer: null,
-        clearColor: [Color.Rgb.Black, 0],
+        clearColor: [Color.RgbLinear.Black, 0],
     }
     applyBlendMode(gl, state)
     applyViewport(gl, state)
@@ -171,37 +170,37 @@ function initState(gl: WebGL2RenderingContext): GlState {
 }
 
 function applyBlendMode(
-    gl: WebGL2RenderingContext,
+    gl: WebGLRenderingContext,
     state: { readonly blendMode: BlendMode.Mode }
 ): void {
     const blendArgs = BlendMode.modeMap[state.blendMode]
     gl.blendFunc(blendArgs.sfact, blendArgs.dfact)
 }
 
-function applyViewport(gl: WebGL2RenderingContext, state: { readonly viewport: Vec4 }): void {
+function applyViewport(gl: WebGLRenderingContext, state: { readonly viewport: Vec4 }): void {
     const { viewport } = state
     gl.viewport(viewport.x, viewport.y, viewport.z, viewport.w)
 }
 
 function applyProgram(
-    gl: WebGL2RenderingContext,
+    gl: WebGLRenderingContext,
     state: { readonly program: WebGLProgram | null }
 ): void {
     gl.useProgram(state.program)
 }
 
 function applyFramebuffer(
-    gl: WebGL2RenderingContext,
+    gl: WebGLRenderingContext,
     state: { readonly framebuffer: WebGLFramebuffer | null }
 ): void {
     gl.bindFramebuffer(WebGLRenderingContext.FRAMEBUFFER, state.framebuffer)
 }
 
 function applyClearColor(
-    gl: WebGL2RenderingContext,
-    state: { readonly clearColor: T2<Color.Rgb, number> }
+    gl: WebGLRenderingContext,
+    state: { readonly clearColor: T2<Color.RgbLinear, number> }
 ): void {
-    const color = state.clearColor[0]
+    const { r, g, b } = state.clearColor[0]
     const alpha = state.clearColor[1]
-    gl.clearColor(color.r, color.g, color.b, alpha)
+    gl.clearColor(r, g, b, alpha)
 }

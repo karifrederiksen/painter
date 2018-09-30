@@ -1,5 +1,6 @@
 import * as Renderer from "./renderer"
 import * as Color from "../color"
+import * as Texture from "./texture"
 import { createProgram, getUniformLocation } from "../web-gl"
 import { Vec2 } from "../util"
 
@@ -46,7 +47,7 @@ void main() {
 // TODO: Use elements array!
 
 export class Shader {
-    static create(gl: WebGL2RenderingContext): Shader | null {
+    static create(gl: WebGLRenderingContext): Shader | null {
         const program = createProgram(gl, VERT_SRC, FRAG_SRC)
         if (program === null) return null
 
@@ -68,7 +69,7 @@ export class Shader {
     private offset: number
 
     private constructor(
-        gl: WebGL2RenderingContext,
+        gl: WebGLRenderingContext,
         readonly program: WebGLProgram,
         private readonly textureUniform: WebGLUniformLocation,
         private readonly resolutionUniform: WebGLUniformLocation
@@ -113,7 +114,7 @@ export class Shader {
         )
 
         // update uniforms
-        gl.uniform1i(this.textureUniform, uniforms.textureIndex)
+        gl.uniform1i(this.textureUniform, renderer.bindTexture(uniforms.texture))
         gl.uniform2f(this.resolutionUniform, uniforms.resolution.x, uniforms.resolution.y)
 
         // enable attributes
@@ -132,7 +133,7 @@ export class Shader {
         this.offset = 0
     }
 
-    dispose(gl: WebGL2RenderingContext): void {
+    dispose(gl: WebGLRenderingContext): void {
         gl.deleteBuffer(this.buffer)
         gl.deleteProgram(this.program)
     }
@@ -219,5 +220,5 @@ export interface BrushPoint {
 
 export interface Uniforms {
     readonly resolution: Readonly<Vec2>
-    readonly textureIndex: number
+    readonly texture: Texture.Texture
 }
