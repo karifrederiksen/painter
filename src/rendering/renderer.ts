@@ -121,6 +121,7 @@ export class Renderer {
     }
 
     setClearColor(rgb: Color.Rgb, alpha: number): void {
+        console.log("Clear!", this.state.clearColor)
         if (rgb.eq(this.state.clearColor[0]) && alpha === this.state.clearColor[1]) return
 
         this.state.clearColor = [rgb, alpha]

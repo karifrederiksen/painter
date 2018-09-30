@@ -22,8 +22,8 @@ const Secondary = styled.span`
     margin-right: 5%;
     border-top-left-radius: 0.75rem;
     border-bottom-left-radius: 0.75rem;
-    box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.2), 0 4px 2px 0 rgba(0, 0, 0, 0.14),
-        0 6px 1px -2px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 1px 5px 0 rgba(0, 0, 0, 0.2), 0 2px 2px 0 rgba(0, 0, 0, 0.14),
+        0 3px 1px -2px rgba(0, 0, 0, 0.12);
 `
 
 const Primary = styled.span`

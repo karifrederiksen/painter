@@ -9,7 +9,7 @@ export class ZipperList<a> {
         if (arr.length === 0) return null
 
         let right: Stack.Stack<a> = Stack.Empty.make()
-        for (let i = 1; i < arr.length; i++) {
+        for (let i = arr.length - 1; i > 0; i--) {
             right = right.cons(arr[i])
         }
 

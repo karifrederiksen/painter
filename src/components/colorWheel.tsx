@@ -165,13 +165,6 @@ export class ColorWheel extends React.Component<ColorWheelProps> {
                 this.props.onChange(new Color.Hsluv(hue, pctX * 100, pctY * 100))
                 break
             }
-            case ColorType.Hpluv: {
-                const hue = this.props.color.h
-                this.props.onChange(
-                    Color.lchToHsluv(Color.hpluvToLch(new Color.Hpluv(hue, pctX * 100, pctY * 100)))
-                )
-                break
-            }
         }
     }
 }
@@ -279,8 +272,6 @@ export class RingRenderer {
                 case ColorType.Hsluv:
                     this.program = createProgram(gl, RING_VERT_SRC, RING_FRAG_SRC_HSLUV)!
                     break
-                case ColorType.Hpluv:
-                    throw "todo"
             }
             gl.bindAttribLocation(this.program, 0, "a_position")
             this.colorLocation = gl.getUniformLocation(this.program, "u_color")!
@@ -301,11 +292,6 @@ export class RingRenderer {
             }
             case ColorType.Hsluv: {
                 this.gl.uniform3f(this.colorLocation, color.h, color.s, color.l)
-                break
-            }
-            case ColorType.Hpluv: {
-                const hpluv = Color.lchToHsluv(Color.hsluvToLch(color))
-                this.gl.uniform3f(this.colorLocation, hpluv.h, hpluv.s, hpluv.l)
                 break
             }
         }
@@ -428,8 +414,6 @@ export class SatValRenderer {
                 case ColorType.Hsluv:
                     this.program = createProgram(gl, SATVAL_VERT_SRC, SATVAL_FRAG_SRC_HSLUV)!
                     break
-                case ColorType.Hpluv:
-                    throw "todo"
             }
             gl.bindAttribLocation(this.program, 0, "a_position")
             this.colorLocation = gl.getUniformLocation(this.program, "u_color")!
@@ -450,11 +434,6 @@ export class SatValRenderer {
             }
             case ColorType.Hsluv: {
                 this.gl.uniform3f(this.colorLocation, color.h, color.s, color.l)
-                break
-            }
-            case ColorType.Hpluv: {
-                const hsl = Color.lchToHsluv(Color.hsluvToLch(color))
-                this.gl.uniform3f(this.colorLocation, hsl.h, hsl.s, hsl.l)
                 break
             }
         }

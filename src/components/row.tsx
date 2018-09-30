@@ -9,10 +9,15 @@ export interface RowProps {
 const Row_ = styled.div`
     display: flex;
     flex-direction: row;
+    width: inherit;
+    height: inherit;
 `
 
 const Col_ = styled.div`
-    width: 100%;
+    display: flex;
+    flex-direction: column;
+    width: inherit;
+    height: inherit;
 `
 
 export function Row({ spacing, children }: RowProps): JSX.Element {

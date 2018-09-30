@@ -6,7 +6,8 @@ import { Slider } from "../components/slider"
 import { Labeled } from "../components/labeled"
 import { InlineLabeled } from "../components/inlineLabeled"
 import { Switch } from "../components/switch"
-import { SecondaryButton } from "../components/buttons"
+import { DefaultButton } from "../components/buttons"
+import { Surface } from "../components/surface"
 
 export interface LayersViewProps {
     readonly layers: Layers.State
@@ -25,10 +26,8 @@ const LayersListWrapper = styled.div`
     }
 `
 
-const LayersControlsWrapper = styled.div`
-    background-color: ${p => p.theme.surfaceColor.toStyle()};
-    color: ${p => p.theme.onSurfaceColor.toStyle()};
-    display: flex;
+const LayersControlsWrapper = styled(Surface)`
+    justify-content: space-between;
     flex-direction: column;
     padding-top: 0.5rem;
     padding-left: 0.5rem;
@@ -43,15 +42,15 @@ export function LayersView({ layers, sender }: LayersViewProps): JSX.Element {
         <LayersWrapper>
             <LayersControlsWrapper>
                 <Row spacing="0.25rem">
-                    <SecondaryButton onClick={() => sender.newLayer(current.id)} title="New layer">
+                    <DefaultButton onClick={() => sender.newLayer(current.id)} title="New layer">
                         New
-                    </SecondaryButton>
-                    <SecondaryButton
+                    </DefaultButton>
+                    <DefaultButton
                         onClick={() => sender.removeLayer(current.id)}
                         title="Remove layer"
                     >
                         Delete
-                    </SecondaryButton>
+                    </DefaultButton>
                 </Row>
                 <InlineLabeled label="Hidden">
                     <Switch
@@ -86,30 +85,17 @@ export interface LayerViewProps {
     readonly onClick: (id: Layers.Id) => void
 }
 
-const LayerWrapper = styled.div`
-    background-color: ${p => p.theme.surfaceColor.toStyle()};
-    color: ${p => p.theme.onSurfaceColor.toStyle()};
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    width: 100%;
-    overflow: hidden;
-    white-space: nowrap;
-    user-select: none;
-    transition: all 150ms;
-`
-
-const UnselectedLayerWrapper = styled(LayerWrapper)`
+const UnselectedLayerWrapper = styled(Surface)`
     cursor: pointer;
     border: 1px solid transparent;
 
     &:hover {
-        border: 1px solid ${p => p.theme.secondaryColorDark.toStyle()};
+        border: 1px solid ${p => p.theme.color.secondaryDark.toStyle()};
     }
 `
 
-const SelectedLayerWrapper = styled(LayerWrapper)`
-    border: 1px solid ${p => p.theme.secondaryColor.toStyle()};
+const SelectedLayerWrapper = styled(Surface)`
+    border: 1px solid ${p => p.theme.color.secondary.toStyle()};
 `
 
 const LayerLeft = styled.div`

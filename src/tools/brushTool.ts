@@ -75,7 +75,6 @@ export function initTempState(): TempState {
 export const enum ColorType {
     Hsv,
     Hsluv,
-    Hpluv,
 }
 
 export function showColorType(type: ColorType): string {
@@ -84,8 +83,6 @@ export function showColorType(type: ColorType): string {
             return "Hsv"
         case ColorType.Hsluv:
             return "Hsluv"
-        case ColorType.Hpluv:
-            return "Hpluv"
     }
 }
 
@@ -107,7 +104,7 @@ export function init(): State {
     return {
         diameterPx: 15,
         flowPct: 0.3,
-        colorMode: ZipperList.fromArray([ColorType.Hsv, ColorType.Hsluv, ColorType.Hpluv])!,
+        colorMode: ZipperList.fromArray([ColorType.Hsluv, ColorType.Hsv])!,
         color: new Color.Hsluv(73, 100, 16),
         colorSecondary: new Color.Hsluv(0, 0, 100),
         spacingPct: 0.05,

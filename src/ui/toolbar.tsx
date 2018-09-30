@@ -10,10 +10,9 @@ import { Slider } from "../components/slider"
 import { Switch } from "../components/switch"
 import { InlineLabeled } from "../components/inlineLabeled"
 import { ColorDisplay } from "../components/colorDisplay"
-import { YPadded } from "../components/padded"
 import { ColorWheel } from "../components/colorWheel"
-import { DropDown } from "../components/dropDown"
-import { Row } from "../components/row"
+import { Menu } from "../components/menu"
+import { Surface, SurfaceLook } from "../components/surface"
 
 export interface ToolbarProps {
     readonly msgSender: Tools.MsgSender
@@ -21,13 +20,11 @@ export interface ToolbarProps {
     readonly transientState: TransientState
 }
 
-const LeftBar = styled.div`
-    background-color: ${p => p.theme.surfaceColor.toStyle()};
-    color: ${p => p.theme.onSurfaceColor.toStyle()};
+const LeftBar = styled(SurfaceLook)`
     display: flex;
     flex-direction: column;
     padding-top: 1rem;
-    margin-right: 0.25rem;
+    margin-right: 0.5rem;
 
     > :not(:last-child) {
         margin-bottom: 0.125rem;
@@ -82,14 +79,27 @@ export function View(props: ToolbarProps): JSX.Element {
     )
 }
 
+const Input = styled.input`
+    background-color: ${p => p.theme.color.surface.toStyle()};
+    color: ${p => p.theme.color.onSurface.toStyle()};
+    padding: 0.25rem 0;
+    border-radius: 0.25rem;
+    font-family: ${p => p.theme.fonts.monospace};
+
+    &:focus {
+        background-color: ${p => p.theme.color.secondary.toStyle()};
+        color: ${p => p.theme.color.onSecondary.toStyle()};
+        padding: 0.25rem 0.5rem;
+    }
+`
+
 export interface TransientState {
     readonly isDetailsExpanded: boolean
 }
 
-const Details = styled.div`
-    background-color: ${p => p.theme.surfaceColor.toStyle()};
-    color: ${p => p.theme.onSurfaceColor.toStyle()};
-    display: flex;
+const Details = styled(Surface)`
+    background-color: ${p => p.theme.color.surface.toStyle()};
+    color: ${p => p.theme.color.onSurface.toStyle()};
     flex-direction: column;
     width: 12rem;
     padding: 0.5rem 0.75rem;
@@ -108,27 +118,27 @@ function BrushDetails(props: BrushDetailsProps): JSX.Element {
 
     return (
         <Details>
-            <YPadded y={0.5}>
-                <DropDown
+            <div style={{ margin: "0.5rem 0" }}>
+                <Menu
                     choices={brush.colorMode}
                     show={BrushTool.showColorType}
                     onSelect={sender.setColorMode}
                 />
-            </YPadded>
+            </div>
             <ColorWheel
                 color={brush.color}
                 colorType={brush.colorMode.focus}
                 onChange={sender.setColor}
             />
-            <YPadded y={0.5}>
+            <div style={{ margin: "0.5rem 0", width: "100%" }}>
                 <ColorDisplay
                     color={brush.color}
                     colorSecondary={brush.colorSecondary}
                     onClick={() => sender.swapColorFrom(brush.color)}
                 />
-            </YPadded>
-            <YPadded y={0.5}>
-                <input
+            </div>
+            <div style={{ margin: "0.5rem 0" }}>
+                <Input
                     type="text"
                     value={brush.color.toStyle()}
                     style={{ width: "100%" }}
@@ -139,7 +149,7 @@ function BrushDetails(props: BrushDetailsProps): JSX.Element {
                         sender.setColor(Color.rgbToHsluv(rgb))
                     }}
                 />
-            </YPadded>
+            </div>
             <Labeled label="Size" value={brush.diameterPx.toFixed(1) + "px"}>
                 <Slider
                     percentage={brush.diameterPx / 500}

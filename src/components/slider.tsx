@@ -26,7 +26,7 @@ const BaseLine = styled.div`
     height: 2px;
     top: 50%;
     transform: translate(0, -50%);
-    background-color: ${p => p.theme.secondaryColorLight.toStyle()};
+    background-color: ${p => p.theme.color.secondaryLight.toStyle()};
     z-index: 0;
 `
 
@@ -36,21 +36,28 @@ const FilledLineClass = styled.div`
     height: 2px;
     top: 50%;
     transform: translate(0, -50%);
-    background-color: ${p => p.theme.primaryColor.toStyle()};
+    background-color: ${p => p.theme.color.primary.toStyle()};
     z-index: 1;
 `
 
-const ButtonClass = styled.div`
+const ButtonBase = styled.div`
     cursor: pointer;
     position: absolute;
     border-radius: 50%;
     width: 0.75rem;
     height: 0.75rem;
     transform: translate(0, -50%);
-    background-color: ${p => p.theme.primaryColor.toStyle()};
     z-index: 2;
     box-shadow: 0 1px 5px 0 rgba(0, 0, 0, 0.2), 0 2px 2px 0 rgba(0, 0, 0, 0.14),
         0 3px 1px -2px rgba(0, 0, 0, 0.12);
+`
+
+const EmptyButton = styled(ButtonBase)`
+    background-color: ${p => p.theme.color.secondaryLight.toStyle()};
+`
+
+const Button = styled(ButtonBase)`
+    background-color: ${p => p.theme.color.primary.toStyle()};
 `
 
 function clamp(x: number, min: number, max: number): number {
@@ -70,12 +77,22 @@ export class Slider extends React.Component<SliderProps> {
         return (
             <Container onMouseDown={this.onDown}>
                 <div ref={el => (this.container = el)}>
-                    <ButtonClass
-                        style={{
-                            left: "calc(" + percentage + " * calc(100% - 0.75rem))",
-                            backgroundColor: color,
-                        }}
-                    />
+                    {percentage === 0 ? (
+                        <EmptyButton
+                            style={{
+                                left: "calc(" + percentage + " * calc(100% - 0.75rem))",
+                                backgroundColor: color,
+                            }}
+                        />
+                    ) : (
+                        <Button
+                            style={{
+                                left: "calc(" + percentage + " * calc(100% - 0.75rem))",
+                                backgroundColor: color,
+                            }}
+                        />
+                    )}
+
                     <FilledLineClass
                         style={{
                             width: percentage * 100 + "%",

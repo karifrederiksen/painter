@@ -55,6 +55,10 @@ const BottomLeft = styled.div`
     bottom: 0.5rem;
 `
 
+const AppContainer = styled.div`
+    font-family: ${p => p.theme.fonts.normal};
+`
+
 class Painter extends React.Component<PainterProps, PainterState> {
     private removeInputListeners: SetOnce<Input.RemoveListeners>
     private cancelFrameStream: SetOnce<CancelFrameStream>
@@ -96,7 +100,7 @@ class Painter extends React.Component<PainterProps, PainterState> {
         // currently there is no cleanup of previous styles...
         injectGlobal`
             body {
-                background-color: ${theme.bgColor.toStyle()};
+                background-color: ${theme.color.background.toStyle()};
             }
         `
         this.currentGlobalTheme = this.state.persistent.theme
@@ -109,7 +113,7 @@ class Painter extends React.Component<PainterProps, PainterState> {
 
         return (
             <ThemeProvider theme={state.persistent.theme}>
-                <div>
+                <AppContainer>
                     <Wrapper>
                         <Toolbar.View
                             tool={state.persistent.tool}
@@ -135,7 +139,7 @@ class Painter extends React.Component<PainterProps, PainterState> {
                             Next theme
                         </PrimaryButton>
                     </BottomLeft>
-                </div>
+                </AppContainer>
             </ThemeProvider>
         )
     }
