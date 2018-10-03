@@ -21,7 +21,7 @@
         "no-invalid-template-strings": true,
         "no-misused-new": true,
         "no-reference": true,
-        "no-shadowed-variable": true,
+        "no-shadowed-variable": false,
         "no-use-before-declare": true,
         "no-unnecessary-callback-wrapper": true,
         "no-unnecessary-type-assertion": true,
