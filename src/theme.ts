@@ -79,7 +79,7 @@ const makeBuilder = (): ThemeBuilder => ({
     },
 })
 
-function randomizeColors(rng_: Rng.State, builder: ThemeBuilder): T2<Theme, Rng.State> {
+function randomizeColors(rng_: Rng.Seed, builder: ThemeBuilder): T2<Theme, Rng.Seed> {
     const rng = new Rng.StatefulWrapper(rng_)
 
     const generate = ({ s, l }: Color.Hsluv) => new Color.Hsluv(rng.next() * 360, rng.next() * s, l)
@@ -99,4 +99,4 @@ function randomizeColors(rng_: Rng.State, builder: ThemeBuilder): T2<Theme, Rng.
     return [builder, rng.state]
 }
 
-export const random = (rng: Rng.State) => randomizeColors(rng, makeBuilder())
+export const random = (rng: Rng.Seed) => randomizeColors(rng, makeBuilder())

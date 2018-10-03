@@ -1,9 +1,3 @@
-export const enum Order {
-    LT = -1,
-    EQ = 0,
-    GT = 1,
-}
-
 export interface T0 extends Iterable<never> {
     readonly length: 0
     [Symbol.iterator](): Iterator<never>
@@ -30,6 +24,15 @@ export interface T3<a, b, c> extends Iterable<a | b | c> {
     [Symbol.iterator](): Iterator<a | b | c>
 }
 
+export interface T4<a, b, c, d> extends Iterable<a | b | c | d> {
+    readonly length: 4
+    readonly [0]: a
+    readonly [1]: b
+    readonly [2]: c
+    readonly [3]: d
+    [Symbol.iterator](): Iterator<a | b | c | d>
+}
+
 export interface PushArray<T> extends ReadonlyArray<T> {
     push(...items: T[]): void
 }
@@ -51,6 +54,14 @@ export interface Action<type, payload = undefined> {
 
 export type Brand<a, brand> = a & { "@..brand": brand }
 
+export function t0(): T0 {
+    return [] as T0
+}
+
+export function t1<a>(first: a): T1<a> {
+    return [first]
+}
+
 export function t2<a, b>(first: a, second: b): T2<a, b> {
     return [first, second]
 }
@@ -58,6 +69,62 @@ export function t2<a, b>(first: a, second: b): T2<a, b> {
 export function t3<a, b, c>(first: a, second: b, third: c): T3<a, b, c> {
     return [first, second, third]
 }
+
+export type Maybe<a> = T0 | T1<a>
+
+export const Maybe = (() => {
+    function of<a>(val: a | null | undefined): Maybe<a> {
+        if (val == null) return []
+        return [val]
+    }
+
+    function withDefault<a>(val: Maybe<a>, def: a): a {
+        if (val.length === 0) return def
+        return val[0]
+    }
+
+    function withDefaultf<a>(val: Maybe<a>, def: () => a): a {
+        if (val.length === 0) return def()
+        return val[0]
+    }
+
+    function map<a, b>(val: Maybe<a>, f: (val: a) => b): Maybe<b> {
+        if (val.length === 0) return []
+        return [f(val[0])]
+    }
+
+    function map2<a, b, c>(val1: Maybe<a>, val2: Maybe<b>, f: (val1: a, val2: b) => c): Maybe<c> {
+        if (val1.length === 0 || val2.length === 0) return []
+        return [f(val1[0], val2[0])]
+    }
+
+    function map3<a, b, c, d>(
+        val1: Maybe<a>,
+        val2: Maybe<b>,
+        val3: Maybe<c>,
+        f: (val1: a, val2: b, val3: c) => d
+    ): Maybe<d> {
+        if (val1.length === 0 || val2.length === 0 || val3.length === 0) return []
+        return [f(val1[0], val2[0], val3[0])]
+    }
+
+    function andThen<a, b>(val: Maybe<a>, f: (val: a) => Maybe<b>): Maybe<b> {
+        if (val.length === 0) return []
+        return f(val[0])
+    }
+
+    return {
+        just: t1,
+        nothing: t0,
+        of,
+        withDefault,
+        withDefaultf,
+        map,
+        map2,
+        map3,
+        andThen,
+    }
+})()
 
 export class Lazy<a> {
     private __value: a | null = null

@@ -1,4 +1,4 @@
-import { T2, T3 } from "./util"
+import { T2, T3, T4 } from "./util"
 
 /*
   Pseudo-random number generator
@@ -7,80 +7,66 @@ import { T2, T3 } from "./util"
   Implementation of Xorshift 128
 */
 
-export interface State {
-    readonly x: number
-    readonly y: number
-    readonly z: number
-    readonly w: number
-}
+export type Seed = T4<number, number, number, number>
 
-function discardInitial(state: State, count: number): State {
-    if (count > 0) {
-        const [_, nextState] = nextInt(state)
-        return discardInitial(nextState, count - 1)
+export function seed(n: number): Seed {
+    let seed_: Seed = [n, 0, 0, 0]
+    for (let i = 0; i < 32; i++) {
+        const [_, nextSeed] = nextInt(seed_)
+        seed_ = nextSeed
     }
-    return state
+    return seed_
 }
 
-export function seed(n: number, discardCount = 32): State {
-    return discardInitial(
-        {
-            x: n,
-            y: 0,
-            z: 0,
-            w: 0,
-        },
-        discardCount
-    )
+export function nextInt(state: Seed): T2<number, Seed> {
+    const s = state[0]
+    let t = state[3]
+    t ^= t << 11
+    t ^= t >>> 8
+    t ^= s
+    t ^= s >>> 19
+    return [t, [t, s, state[1], state[2]]]
 }
 
-/* tslint:disable:no-bitwise */
-export function nextInt(state: State): T2<number, State> {
-    const t = state.x ^ (state.x << 11)
-    const result = state.w ^ (state.w >> 19) ^ t ^ (t >> 8)
-
-    return [
-        result,
-        {
-            x: state.y,
-            y: state.z,
-            z: state.w,
-            w: result,
-        },
-    ]
+export function next(state: Seed): T2<number, Seed> {
+    const [result, nextState] = nextInt(state)
+    console.log(result)
+    return [(result >>> 0) / ((1 << 30) * 2), nextState]
 }
 
-export function next2(state: State): T3<number, number, State> {
+export function next2(state: Seed): T3<number, number, Seed> {
     const [first, state2] = next(state)
     const [second, state3] = next(state2)
     return [first, second, state3]
 }
 
-export function next(state: State): T2<number, State> {
-    const [result, nextState] = nextInt(state)
-    return [(result >>> 0) / ((1 << 30) * 2), nextState]
+export function next3(state: Seed): T4<number, number, number, Seed> {
+    const [first, state2] = next(state)
+    const [second, state3] = next(state2)
+    const [third, state4] = next(state3)
+    return [first, second, third, state4]
 }
 
 export class StatefulWrapper {
-    private __state: State
+    private __state: Seed
 
-    get state(): State {
+    get state(): Seed {
         return this.__state
     }
 
-    constructor(state: State) {
+    constructor(state: Seed) {
         this.__state = state
     }
 
     next(): number {
         const [result, nextState] = next(this.__state)
-        this.__state = discardInitial(nextState, 32)
+        this.__state = nextState
         return result
     }
 
     nextInt(): number {
         const [result, nextState] = nextInt(this.__state)
-        this.__state = discardInitial(nextState, 32)
+        this.__state = nextState
         return result
     }
 }

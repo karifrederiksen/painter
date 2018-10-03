@@ -19,7 +19,7 @@ export interface Hooks {
 }
 
 export interface State {
-    readonly rng: Rng.State
+    readonly rng: Rng.Seed
     readonly theme: Theme.Theme
     readonly tool: Tools.Tool
     readonly layers: Layers.State
