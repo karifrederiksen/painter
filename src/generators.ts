@@ -13,7 +13,7 @@ export function always<a>(val: a): Generator<a> {
 
 export function bool(rng: Rng.Seed): GenResult<boolean> {
     const [pct, nextSeed] = Rng.next(rng)
-    return [pct < 5, nextSeed]
+    return [pct < 0.5, nextSeed]
 }
 
 export function int(min: number, max: number): Generator<number> {
