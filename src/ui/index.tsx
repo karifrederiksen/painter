@@ -6,6 +6,7 @@ import * as Layers from "./layers"
 import * as Input from "../input"
 import * as Canvas from "../canvas"
 import * as Theme from "../theme"
+import * as Scenarios from "../scenarios"
 import { SetOnce, FrameStream, CancelFrameStream } from "../util"
 import { PrimaryButton } from "../components/buttons"
 
@@ -70,6 +71,7 @@ class Painter extends React.Component<PainterProps, PainterState> {
     private htmlCanvas: HTMLCanvasElement | null
     private readonly sender: Canvas.MsgSender
     private currentGlobalTheme: Theme.Theme
+    private afterUpdate: () => void = noOp
 
     constructor(props: PainterProps) {
         super(props)
@@ -175,6 +177,19 @@ class Painter extends React.Component<PainterProps, PainterState> {
             })
         )
         this.cancelFrameStream.set(this.props.frameStream(this.sender.onFrame))
+
+        {
+            const getState = () => this.state.persistent
+            const afterUpdate = () => {
+                const afterUpdate = this.afterUpdate
+                const prom = new Promise<void>(resolve => {
+                    this.afterUpdate = resolve
+                })
+                prom.then(afterUpdate)
+                return prom
+            }
+            Scenarios.setup(getState, this.sender, afterUpdate)
+        }
     }
 
     componentWillUnmount() {
@@ -186,5 +201,7 @@ class Painter extends React.Component<PainterProps, PainterState> {
 
     componentDidUpdate() {
         this.canvas.value.update(this.state.persistent)
+        this.afterUpdate()
+        this.afterUpdate = noOp
     }
 }
