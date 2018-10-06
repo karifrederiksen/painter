@@ -59,12 +59,15 @@ const AppContainer = styled.div`
     font-family: ${p => p.theme.fonts.normal};
 `
 
+const noOp = () => {
+    /**/
+}
+
 class Painter extends React.Component<PainterProps, PainterState> {
     private removeInputListeners: SetOnce<Input.RemoveListeners>
     private cancelFrameStream: SetOnce<CancelFrameStream>
     private canvas: SetOnce<Canvas.Canvas>
     private htmlCanvas: HTMLCanvasElement | null
-    private transientState: TransientState
     private readonly sender: Canvas.MsgSender
     private currentGlobalTheme: Theme.Theme
 
@@ -79,15 +82,16 @@ class Painter extends React.Component<PainterProps, PainterState> {
         this.canvas = new SetOnce()
         this.sender = Canvas.createSender(msg => {
             //console.log("Message of type ", msg.type, "with payload", msg.payload)
-            this.setState((state: PainterState) => ({
-                ...state,
-                persistent: Canvas.update(state.persistent, msg),
-            }))
+            this.setState((state: PainterState) => {
+                const [nextState, outMsg] = Canvas.update(state.persistent, msg)
+                this.canvas.value.handle(outMsg)
+                return {
+                    ...state,
+                    persistent: nextState,
+                }
+            })
         })
         this.htmlCanvas = null
-        this.transientState = {
-            toolBar: { isDetailsExpanded: true },
-        }
         this.setGlobalTheme()
         this.currentGlobalTheme = this.state.persistent.theme
     }
@@ -149,24 +153,28 @@ class Painter extends React.Component<PainterProps, PainterState> {
         const htmlCanvas = this.htmlCanvas
         if (htmlCanvas == null) throw "Canvas not found"
 
-        const canvas = Canvas.Canvas.create(htmlCanvas, {
-            onStats: stats => {
-                console.log(stats)
-            },
-        })
-        if (canvas === null) throw "Failed to initialize Canvas"
+        {
+            const canvas = Canvas.Canvas.create(htmlCanvas, {
+                onStats: stats => {
+                    console.log(stats)
+                },
+            })
+            if (canvas === null) throw "Failed to initialize Canvas"
 
-        this.canvas.set(canvas)
+            this.canvas.set(canvas)
+        }
 
         this.removeInputListeners.set(
             Input.listen(htmlCanvas, {
-                click: this.onClick,
-                release: this.onRelease,
-                move: this.onMove,
-                drag: this.onDrag,
+                click: this.sender.onClick,
+                release: this.sender.onRelease,
+                move: x => {
+                    /**/
+                },
+                drag: this.sender.onDrag,
             })
         )
-        this.cancelFrameStream.set(this.props.frameStream(this.onFrame))
+        this.cancelFrameStream.set(this.props.frameStream(this.sender.onFrame))
     }
 
     componentWillUnmount() {
@@ -177,47 +185,6 @@ class Painter extends React.Component<PainterProps, PainterState> {
     }
 
     componentDidUpdate() {
-        this.canvas.value.onUpdate(this.state.persistent)
-    }
-
-    private onClick = (input: Input.PointerInput): void => {
-        const state = this.state as PainterState
-        const tool = this.canvas.value.onClick(state.persistent.tool, input)
-        const persistent = { ...state.persistent, tool }
-        const newState: PainterState = { ...state, persistent }
-        this.setState(newState)
-    }
-
-    private onRelease = (input: Input.PointerInput): void => {
-        const state = this.state as PainterState
-        const tool = this.canvas.value.onRelease(state.persistent.tool, input)
-        const persistent = { ...state.persistent, tool }
-        const newState: PainterState = { ...state, persistent }
-        this.setState(newState)
-    }
-
-    private onMove = (_input: Input.PointerInput): void => {
-        //
-    }
-
-    private onDrag = (input: Input.PointerInput): void => {
-        const state = this.state as PainterState
-        const tool = this.canvas.value.onDrag(state.persistent.tool, input)
-        const persistent = { ...state.persistent, tool }
-        const newState: PainterState = { ...state, persistent }
-        this.setState(newState)
-    }
-
-    private onFrame = (time: number): void => {
-        const state = this.state as PainterState
-        const tool = this.canvas.value.onFrame(state.persistent.tool, time)
-        if (tool === state.persistent.tool) {
-            this.canvas.value.endFrame(state.persistent)
-        } else {
-            const persistent = { ...state.persistent, tool }
-            const newState: PainterState = { ...state, persistent }
-            this.canvas.value.endFrame(persistent)
-            this.setState(newState)
-        }
+        this.canvas.value.update(this.state.persistent)
     }
 }

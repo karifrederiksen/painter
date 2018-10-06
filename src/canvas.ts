@@ -10,7 +10,8 @@ import * as CombinedLayers from "./rendering/combinedLayers"
 import * as Color from "./color"
 import * as Rng from "./rng"
 import * as Theme from "./theme"
-import { Action, Vec4, Vec2 } from "./util"
+import { BrushPoint } from "./rendering/brushShader"
+import { Action, Vec4, Vec2, T2 } from "./util"
 
 export interface Hooks {
     // readonly onCanvasSnapshot: (snapshot: Snapshot) => void
@@ -40,37 +41,97 @@ export const enum MsgType {
     RandomizeTheme,
     ToolMsg,
     LayersMsg,
+    OnClick,
+    OnRelease,
+    OnDrag,
+    OnFrame,
 }
 
 export type CanvasMsg =
+    | Action<MsgType.OnFrame, number>
+    | Action<MsgType.OnClick, Input.PointerInput>
+    | Action<MsgType.OnRelease, Input.PointerInput>
+    | Action<MsgType.OnDrag, Input.PointerInput>
     | Action<MsgType.RandomizeTheme>
     | Action<MsgType.ToolMsg, Tools.ToolMsg>
     | Action<MsgType.LayersMsg, Layers.Msg>
 
+export const enum EffectType {
+    NoOp,
+    Frame,
+    BrushPoints,
+    Release,
+}
+
+export type Effect =
+    | Action<EffectType.NoOp>
+    | Action<EffectType.Frame, ReadonlyArray<BrushPoint>>
+    | Action<EffectType.BrushPoints, ReadonlyArray<BrushPoint>>
+    | Action<EffectType.Release, ReadonlyArray<BrushPoint>>
+
 export interface MsgSender {
-    randomizeTheme(): void
+    readonly onFrame: (timeMs: number) => void
+    readonly onClick: (input: Input.PointerInput) => void
+    readonly onRelease: (input: Input.PointerInput) => void
+    readonly onDrag: (input: Input.PointerInput) => void
+    readonly randomizeTheme: () => void
     readonly tool: Tools.MsgSender
     readonly layer: Layers.MsgSender
 }
 
 export function createSender(sendMessage: (msg: CanvasMsg) => void): MsgSender {
     return {
+        onFrame: timeMs => sendMessage({ type: MsgType.OnFrame, payload: timeMs }),
+        onClick: input => sendMessage({ type: MsgType.OnClick, payload: input }),
+        onRelease: input => sendMessage({ type: MsgType.OnRelease, payload: input }),
+        onDrag: input => sendMessage({ type: MsgType.OnDrag, payload: input }),
         randomizeTheme: () => sendMessage({ type: MsgType.RandomizeTheme, payload: undefined }),
         tool: Tools.createSender(msg => sendMessage({ type: MsgType.ToolMsg, payload: msg })),
         layer: Layers.createSender(msg => sendMessage({ type: MsgType.LayersMsg, payload: msg })),
     }
 }
 
-export function update(state: State, msg: CanvasMsg): State {
+const noOp: Effect = { type: EffectType.NoOp, payload: undefined }
+
+export function update(state: State, msg: CanvasMsg): T2<State, Effect> {
     switch (msg.type) {
+        case MsgType.OnFrame: {
+            const [newTool, brushPoints] = Tools.onFrame(state.tool, msg.payload)
+            const nextState = { ...state, tool: newTool }
+            const effect: Effect = { type: EffectType.Frame, payload: brushPoints }
+            return [nextState, effect]
+        }
+        case MsgType.OnClick: {
+            const [newTool, brushPoints] = Tools.onClick(state.tool, msg.payload)
+            const nextState = { ...state, tool: newTool }
+            const effect: Effect = { type: EffectType.BrushPoints, payload: brushPoints }
+            return [nextState, effect]
+        }
+        case MsgType.OnRelease: {
+            const [newTool, brushPoints] = Tools.onRelease(state.tool, msg.payload)
+            const nextState = { ...state, tool: newTool }
+            const effect: Effect = { type: EffectType.Release, payload: brushPoints }
+            return [nextState, effect]
+        }
+        case MsgType.OnDrag: {
+            const [newTool, brushPoints] = Tools.onDrag(state.tool, msg.payload)
+            const nextState = { ...state, tool: newTool }
+            const effect: Effect = { type: EffectType.BrushPoints, payload: brushPoints }
+            return [nextState, effect]
+        }
         case MsgType.RandomizeTheme: {
             const [theme, rng] = Theme.random(state.rng)
-            return { ...state, rng, theme }
+            const nextState = { ...state, rng, theme }
+            return [nextState, noOp]
         }
-        case MsgType.ToolMsg:
-            return { ...state, tool: Tools.update(state.tool, msg.payload) }
-        case MsgType.LayersMsg:
-            return { ...state, layers: state.layers.update(msg.payload) }
+        case MsgType.ToolMsg: {
+            const nextState = { ...state, tool: Tools.update(state.tool, msg.payload) }
+            return [nextState, noOp]
+        }
+        case MsgType.LayersMsg: {
+            const nextState = { ...state, layers: state.layers.update(msg.payload) }
+            return [nextState, noOp]
+        }
     }
 }
 
@@ -92,7 +153,6 @@ export class Canvas {
     }
 
     private readonly combineLayers: CombinedLayers.CombinedLayers
-    private hasRendered: boolean = false
 
     private constructor(
         readonly canvasElement: HTMLCanvasElement,
@@ -108,7 +168,7 @@ export class Canvas {
         )
     }
 
-    onUpdate(newState: State): void {
+    update(newState: State): void {
         this.combineLayers.update({
             flattened: newState.layers.split(),
             renderer: this.renderer,
@@ -116,15 +176,25 @@ export class Canvas {
         })
     }
 
-    onClick(tool: Tools.Tool, input: Input.PointerInput): Tools.Tool {
-        const [newTool, brushPoints] = Tools.onClick(tool, input)
-        this.stroke.addPoints(brushPoints)
-        return newTool
+    handle(eff: Effect): void {
+        switch (eff.type) {
+            case EffectType.NoOp:
+                return
+            case EffectType.Frame:
+                this.stroke.addPoints(eff.payload)
+                this.render()
+                return
+            case EffectType.BrushPoints:
+                this.stroke.addPoints(eff.payload)
+                return
+            case EffectType.Release:
+                this.onRelease(eff.payload)
+                return
+        }
     }
 
-    onRelease(tool: Tools.Tool, input: Input.PointerInput): Tools.Tool {
+    private onRelease(brushPoints: ReadonlyArray<BrushPoint>): void {
         const { stroke, combineLayers, renderer } = this
-        const [newTool, brushPoints] = Tools.onRelease(tool, input)
         const resolution = getResolution(this.canvasElement)
 
         stroke.addPoints(brushPoints)
@@ -149,22 +219,9 @@ export class Canvas {
             console.info("released with no layer selected")
         }
         stroke.clear(renderer)
-        return newTool
     }
 
-    onDrag(tool: Tools.Tool, input: Input.PointerInput): Tools.Tool {
-        const [newTool, brushPoints] = Tools.onDrag(tool, input)
-        this.stroke.addPoints(brushPoints)
-        return newTool
-    }
-
-    onFrame(tool: Tools.Tool, currentTime: number): Tools.Tool {
-        const [newTool, brushPoints] = Tools.onFrame(tool, currentTime)
-        this.stroke.addPoints(brushPoints)
-        return newTool
-    }
-
-    endFrame(state: State): void {
+    private render(): void {
         const { renderer, stroke, outputTexture, outputShader, combineLayers } = this
         const resolution = getResolution(this.canvasElement)
         if (stroke.shader.canFlush) {
