@@ -1,6 +1,4 @@
-import * as Renderer from "./renderer"
 import * as Color from "../color"
-import * as Texture from "./texture"
 import { createProgram, getUniformLocation } from "../web-gl"
 import { Vec2 } from "../util"
 
@@ -99,9 +97,8 @@ export class Shader {
         this.offset = offset
     }
 
-    flush(renderer: Renderer.Renderer, uniforms: Uniforms): void {
-        renderer.setProgram(this.program)
-        const gl = renderer.gl
+    flush(gl: WebGLRenderingContext, uniforms: Uniforms): void {
+        gl.useProgram(this.program)
 
         const arrayView = this.array.subarray(0, this.offset)
 
@@ -114,7 +111,7 @@ export class Shader {
         )
 
         // update uniforms
-        gl.uniform1i(this.textureUniform, renderer.bindTexture(uniforms.texture))
+        gl.uniform1i(this.textureUniform, uniforms.brushTextureIdx)
         gl.uniform2f(this.resolutionUniform, uniforms.resolution.x, uniforms.resolution.y)
 
         // enable attributes
@@ -220,5 +217,5 @@ export interface BrushPoint {
 
 export interface Uniforms {
     readonly resolution: Readonly<Vec2>
-    readonly texture: Texture.Texture
+    readonly brushTextureIdx: number
 }

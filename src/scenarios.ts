@@ -27,6 +27,7 @@ async function multipleLayers(
     sender.tool.brush.setOpacity(0.6)
     sender.tool.brush.setColor(new Hsluv(0, 100, 50))
     sender.tool.brush.setDiameter(100)
+    await afterUpdate()
     sender.onClick(mkPt(100, 100, 0.2))
     await afterUpdate()
     sender.onDrag(mkPt(600, 700, 1.0))

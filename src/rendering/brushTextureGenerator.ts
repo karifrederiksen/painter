@@ -1,8 +1,5 @@
-import * as Renderer from "./renderer"
-import * as Texture from "./texture"
-import * as Color from "../color"
 import { getUniformLocation, createProgram } from "../web-gl"
-import { Vec4 } from "../util"
+import { Vec2 } from "../util"
 
 const VERT_SRC = `
 precision highp float;
@@ -38,6 +35,8 @@ void main() {
 export interface Args {
     readonly softness: number
     readonly gamma: number
+    readonly framebuffer: WebGLFramebuffer
+    readonly size: Vec2
 }
 
 export class Generator {
@@ -88,27 +87,26 @@ export class Generator {
         this.array = array
     }
 
-    generateBrushTexture(renderer: Renderer.Renderer, args: Args, texture: Texture.Texture): void {
-        renderer.setViewport(new Vec4(0, 0, texture.size.x, texture.size.y))
-        renderer.setFramebuffer(texture.framebuffer)
-        renderer.setClearColor(Color.RgbLinear.Black, 0)
-        renderer.clear(texture.framebuffer)
-        renderer.setProgram(this.program)
+    generateBrushTexture(gl: WebGLRenderingContext, args: Args): void {
+        gl.useProgram(this.program)
+        gl.viewport(0, 0, args.size.x, args.size.y)
+        gl.bindFramebuffer(gl.FRAMEBUFFER, args.framebuffer)
+        gl.clearColor(0, 0, 0, 0)
+        gl.clear(gl.COLOR_BUFFER_BIT)
 
-        renderer.gl.uniform1f(this.softnessUniform, args.softness)
-        renderer.gl.uniform1f(this.gammaUniform, args.gamma)
+        gl.uniform1f(this.softnessUniform, args.softness)
+        gl.uniform1f(this.gammaUniform, args.gamma)
 
-        renderer.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.buffer)
-        renderer.gl.bufferData(
+        gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.buffer)
+        gl.bufferData(
             WebGLRenderingContext.ARRAY_BUFFER,
             this.array,
             WebGLRenderingContext.STATIC_DRAW
         )
 
-        renderer.gl.vertexAttribPointer(0, 2, WebGLRenderingContext.FLOAT, false, 8, 0)
-        renderer.gl.enableVertexAttribArray(0)
-
-        renderer.gl.drawArrays(WebGLRenderingContext.TRIANGLES, 0, 6)
+        gl.vertexAttribPointer(0, 2, WebGLRenderingContext.FLOAT, false, 8, 0)
+        gl.enableVertexAttribArray(0)
+        gl.drawArrays(WebGLRenderingContext.TRIANGLES, 0, 6)
     }
 
     dispose(gl: WebGLRenderingContext): void {

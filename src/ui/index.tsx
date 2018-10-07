@@ -162,7 +162,7 @@ class Painter extends React.Component<PainterProps, PainterState> {
         if (htmlCanvas == null) throw "Canvas not found"
 
         {
-            const canvas = Canvas.Canvas.create(htmlCanvas, {
+            const canvas = Canvas.Canvas.create(htmlCanvas, this.state.persistent, {
                 onStats: stats => {
                     console.log(stats)
                 },

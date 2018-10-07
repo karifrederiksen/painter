@@ -1,7 +1,5 @@
-import * as Renderer from "./renderer"
-import * as Texture from "./texture"
 import { createProgram, getUniformLocation } from "../web-gl"
-import { Vec2, Vec4 } from "../util"
+import { Vec2 } from "../util"
 
 const floatsPerVertex = 4
 const batchStride = floatsPerVertex * 4
@@ -42,7 +40,7 @@ export interface Args {
     readonly opacity: number
     readonly resolution: Vec2
     readonly framebuffer: WebGLFramebuffer
-    readonly texture: Texture.Texture
+    readonly textureIdx: number
     readonly x0: number
     readonly y0: number
     readonly x1: number
@@ -98,11 +96,12 @@ export class Shader {
         array[21] = 1
     }
 
-    render(renderer: Renderer.Renderer, args: Args): void {
-        const { gl } = renderer
-        renderer.setProgram(this.program)
-        renderer.setFramebuffer(args.framebuffer)
-        args.texture.updateSize(renderer, args.resolution)
+    render(gl: WebGLRenderingContext, args: Args): void {
+        if (args.framebuffer == null) {
+            throw "Framebuffer should be defined"
+        }
+        gl.useProgram(this.program)
+        gl.bindFramebuffer(gl.FRAMEBUFFER, args.framebuffer)
         const array = this.array
         const { x0, y0, x1, y1 } = args
 
@@ -125,7 +124,7 @@ export class Shader {
         gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, array, WebGLRenderingContext.DYNAMIC_DRAW)
 
         // update uniforms
-        gl.uniform1i(this.textureUniform, renderer.bindTexture(args.texture))
+        gl.uniform1i(this.textureUniform, args.textureIdx)
         gl.uniform2f(this.resolutionUniform, args.resolution.x, args.resolution.y)
         gl.uniform1f(this.opacityUniform, args.opacity)
 

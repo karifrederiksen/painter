@@ -1,5 +1,3 @@
-import * as Renderer from "./renderer"
-import * as Texture from "./texture"
 import { createProgram, getUniformLocation, DEFINE_from_linear } from "../web-gl"
 import { Vec2 } from "../util"
 
@@ -42,7 +40,7 @@ void main() {
 
 export interface Args {
     readonly resolution: Vec2
-    readonly texture: Texture.Texture
+    readonly textureIdx: number
     readonly x0: number
     readonly y0: number
     readonly x1: number
@@ -50,8 +48,7 @@ export interface Args {
 }
 
 export class Shader {
-    static create(renderer: Renderer.Renderer): Shader | null {
-        const gl = renderer.gl
+    static create(gl: WebGLRenderingContext): Shader | null {
         const program = createProgram(gl, VERT_SRC, FRAG_SRC)
         if (program === null) return null
 
@@ -95,10 +92,9 @@ export class Shader {
         array[21] = 1
     }
 
-    render(renderer: Renderer.Renderer, args: Args): void {
-        renderer.setProgram(this.program)
-        renderer.setFramebuffer(null)
-        const gl = renderer.gl
+    render(gl: WebGLRenderingContext, args: Args): void {
+        gl.useProgram(this.program)
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null)
         const array = this.array
         const { x0, y0, x1, y1 } = args
 
@@ -121,7 +117,7 @@ export class Shader {
         gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, array, WebGLRenderingContext.DYNAMIC_DRAW)
 
         // update uniforms
-        gl.uniform1i(this.textureUniform, renderer.bindTexture(args.texture))
+        gl.uniform1i(this.textureUniform, args.textureIdx)
         gl.uniform2f(this.resolutionUniform, args.resolution.x, args.resolution.y)
 
         // enable attributes

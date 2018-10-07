@@ -1,3 +1,5 @@
+import { networkInterfaces } from "os"
+
 export interface T0 extends Iterable<never> {
     readonly length: 0
     [Symbol.iterator](): Iterator<never>
@@ -122,6 +124,65 @@ export const Maybe = (() => {
         map,
         map2,
         map3,
+        andThen,
+    }
+})()
+
+export type Result<ok, err> = T2<false, err> | T2<true, ok>
+
+export const Result = (() => {
+    function isOk<ok, err>(res: Result<ok, err>): res is T2<true, ok> {
+        return res[0]
+    }
+    function isErr<ok, err>(res: Result<ok, err>): res is T2<false, err> {
+        return !res[0]
+    }
+
+    function ok<ok, err>(val: ok): Result<ok, err> {
+        return [true, val]
+    }
+
+    function err<ok, err>(val: err): Result<ok, err> {
+        return [false, val]
+    }
+
+    function map<ok, err, newOk>(res: Result<ok, err>, f: (val: ok) => newOk): Result<newOk, err> {
+        if (isOk(res)) {
+            return [true, f(res[1])]
+        } else {
+            return [false, res[1]]
+        }
+    }
+
+    function mapErr<ok, err, newErr>(
+        res: Result<ok, err>,
+        f: (val: err) => newErr
+    ): Result<ok, newErr> {
+        if (isOk(res)) {
+            return [true, res[1]]
+        } else {
+            return [false, f(res[1])]
+        }
+    }
+
+    function andThen<ok, err, newOk>(
+        res: Result<ok, err>,
+        f: (val: ok) => Result<newOk, err>
+    ): Result<newOk, err> {
+        if (isOk(res)) {
+            return f(res[1])
+        } else {
+            return [false, res[1]]
+        }
+    }
+
+    return {
+        isOk,
+        isErr,
+        ok,
+        err,
+        map,
+        mapErr,
         andThen,
     }
 })()
