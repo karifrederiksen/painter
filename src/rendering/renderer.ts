@@ -122,7 +122,8 @@ export class Renderer {
         applyClearColor(this.gl, this.state)
     }
 
-    clear(): void {
+    clear(framebuffer: WebGLFramebuffer | null): void {
+        this.setFramebuffer(framebuffer)
         this.gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT)
     }
 

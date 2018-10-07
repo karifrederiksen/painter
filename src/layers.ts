@@ -7,7 +7,6 @@ export interface CollectedLayer {
     readonly id: Id
     readonly name: string
     readonly opacity: number
-    readonly isHidden: boolean
 }
 
 export class LeafLayer {
@@ -86,27 +85,23 @@ export class GroupLayer {
         return selected
     }
 
-    getWithContext(
-        selectedPath: Stack.NonEmpty<number>,
-        context: CollectLeavesContext
-    ): CollectedLayer {
+    getWithContext(selectedPath: Stack.NonEmpty<number>, opacity: number): CollectedLayer {
         const index = selectedPath.head
         const selected = this.children[index]
 
         if (selectedPath.tail.isNonEmpty()) {
             if (selected.isLeaf) throw "Invariant violation"
 
-            return selected.getWithContext(selectedPath.tail, {
-                isHidden: context.isHidden || this.isHidden,
-                opacity: context.opacity * this.opacity,
-            })
+            return selected.getWithContext(
+                selectedPath.tail,
+                this.isHidden ? 0 : opacity * this.opacity
+            )
         }
 
         return {
             id: selected.id,
-            isHidden: context.isHidden || selected.isHidden,
             name: selected.name,
-            opacity: context.opacity * selected.opacity,
+            opacity: selected.isHidden ? 0 : opacity * selected.opacity,
         }
     }
 
@@ -181,30 +176,22 @@ export class GroupLayer {
         }
     }
 
-    collectLeaves(array: PushArray<CollectedLayer>, context: CollectLeavesContext): void {
+    collectLeaves(array: PushArray<CollectedLayer>, opacity: number): void {
         const children = this.children
         for (let i = 0; i < children.length; i++) {
             const layer = children[i]
+            const nextOpacity = layer.isHidden ? 0 : opacity * layer.opacity
             if (layer.isLeaf) {
                 array.push({
                     id: layer.id,
-                    isHidden: context.isHidden || layer.isHidden,
                     name: layer.name,
-                    opacity: context.opacity * layer.opacity,
+                    opacity: nextOpacity,
                 })
             } else {
-                layer.collectLeaves(array, {
-                    opacity: context.opacity * layer.opacity,
-                    isHidden: context.isHidden || layer.isHidden,
-                })
+                layer.collectLeaves(array, nextOpacity)
             }
         }
     }
-}
-
-interface CollectLeavesContext {
-    readonly opacity: number
-    readonly isHidden: boolean
 }
 
 export type Layer = LeafLayer | GroupLayer
@@ -291,7 +278,6 @@ export class State {
             case LayersMsgType.SetHidden: {
                 const [msgLayerId, isHidden] = msg.payload
                 const current = this.current()
-                console.log("isHidden", current.isHidden, isHidden)
 
                 return current.id === msgLayerId
                     ? this.updateCurrent(x => x.with({ isHidden }))
@@ -306,29 +292,39 @@ export class State {
             const selectedIdx = this.selectedPath.head
             const above: PushArray<CollectedLayer> = []
             const below: PushArray<CollectedLayer> = []
-            const context: CollectLeavesContext = { opacity: 1, isHidden: false }
+            const baseOpacity: number = 1
 
             for (let i = 0; i < selectedIdx; i++) {
                 const child = children[i]
-                if (child.isLeaf) above.push(child)
-                else child.collectLeaves(above, context)
+                if (child.isLeaf)
+                    above.push({
+                        id: child.id,
+                        name: child.name,
+                        opacity: baseOpacity * child.opacity,
+                    })
+                else child.collectLeaves(above, baseOpacity)
             }
 
             for (let i = this.selectedPath.head + 1; i < children.length; i++) {
                 const child = children[i]
-                if (child.isLeaf) below.push(child)
-                else child.collectLeaves(below, context)
+                if (child.isLeaf)
+                    below.push({
+                        id: child.id,
+                        name: child.name,
+                        opacity: baseOpacity * child.opacity,
+                    })
+                else child.collectLeaves(below, baseOpacity)
             }
 
             const current = this.layers.get(this.selectedPath)
             if (current.isLeaf)
                 return {
                     above,
-                    current: this.layers.getWithContext(this.selectedPath, context),
+                    current: this.layers.getWithContext(this.selectedPath, baseOpacity),
                     below,
                 }
 
-            current.collectLeaves(below, context)
+            current.collectLeaves(below, baseOpacity)
             this.splitLayers = { above, current: null, below }
         }
         return this.splitLayers

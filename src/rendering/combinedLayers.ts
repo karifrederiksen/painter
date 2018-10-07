@@ -1,8 +1,9 @@
 import * as Layers from "../layers"
 import * as Texture from "./texture"
 import * as Renderer from "./renderer"
+import * as Stroke from "./stroke"
 import { Vec2, Vec4 } from "../util"
-import { RgbLinear } from "../color"
+import * as Color from "../color"
 
 // I need a layerManager that keeps track of mappings between layerIds and textures
 // combinedLayers can be a component of that manager
@@ -19,18 +20,20 @@ export class CombinedLayers {
     private size: Vec2
     readonly above: Texture.Texture
     readonly below: Texture.Texture
-    private __current: Texture.Texture | null
+    readonly current: Texture.Texture
+    private __currentOpacity: number
 
-    get current(): Texture.Texture | null {
-        return this.__current
+    get currentOpacity(): number {
+        return this.__currentOpacity
     }
 
     constructor(renderer: Renderer.Renderer, size: Vec2) {
         this.layerTextureMap = new Map()
-        this.__current = null
+        this.current = renderer.createTexture(size)
         this.above = renderer.createTexture(size)
         this.below = renderer.createTexture(size)
         this.size = size
+        this.__currentOpacity = 1
     }
 
     update(updateArgs: UpdateArgs): void {
@@ -47,16 +50,20 @@ export class CombinedLayers {
 
         {
             // re-render above
-            renderer.setFramebuffer(this.above.framebuffer)
             renderer.setViewport(new Vec4(0, 0, this.above.size.x, this.above.size.y))
-            renderer.setClearColor(RgbLinear.Black, 0)
-            renderer.clear()
+            renderer.setClearColor(Color.RgbLinear.Black, 0)
+            renderer.clear(this.above.framebuffer)
             const fabove = flattened.above
             for (let i = fabove.length - 1; i >= 0; i--) {
-                const texture = getTextureForLayer(updateArgs, layerTextureMap, fabove[i].id)
+                const layer = fabove[i]
+                if (layer.opacity === 0) continue
+
+                const texture = getTextureForLayer(renderer, layerTextureMap, fabove[i].id)
 
                 renderer.shaders.textureShader.render(renderer, {
+                    opacity: layer.opacity,
                     resolution: texture.size,
+                    framebuffer: this.above.framebuffer,
                     texture: texture,
                     x0: 0,
                     y0: 0,
@@ -68,16 +75,20 @@ export class CombinedLayers {
 
         {
             // re-render below
-            renderer.setFramebuffer(this.below.framebuffer)
             renderer.setViewport(new Vec4(0, 0, this.below.size.x, this.below.size.y))
-            renderer.setClearColor(RgbLinear.Black, 0)
-            renderer.clear()
+            renderer.setClearColor(Color.RgbLinear.Black, 0)
+            renderer.clear(this.below.framebuffer)
             const fbelow = flattened.below
             for (let i = fbelow.length - 1; i >= 0; i--) {
-                const texture = getTextureForLayer(updateArgs, layerTextureMap, fbelow[i].id)
+                const layer = fbelow[i]
+                if (layer.opacity === 0) continue
+
+                const texture = getTextureForLayer(renderer, layerTextureMap, layer.id)
 
                 renderer.shaders.textureShader.render(renderer, {
+                    opacity: layer.opacity,
                     resolution: texture.size,
+                    framebuffer: this.below.framebuffer,
                     texture: texture,
                     x0: 0,
                     y0: 0,
@@ -87,15 +98,91 @@ export class CombinedLayers {
             }
         }
 
-        this.__current =
-            flattened.current === null
-                ? null
-                : getTextureForLayer(updateArgs, layerTextureMap, flattened.current.id)
+        if (flattened.current === null) {
+            this.__currentOpacity = 0
+        } else {
+            this.__currentOpacity = flattened.current.opacity
+        }
+    }
+
+    applyStroke(renderer: Renderer.Renderer, resolution: Vec2, stroke: Stroke.Stroke): void {
+        const flattened = this.previousFlattened
+        if (flattened.current === null) {
+            console.info("no current texture")
+            return
+        }
+
+        renderer.setViewport(new Vec4(0, 0, resolution.x, resolution.y))
+        renderer.setClearColor(Color.RgbLinear.Black, 0.0)
+        renderer.clear(this.current.framebuffer)
+
+        {
+            // LAYER
+            const layerTexture = getTextureForLayer(
+                renderer,
+                this.layerTextureMap,
+                flattened.current.id
+            )
+            renderer.shaders.textureShader.render(renderer, {
+                opacity: 1,
+                resolution,
+                framebuffer: this.current.framebuffer,
+                texture: layerTexture,
+                x0: 0,
+                y0: 0,
+                x1: resolution.x,
+                y1: resolution.y,
+            })
+        }
+
+        {
+            // STROKE
+            renderer.shaders.textureShader.render(renderer, {
+                opacity: 1,
+                resolution,
+                framebuffer: this.current.framebuffer,
+                texture: stroke.texture,
+                x0: 0,
+                y0: 0,
+                x1: resolution.x,
+                y1: resolution.y,
+            })
+        }
+    }
+
+    applyStrokeToUnderlying(
+        renderer: Renderer.Renderer,
+        resolution: Vec2,
+        stroke: Stroke.Stroke
+    ): void {
+        const flattened = this.previousFlattened
+        if (flattened.current === null) {
+            console.info("no current texture")
+            return
+        }
+
+        const layerTexture = getTextureForLayer(
+            renderer,
+            this.layerTextureMap,
+            flattened.current.id
+        )
+        renderer.setViewport(new Vec4(0, 0, resolution.x, resolution.y))
+
+        renderer.shaders.textureShader.render(renderer, {
+            opacity: 1,
+            resolution,
+            framebuffer: layerTexture.framebuffer,
+            texture: stroke.texture,
+            x0: 0,
+            y0: 0,
+            x1: resolution.x,
+            y1: resolution.y,
+        })
     }
 }
 
 function getTextureForLayer(
-    { renderer }: UpdateArgs,
+    renderer: Renderer.Renderer,
     layerTextureMap: Map<Layers.Id, Texture.Id>,
     layerId: Layers.Id
 ): Texture.Texture {

@@ -13,7 +13,7 @@ const babelConfig = {
 
 module.exports = {
     mode: "development",
-    entry: resolve(__dirname, "src/index.ts"),
+    entry: resolve(__dirname, "src/ui/index.tsx"),
     output: {
         path: resolve(__dirname, "dist"),
         filename: "[name].js",

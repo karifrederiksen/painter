@@ -92,7 +92,7 @@ export class Generator {
         renderer.setViewport(new Vec4(0, 0, texture.size.x, texture.size.y))
         renderer.setFramebuffer(texture.framebuffer)
         renderer.setClearColor(Color.RgbLinear.Black, 0)
-        renderer.clear()
+        renderer.clear(texture.framebuffer)
         renderer.setProgram(this.program)
 
         renderer.gl.uniform1f(this.softnessUniform, args.softness)

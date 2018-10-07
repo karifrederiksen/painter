@@ -1,4 +1,5 @@
 import * as React from "react"
+import * as ReactDOM from "react-dom"
 import styled from "../styled"
 import { ThemeProvider, injectGlobal } from "../styled"
 import * as Toolbar from "./toolbar"
@@ -8,10 +9,15 @@ import * as Canvas from "../canvas"
 import * as Theme from "../theme"
 import * as Scenarios from "../scenarios"
 import { SetOnce, FrameStream, CancelFrameStream } from "../util"
-import { PrimaryButton } from "../components/buttons"
+import * as Buttons from "../components/buttons"
 
-export function start(): JSX.Element {
-    return <Painter state={Canvas.initState()} frameStream={FrameStream.make} />
+// HMR hooks
+declare global {
+    interface NodeModule {
+        readonly hot?: {
+            accept(): void
+        }
+    }
 }
 
 type PainterProps = {
@@ -141,9 +147,9 @@ class Painter extends React.Component<PainterProps, PainterState> {
                         </div>
                     </Wrapper>
                     <BottomLeft>
-                        <PrimaryButton onClick={this.sender.randomizeTheme}>
+                        <Buttons.PrimaryButton onClick={this.sender.randomizeTheme}>
                             Next theme
-                        </PrimaryButton>
+                        </Buttons.PrimaryButton>
                     </BottomLeft>
                 </AppContainer>
             </ThemeProvider>
@@ -203,5 +209,22 @@ class Painter extends React.Component<PainterProps, PainterState> {
         this.canvas.value.update(this.state.persistent)
         this.afterUpdate()
         this.afterUpdate = noOp
+    }
+}
+
+{
+    const rootElement = document.getElementById("canvas-root")
+
+    if (rootElement === null) {
+        throw "canvas-root not found"
+    }
+
+    ReactDOM.render(
+        <Painter state={Canvas.initState()} frameStream={FrameStream.make} />,
+        rootElement
+    )
+
+    if (typeof module.hot === "object") {
+        module.hot.accept()
     }
 }

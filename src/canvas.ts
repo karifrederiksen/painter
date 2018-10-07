@@ -188,32 +188,23 @@ export class Canvas {
                 this.stroke.addPoints(eff.payload)
                 return
             case EffectType.Release:
-                this.onRelease(eff.payload)
+                this.stroke.addPoints(eff.payload)
+                this.endStroke()
                 return
         }
     }
 
-    private onRelease(brushPoints: ReadonlyArray<BrushPoint>): void {
+    private endStroke(): void {
         const { stroke, combineLayers, renderer } = this
         const resolution = getResolution(this.canvasElement)
 
-        stroke.addPoints(brushPoints)
         if (stroke.shader.canFlush) {
             stroke.render(renderer, resolution)
         }
 
         if (combineLayers.current !== null) {
             // render the stroke to the current layer
-            renderer.setViewport(new Vec4(0, 0, resolution.x, resolution.y))
-            renderer.setFramebuffer(combineLayers.current.framebuffer)
-            renderer.shaders.textureShader.render(renderer, {
-                resolution,
-                texture: stroke.texture,
-                x0: 0,
-                y0: 0,
-                x1: resolution.x,
-                y1: resolution.y,
-            })
+            combineLayers.applyStrokeToUnderlying(renderer, resolution, stroke)
             // TODO: store the stroke in history
         } else {
             console.info("released with no layer selected")
@@ -227,64 +218,49 @@ export class Canvas {
         if (stroke.shader.canFlush) {
             stroke.render(renderer, resolution)
         }
+        combineLayers.applyStroke(renderer, resolution, stroke)
 
         // render to outputTexture
         outputTexture.updateSize(renderer, resolution)
-        renderer.setFramebuffer(outputTexture.framebuffer)
         renderer.setViewport(new Vec4(0, 0, resolution.x, resolution.y))
         renderer.setClearColor(Color.RgbLinear.Black.mix(0.3, Color.RgbLinear.White), 1.0)
-        renderer.clear()
-        {
-            // BELOW
-            renderer.setFramebuffer(outputTexture.framebuffer)
-            renderer.shaders.textureShader.render(renderer, {
-                resolution,
-                texture: combineLayers.below,
-                x0: 0,
-                y0: 0,
-                x1: resolution.x,
-                y1: resolution.y,
-            })
-        }
+        renderer.clear(outputTexture.framebuffer)
 
-        if (combineLayers.current !== null) {
-            // CURRENT
-            renderer.setFramebuffer(outputTexture.framebuffer)
-            renderer.shaders.textureShader.render(renderer, {
-                resolution,
-                texture: combineLayers.current,
-                x0: 0,
-                y0: 0,
-                x1: resolution.x,
-                y1: resolution.y,
-            })
-
-            // STROKE
-            renderer.setFramebuffer(outputTexture.framebuffer)
-            renderer.shaders.textureShader.render(renderer, {
-                resolution,
-                texture: stroke.texture,
-                x0: 0,
-                y0: 0,
-                x1: resolution.x,
-                y1: resolution.y,
-            })
-        }
-        {
-            // ABOVE
-            renderer.setFramebuffer(outputTexture.framebuffer)
-            renderer.shaders.textureShader.render(renderer, {
-                resolution,
-                texture: combineLayers.above,
-                x0: 0,
-                y0: 0,
-                x1: resolution.x,
-                y1: resolution.y,
-            })
-        }
+        // BELOW
+        renderer.shaders.textureShader.render(renderer, {
+            opacity: 1,
+            resolution,
+            framebuffer: outputTexture.framebuffer,
+            texture: combineLayers.below,
+            x0: 0,
+            y0: 0,
+            x1: resolution.x,
+            y1: resolution.y,
+        })
+        // CURRENT
+        renderer.shaders.textureShader.render(renderer, {
+            opacity: combineLayers.currentOpacity,
+            resolution,
+            framebuffer: outputTexture.framebuffer,
+            texture: combineLayers.current,
+            x0: 0,
+            y0: 0,
+            x1: resolution.x,
+            y1: resolution.y,
+        })
+        // ABOVE
+        renderer.shaders.textureShader.render(renderer, {
+            opacity: 1,
+            resolution,
+            framebuffer: outputTexture.framebuffer,
+            texture: combineLayers.above,
+            x0: 0,
+            y0: 0,
+            x1: resolution.x,
+            y1: resolution.y,
+        })
 
         // outputTexture -> canvas
-        renderer.setFramebuffer(null)
         outputShader.render(renderer, {
             resolution,
             texture: outputTexture,

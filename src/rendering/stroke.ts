@@ -75,9 +75,8 @@ export class Stroke {
 
     clear(renderer: Renderer.Renderer): void {
         this.affectedArea = null
-        renderer.setFramebuffer(this.texture.framebuffer)
         renderer.setClearColor(Color.RgbLinear.Black, 0)
-        renderer.clear()
+        renderer.clear(this.texture.framebuffer)
     }
 
     dispose(gl: WebGLRenderingContext): void {

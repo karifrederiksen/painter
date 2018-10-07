@@ -1,7 +1,7 @@
 import * as Renderer from "./renderer"
 import * as Texture from "./texture"
 import { createProgram, getUniformLocation } from "../web-gl"
-import { Vec2 } from "../util"
+import { Vec2, Vec4 } from "../util"
 
 const floatsPerVertex = 4
 const batchStride = floatsPerVertex * 4
@@ -30,16 +30,18 @@ precision highp float;
 varying vec2 v_tex_coords;
 
 uniform sampler2D u_texture;
+uniform float u_opacity;
 
 void main() {
     vec4 pixel = texture2D(u_texture, v_tex_coords);
-    gl_FragColor = pixel;
-    //gl_FragColor = pixel * 0.01 + vec4(1.0, 0.0, 0.0, 1.0) * 0.99;
+    gl_FragColor = pixel * u_opacity;
 }
 `
 
 export interface Args {
+    readonly opacity: number
     readonly resolution: Vec2
+    readonly framebuffer: WebGLFramebuffer
     readonly texture: Texture.Texture
     readonly x0: number
     readonly y0: number
@@ -61,7 +63,10 @@ export class Shader {
         const resolutionUniform = getUniformLocation(gl, program, "u_resolution")
         if (resolutionUniform === null) return null
 
-        return new Shader(gl, program, textureUniform, resolutionUniform)
+        const opacityUniform = getUniformLocation(gl, program, "u_opacity")
+        if (opacityUniform === null) return null
+
+        return new Shader(gl, program, textureUniform, resolutionUniform, opacityUniform)
     }
 
     private readonly buffer: WebGLBuffer
@@ -71,7 +76,8 @@ export class Shader {
         gl: WebGLRenderingContext,
         private readonly program: WebGLProgram,
         private readonly textureUniform: WebGLUniformLocation,
-        private readonly resolutionUniform: WebGLUniformLocation
+        private readonly resolutionUniform: WebGLUniformLocation,
+        private readonly opacityUniform: WebGLUniformLocation
     ) {
         this.buffer = gl.createBuffer()!
         this.array = new Float32Array(floatsPerVertex * 6)
@@ -94,8 +100,9 @@ export class Shader {
 
     render(renderer: Renderer.Renderer, args: Args): void {
         const { gl } = renderer
-        args.texture.updateSize(renderer, args.resolution)
         renderer.setProgram(this.program)
+        renderer.setFramebuffer(args.framebuffer)
+        args.texture.updateSize(renderer, args.resolution)
         const array = this.array
         const { x0, y0, x1, y1 } = args
 
@@ -120,6 +127,7 @@ export class Shader {
         // update uniforms
         gl.uniform1i(this.textureUniform, renderer.bindTexture(args.texture))
         gl.uniform2f(this.resolutionUniform, args.resolution.x, args.resolution.y)
+        gl.uniform1f(this.opacityUniform, args.opacity)
 
         // enable attributes
         gl.vertexAttribPointer(0, 2, WebGLRenderingContext.FLOAT, false, batchStride, 0)

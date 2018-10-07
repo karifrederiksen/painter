@@ -97,6 +97,7 @@ export class Shader {
 
     render(renderer: Renderer.Renderer, args: Args): void {
         renderer.setProgram(this.program)
+        renderer.setFramebuffer(null)
         const gl = renderer.gl
         const array = this.array
         const { x0, y0, x1, y1 } = args
