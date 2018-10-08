@@ -8,8 +8,9 @@ import * as Input from "../input"
 import * as Canvas from "../canvas"
 import * as Theme from "../theme"
 import * as Scenarios from "../scenarios"
-import { SetOnce, FrameStream, CancelFrameStream } from "../util"
+import { SetOnce, FrameStream, CancelFrameStream, Lazy } from "../util"
 import * as Buttons from "../components/buttons"
+import * as Store from "../store"
 
 // HMR hooks
 declare global {
@@ -41,21 +42,6 @@ const Wrapper = styled.div`
     }
 `
 
-interface PainterState {
-    readonly persistent: Canvas.State
-    readonly transient: TransientState
-}
-
-interface TransientState {
-    readonly toolBar: Toolbar.TransientState
-}
-
-function initTransient(): TransientState {
-    return {
-        toolBar: { isDetailsExpanded: true },
-    }
-}
-
 const BottomLeft = styled.div`
     position: absolute;
     left: 0.5rem;
@@ -65,47 +51,35 @@ const BottomLeft = styled.div`
 const AppContainer = styled.div`
     font-family: ${p => p.theme.fonts.normal};
 `
-
-const noOp = () => {
-    /**/
-}
-
-class Painter extends React.Component<PainterProps, PainterState> {
-    private removeInputListeners: SetOnce<Input.RemoveListeners>
-    private cancelFrameStream: SetOnce<CancelFrameStream>
-    private canvas: SetOnce<Canvas.Canvas>
-    private htmlCanvas: HTMLCanvasElement | null
+class Painter extends React.Component<PainterProps, Canvas.State> {
+    private readonly removeInputListeners: SetOnce<Input.RemoveListeners>
+    private readonly cancelFrameStream: SetOnce<CancelFrameStream>
+    private readonly canvas: SetOnce<Canvas.Canvas>
+    private readonly store: Store.Store<Canvas.State, Canvas.CanvasMsg>
     private readonly sender: Canvas.MsgSender
+    private htmlCanvas: HTMLCanvasElement | null
     private currentGlobalTheme: Theme.Theme
-    private afterUpdate: () => void = noOp
 
     constructor(props: PainterProps) {
         super(props)
-        this.state = {
-            persistent: props.state,
-            transient: initTransient(),
-        }
+        this.state = props.state
         this.removeInputListeners = new SetOnce()
         this.cancelFrameStream = new SetOnce()
         this.canvas = new SetOnce()
-        this.sender = Canvas.createSender(msg => {
-            //console.log("Message of type ", msg.type, "with payload", msg.payload)
-            this.setState((state: PainterState) => {
-                const [nextState, outMsg] = Canvas.update(state.persistent, msg)
-                this.canvas.value.handle(outMsg)
-                return {
-                    ...state,
-                    persistent: nextState,
-                }
-            })
+        this.store = Store.createStore<Canvas.State, Canvas.CanvasMsg, Canvas.Effect>({
+            initialState: this.state,
+            effectsHandler: new Lazy(() => (ef: Canvas.Effect) => this.canvas.value.handle(ef)),
+            setState: state => this.setState(state),
+            update: Canvas.update,
         })
+        this.sender = Canvas.createSender(this.store.send)
         this.htmlCanvas = null
         this.setGlobalTheme()
-        this.currentGlobalTheme = this.state.persistent.theme
+        this.currentGlobalTheme = this.state.theme
     }
 
     private setGlobalTheme() {
-        const theme = this.state.persistent.theme
+        const theme = this.state.theme
         if (theme === this.currentGlobalTheme) return
 
         // In styled-components v4, there will be a component that takes care of global css
@@ -115,22 +89,23 @@ class Painter extends React.Component<PainterProps, PainterState> {
                 background-color: ${theme.color.background.toStyle()};
             }
         `
-        this.currentGlobalTheme = this.state.persistent.theme
+        this.currentGlobalTheme = this.state.theme
     }
 
     render() {
         const state = this.state
+        const sender = this.sender
 
         this.setGlobalTheme()
 
         return (
-            <ThemeProvider theme={state.persistent.theme}>
+            <ThemeProvider theme={state.theme}>
                 <AppContainer>
                     <Wrapper>
                         <Toolbar.View
-                            tool={state.persistent.tool}
-                            transientState={state.transient.toolBar}
-                            msgSender={this.sender.tool}
+                            tool={state.tool}
+                            transientState={{ isDetailsExpanded: true }}
+                            msgSender={sender.tool}
                         />
                         <canvas
                             width="800"
@@ -140,14 +115,11 @@ class Painter extends React.Component<PainterProps, PainterState> {
                             style={{ cursor: "crosshair" }}
                         />
                         <div style={{ width: "14rem" }}>
-                            <Layers.LayersView
-                                layers={state.persistent.layers}
-                                sender={this.sender.layer}
-                            />
+                            <Layers.LayersView layers={state.layers} sender={sender.layer} />
                         </div>
                     </Wrapper>
                     <BottomLeft>
-                        <Buttons.PrimaryButton onClick={this.sender.randomizeTheme}>
+                        <Buttons.PrimaryButton onClick={sender.randomizeTheme}>
                             Next theme
                         </Buttons.PrimaryButton>
                     </BottomLeft>
@@ -162,7 +134,7 @@ class Painter extends React.Component<PainterProps, PainterState> {
         if (htmlCanvas == null) throw "Canvas not found"
 
         {
-            const canvas = Canvas.Canvas.create(htmlCanvas, this.state.persistent, {
+            const canvas = Canvas.Canvas.create(htmlCanvas, this.state, {
                 onStats: stats => {
                     console.log(stats)
                 },
@@ -185,16 +157,8 @@ class Painter extends React.Component<PainterProps, PainterState> {
         this.cancelFrameStream.set(this.props.frameStream(this.sender.onFrame))
 
         {
-            const getState = () => this.state.persistent
-            const afterUpdate = () => {
-                const afterUpdate = this.afterUpdate
-                const prom = new Promise<void>(resolve => {
-                    this.afterUpdate = resolve
-                })
-                prom.then(afterUpdate)
-                return prom
-            }
-            Scenarios.setup(getState, this.sender, afterUpdate)
+            const getState = () => this.state
+            Scenarios.setup(getState, this.sender)
         }
     }
 
@@ -206,9 +170,7 @@ class Painter extends React.Component<PainterProps, PainterState> {
     }
 
     componentDidUpdate() {
-        this.canvas.value.update(this.state.persistent)
-        this.afterUpdate()
-        this.afterUpdate = noOp
+        this.canvas.value.update(this.state)
     }
 }
 

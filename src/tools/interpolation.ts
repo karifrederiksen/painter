@@ -58,7 +58,7 @@ export function interpolate(
 
         const alpha = alphaIsEq ? start.alpha : lerp(pct, start.alpha, end.alpha)
         const color = colorIsEq ? start.color : start.color.mix(pct, end.color)
-        const position = start.position.lerp(pct, end.position)
+        const position = Vec2.lerp(pct, start.position, end.position)
         const scaledDiameter =
             brush.diameterPx *
             (pressureIsEq ? start.pressure : lerp(pct, start.pressure, end.pressure))
@@ -91,7 +91,7 @@ function interpolateNormal(
     start: InputPoint,
     end: InputPoint
 ): ReadonlyArray<number> {
-    const totalDist = distance(start.position.x, start.position.y, end.position.x, end.position.y)
+    const totalDist = Vec2.distance(start.position, end.position)
 
     const count = Math.floor(totalDist / spacingPx)
     const arr = new Array<number>(count)

@@ -6,8 +6,6 @@ import * as Layers from "../layers"
 import * as BlendMode from "./blendMode"
 import { T2, Vec4, Result, Vec2, Brand } from "../util"
 
-export type TextureId = Brand<"Texture Id", number>
-
 export interface CreationArgs {
     readonly gl: WebGLRenderingContext
     readonly brushTextureGenerator: BrushTextureShader.Generator
@@ -98,6 +96,8 @@ export function create(canvas: HTMLCanvasElement): Result<Context, string> {
     })
     return Result.ok(context)
 }
+
+type TextureId = Brand<"Texture Id", number>
 
 interface Stroke {
     readonly textureId: TextureId

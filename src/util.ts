@@ -74,33 +74,37 @@ export function t3<a, b, c>(first: a, second: b, third: c): T3<a, b, c> {
 
 export type Maybe<a> = T0 | T1<a>
 
-export const Maybe = (() => {
-    function of<a>(val: a | null | undefined): Maybe<a> {
+export namespace Maybe {
+    export function of<a>(val: a | null | undefined): Maybe<a> {
         if (val == null) return []
         return [val]
     }
 
-    function withDefault<a>(val: Maybe<a>, def: a): a {
+    export function withDefault<a>(val: Maybe<a>, def: a): a {
         if (val.length === 0) return def
         return val[0]
     }
 
-    function withDefaultf<a>(val: Maybe<a>, def: () => a): a {
+    export function withDefaultf<a>(val: Maybe<a>, def: () => a): a {
         if (val.length === 0) return def()
         return val[0]
     }
 
-    function map<a, b>(val: Maybe<a>, f: (val: a) => b): Maybe<b> {
+    export function map<a, b>(val: Maybe<a>, f: (val: a) => b): Maybe<b> {
         if (val.length === 0) return []
         return [f(val[0])]
     }
 
-    function map2<a, b, c>(val1: Maybe<a>, val2: Maybe<b>, f: (val1: a, val2: b) => c): Maybe<c> {
+    export function map2<a, b, c>(
+        val1: Maybe<a>,
+        val2: Maybe<b>,
+        f: (val1: a, val2: b) => c
+    ): Maybe<c> {
         if (val1.length === 0 || val2.length === 0) return []
         return [f(val1[0], val2[0])]
     }
 
-    function map3<a, b, c, d>(
+    export function map3<a, b, c, d>(
         val1: Maybe<a>,
         val2: Maybe<b>,
         val3: Maybe<c>,
@@ -110,43 +114,34 @@ export const Maybe = (() => {
         return [f(val1[0], val2[0], val3[0])]
     }
 
-    function andThen<a, b>(val: Maybe<a>, f: (val: a) => Maybe<b>): Maybe<b> {
+    export function andThen<a, b>(val: Maybe<a>, f: (val: a) => Maybe<b>): Maybe<b> {
         if (val.length === 0) return []
         return f(val[0])
     }
-
-    return {
-        just: t1,
-        nothing: t0,
-        of,
-        withDefault,
-        withDefaultf,
-        map,
-        map2,
-        map3,
-        andThen,
-    }
-})()
+}
 
 export type Result<ok, err> = T2<false, err> | T2<true, ok>
 
-export const Result = (() => {
-    function isOk<ok, err>(res: Result<ok, err>): res is T2<true, ok> {
+export namespace Result {
+    export function isOk<ok, err>(res: Result<ok, err>): res is T2<true, ok> {
         return res[0]
     }
-    function isErr<ok, err>(res: Result<ok, err>): res is T2<false, err> {
+    export function isErr<ok, err>(res: Result<ok, err>): res is T2<false, err> {
         return !res[0]
     }
 
-    function ok<ok, err>(val: ok): Result<ok, err> {
+    export function ok<ok, err>(val: ok): Result<ok, err> {
         return [true, val]
     }
 
-    function err<ok, err>(val: err): Result<ok, err> {
+    export function err<ok, err>(val: err): Result<ok, err> {
         return [false, val]
     }
 
-    function map<ok, err, newOk>(res: Result<ok, err>, f: (val: ok) => newOk): Result<newOk, err> {
+    export function map<ok, err, newOk>(
+        res: Result<ok, err>,
+        f: (val: ok) => newOk
+    ): Result<newOk, err> {
         if (isOk(res)) {
             return [true, f(res[1])]
         } else {
@@ -154,7 +149,7 @@ export const Result = (() => {
         }
     }
 
-    function mapErr<ok, err, newErr>(
+    export function mapErr<ok, err, newErr>(
         res: Result<ok, err>,
         f: (val: err) => newErr
     ): Result<ok, newErr> {
@@ -165,7 +160,7 @@ export const Result = (() => {
         }
     }
 
-    function andThen<ok, err, newOk>(
+    export function andThen<ok, err, newOk>(
         res: Result<ok, err>,
         f: (val: ok) => Result<newOk, err>
     ): Result<newOk, err> {
@@ -175,17 +170,7 @@ export const Result = (() => {
             return [false, res[1]]
         }
     }
-
-    return {
-        isOk,
-        isErr,
-        ok,
-        err,
-        map,
-        mapErr,
-        andThen,
-    }
-})()
+}
 
 export class Lazy<a> {
     private __value: a | null = null
@@ -258,11 +243,23 @@ export class Vec2 {
     constructor(readonly x: number, readonly y: number) {}
 
     eq(other: Vec2): boolean {
-        return this.x === other.x && this.y === other.y
+        return Vec2.eq(this, other)
+    }
+}
+
+export namespace Vec2 {
+    export function eq(l: Vec2, r: Vec2): boolean {
+        return l.x === r.x && l.y === r.y
     }
 
-    lerp(pct: number, end: Vec2): Vec2 {
-        return new Vec2(this.x + (end.x - this.x) * pct, this.y + (end.y - this.y) * pct)
+    export function lerp(pct: number, begin: Vec2, end: Vec2): Vec2 {
+        return new Vec2(begin.x + (end.x - begin.x) * pct, begin.y + (end.y - begin.y) * pct)
+    }
+
+    export function distance(l: Vec2, r: Vec2): number {
+        const x = r.x - l.x
+        const y = r.y - l.y
+        return Math.sqrt(x * x + y * y)
     }
 }
 
@@ -270,25 +267,37 @@ export class Vec3 {
     constructor(readonly x: number, readonly y: number, readonly z: number) {}
 
     eq(other: Vec3): boolean {
-        return this.x === other.x && this.y === other.y && this.z === other.z
-    }
-
-    lerp(pct: number, end: Vec3): Vec3 {
-        return new Vec3(
-            this.x + (end.x - this.x) * pct,
-            this.y + (end.y - this.y) * pct,
-            this.z + (end.z - this.z) * pct
-        )
+        return Vec3.eq(this, other)
     }
 }
 
+export namespace Vec3 {
+    export function eq(l: Vec3, r: Vec3): boolean {
+        return l.x === r.x && l.y === r.y && l.y === r.y
+    }
+
+    export function lerp(pct: number, begin: Vec3, end: Vec3): Vec3 {
+        return new Vec3(
+            begin.x + (end.x - begin.x) * pct,
+            begin.y + (end.y - begin.y) * pct,
+            begin.z + (end.z - begin.z) * pct
+        )
+    }
+}
 export class Vec4 {
     constructor(readonly x: number, readonly y: number, readonly z: number, readonly w: number) {}
 
     eq(other: Vec4): boolean {
-        return this.x === other.x && this.y === other.y && this.z === other.z && this.w === other.w
+        return Vec4.eq(this, other)
     }
 }
+
+export namespace Vec4 {
+    export function eq(l: Vec4, r: Vec4): boolean {
+        return l.x === r.x && l.y === r.y && l.z === r.z && l.w === r.w
+    }
+}
+
 export interface FrameStream {
     (fn: (time: number) => void): CancelFrameStream
 }

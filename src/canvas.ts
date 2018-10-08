@@ -2,13 +2,11 @@ import * as Layers from "./layers"
 import * as Stats from "./renderStats"
 import * as Tools from "./tools"
 import * as Input from "./input"
-import * as OutputShader from "./rendering/outputShader"
-import * as Color from "./color"
 import * as Rng from "./rng"
 import * as Theme from "./theme"
 import * as Context from "./rendering/context"
 import { BrushPoint } from "./rendering/brushShader"
-import { Action, Vec4, Vec2, T2, Result } from "./util"
+import { Action, Vec2, T2, Result } from "./util"
 
 export interface Hooks {
     // readonly onCanvasSnapshot: (snapshot: Snapshot) => void

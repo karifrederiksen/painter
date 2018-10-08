@@ -210,7 +210,7 @@ function addCorner(
 export interface BrushPoint {
     readonly color: Color.RgbLinear
     readonly alpha: number
-    readonly position: Readonly<Vec2>
+    readonly position: Vec2
     readonly scaledDiameter: number
     readonly rotation: number
 }
