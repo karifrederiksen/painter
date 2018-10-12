@@ -1,82 +1,45 @@
-import { T2 } from "./util"
-
-// Consider reworking this so it just sends out an array and leaves the computations to whoever receives it
-
-export interface Stats {
-    readonly actualFps: number
-    readonly potentialFps: number
-    readonly avgFrameTime: number
-    readonly minFrameTime: number
-    readonly maxFrameTime: number
+export interface Sample {
+    readonly startMs: number
+    readonly endMs: number
 }
 
 export interface Args {
     readonly maxSamples: number
-    readonly outputFrequency: number
-    readonly onStats: (stats: Stats) => void
+    readonly onSamples: (stats: ReadonlyArray<Sample>) => void
 }
 
-export class StatsCapture {
+export class PerfTracker {
     private readonly maxSamples: number
-    private readonly outputFrequency: number
-    private readonly onStats: (stats: Stats) => void
-    private readonly samples: Array<T2<number, number>>
-    private sampleCount: number
-    private nextIndex: number
+    private readonly onSamples: (stats: ReadonlyArray<Sample>) => void
+    private samples: Array<Sample>
+    private nextIdx = 0
+    private startTimeMs: number | null = null
 
     constructor(args: Args) {
         this.maxSamples = args.maxSamples
-        this.outputFrequency = args.outputFrequency
-        this.onStats = args.onStats
-        this.samples = new Array<T2<number, number>>()
-        this.sampleCount = 0
-        this.nextIndex = 0
+        this.onSamples = args.onSamples
+        this.samples = new Array(args.maxSamples)
     }
 
-    timedRender<a>(arg: a, render: (arg: a) => void): void {
-        const start = performance.now()
-        render(arg)
-        const end = performance.now()
-
-        this.samples[this.nextIndex] = [start, end]
-        this.nextIndex = (this.nextIndex + 1) % this.maxSamples
-
-        if (++this.sampleCount % this.outputFrequency === 0) this.outputStats()
+    start() {
+        console.assert(
+            this.startTimeMs === null,
+            "Performance tracker should not already be in use"
+        )
+        this.startTimeMs = performance.now()
     }
 
-    private outputStats(): void {
-        const { samples, nextIndex, maxSamples, sampleCount } = this
-        const count = Math.min(sampleCount, maxSamples)
+    end() {
+        console.assert(this.startTimeMs !== null, "Performance tracker should be started")
+        const endMs = performance.now()
+        const startMs = this.startTimeMs!
+        this.startTimeMs = null
 
-        let minFrameTime = Number.MAX_VALUE
-        let maxFrameTime = Number.MIN_VALUE
-        let totalFrameTime = 0
-
-        for (let i = 0; i < count; i++) {
-            const delta = samples[i][1] - samples[i][0]
-
-            totalFrameTime += delta
-            if (delta < minFrameTime) minFrameTime = delta
-            if (delta > minFrameTime) maxFrameTime = delta
+        this.samples[this.nextIdx++] = { startMs, endMs }
+        if (this.nextIdx === this.maxSamples) {
+            this.onSamples(this.samples)
+            this.samples = new Array(this.maxSamples)
+            this.nextIdx = 0
         }
-
-        const avgFrameTime = totalFrameTime / count
-
-        const endIndex = this.previousIndex(nextIndex)
-        const startIndex = nextIndex < sampleCount ? nextIndex : 0
-
-        const totalTime = samples[endIndex][1] - samples[startIndex][0]
-
-        this.onStats({
-            actualFps: (count / totalTime) * 1000,
-            potentialFps: 1000 / avgFrameTime,
-            avgFrameTime,
-            minFrameTime,
-            maxFrameTime,
-        })
-    }
-
-    private previousIndex(index: number): number {
-        return index > 0 ? index - 1 : this.sampleCount >= this.maxSamples ? this.maxSamples - 1 : 0
     }
 }

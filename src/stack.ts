@@ -104,3 +104,11 @@ export class NonEmpty<a> implements Stack<a> {
         return "Cons (" + this.head + " " + this.tail + ")"
     }
 }
+
+export function fromArray<a>(arr: ReadonlyArray<a>): Stack<a> {
+    let stack: Stack<a> = Empty.make()
+    for (let i = 0; i < arr.length; i++) {
+        stack = stack.cons(arr[i])
+    }
+    return stack
+}
