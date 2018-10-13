@@ -369,16 +369,13 @@ function ColorSliders({
 }>): JSX.Element {
     switch (colorType) {
         case ColorMode.Hsluv:
-            return HsluvSliders({ sender, color })
-        default:
-            return <></>
+            return HsluvSliders(sender, color)
+        case ColorMode.Hsv:
+            return HsvSliders(sender, Color.rgbToHsv(color.toRgb()))
     }
 }
 
-function HsluvSliders({
-    sender,
-    color,
-}: Readonly<{ sender: MsgSender; color: Color.Hsluv }>): JSX.Element {
+function HsluvSliders(sender: MsgSender, color: Color.Hsluv): JSX.Element {
     return (
         <>
             <Labeled label="Hue" value={color.h.toFixed(2)}>
@@ -397,6 +394,31 @@ function HsluvSliders({
                 <Slider
                     percentage={color.l / 100}
                     onChange={pct => sender.setColor(color.withL(pct * 100))}
+                />
+            </Labeled>
+        </>
+    )
+}
+
+function HsvSliders(sender: MsgSender, color: Color.Hsv): JSX.Element {
+    return (
+        <>
+            <Labeled label="Hue" value={color.h.toFixed(2)}>
+                <Slider
+                    percentage={color.h}
+                    onChange={pct => sender.setColor(Color.rgbToHsluv(color.withH(pct).toRgb()))}
+                />
+            </Labeled>
+            <Labeled label="Saturation" value={color.s.toFixed(2)}>
+                <Slider
+                    percentage={color.s}
+                    onChange={pct => sender.setColor(Color.rgbToHsluv(color.withS(pct).toRgb()))}
+                />
+            </Labeled>
+            <Labeled label="Value" value={color.v.toFixed(2)}>
+                <Slider
+                    percentage={color.v}
+                    onChange={pct => sender.setColor(Color.rgbToHsluv(color.withV(pct).toRgb()))}
                 />
             </Labeled>
         </>
