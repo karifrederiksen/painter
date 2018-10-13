@@ -1,12 +1,12 @@
 import * as React from "react"
 import styled from "../styled"
-import { DEFINE_TAU, createProgram, DEFINE_hsluv_etc, DEFINE_hsvToRgb } from "../web-gl"
 import * as Color from "../color"
-import { ColorType } from "../tools/brushTool"
+import { DEFINE_TAU, createProgram, DEFINE_hsluv_etc, DEFINE_hsvToRgb } from "../web-gl"
+import { ColorMode } from "../util"
 
 export type ColorWheelProps = {
     readonly color: Color.Hsluv
-    readonly colorType: ColorType
+    readonly colorType: ColorMode
     readonly onChange: (color: Color.Hsluv) => void
 }
 
@@ -153,14 +153,14 @@ export class ColorWheel extends React.Component<ColorWheelProps> {
         const pctY = 1 - y / height
 
         switch (this.props.colorType) {
-            case ColorType.Hsv: {
+            case ColorMode.Hsv: {
                 const hue = Color.rgbToHsv(this.props.color.toRgb()).h
                 this.props.onChange(
                     Color.rgbToHsluv(Color.hsvToRgb(new Color.Hsv(hue, pctX, pctY)))
                 )
                 break
             }
-            case ColorType.Hsluv: {
+            case ColorMode.Hsluv: {
                 const hue = this.props.color.h
                 this.props.onChange(new Color.Hsluv(hue, pctX * 100, pctY * 100))
                 break
@@ -244,7 +244,7 @@ export class RingRenderer {
     private readonly buffer: WebGLBuffer
     private program: WebGLProgram | null = null
     private colorLocation: WebGLUniformLocation | null = null
-    private prevColorType: ColorType | null = null
+    private prevColorType: ColorMode | null = null
     private prevColor: Color.Hsluv | null = null
 
     constructor(private readonly gl: WebGLRenderingContext) {
@@ -257,7 +257,7 @@ export class RingRenderer {
         )
     }
 
-    render(colorType: ColorType, color: Color.Hsluv): void {
+    render(colorType: ColorMode, color: Color.Hsluv): void {
         const gl = this.gl
 
         if (!this.program || this.prevColorType !== colorType) {
@@ -266,10 +266,10 @@ export class RingRenderer {
             }
 
             switch (colorType) {
-                case ColorType.Hsv:
+                case ColorMode.Hsv:
                     this.program = createProgram(gl, RING_VERT_SRC, RING_FRAG_SRC_HSV)!
                     break
-                case ColorType.Hsluv:
+                case ColorMode.Hsluv:
                     this.program = createProgram(gl, RING_VERT_SRC, RING_FRAG_SRC_HSLUV)!
                     break
             }
@@ -285,12 +285,12 @@ export class RingRenderer {
         gl.enableVertexAttribArray(0)
 
         switch (colorType) {
-            case ColorType.Hsv: {
+            case ColorMode.Hsv: {
                 const hsv = Color.rgbToHsv(Color.hsluvToRgb(color))
                 this.gl.uniform3f(this.colorLocation, hsv.h, hsv.s, hsv.v)
                 break
             }
-            case ColorType.Hsluv: {
+            case ColorMode.Hsluv: {
                 this.gl.uniform3f(this.colorLocation, color.h, color.s, color.l)
                 break
             }
@@ -367,7 +367,7 @@ export class SatValRenderer {
     private readonly buffer: WebGLBuffer
     private colorLocation: WebGLUniformLocation | null = null
     private program: WebGLProgram | null = null
-    private prevColorType: ColorType | null = null
+    private prevColorType: ColorMode | null = null
     private prevColor: Color.Hsluv | null = null
 
     constructor(private readonly gl: WebGLRenderingContext) {
@@ -399,7 +399,7 @@ export class SatValRenderer {
         )
     }
 
-    render(colorType: ColorType, color: Color.Hsluv): void {
+    render(colorType: ColorMode, color: Color.Hsluv): void {
         const gl = this.gl
 
         if (!this.program || this.prevColor!.eq(color)) {
@@ -408,10 +408,10 @@ export class SatValRenderer {
             }
 
             switch (colorType) {
-                case ColorType.Hsv:
+                case ColorMode.Hsv:
                     this.program = createProgram(gl, SATVAL_VERT_SRC, SATVAL_FRAG_SRC_HSV)!
                     break
-                case ColorType.Hsluv:
+                case ColorMode.Hsluv:
                     this.program = createProgram(gl, SATVAL_VERT_SRC, SATVAL_FRAG_SRC_HSLUV)!
                     break
             }
@@ -427,12 +427,12 @@ export class SatValRenderer {
         gl.enableVertexAttribArray(0)
 
         switch (colorType) {
-            case ColorType.Hsv: {
+            case ColorMode.Hsv: {
                 const hsv = Color.rgbToHsv(Color.hsluvToRgb(color))
                 this.gl.uniform3f(this.colorLocation, hsv.h, hsv.s, hsv.v)
                 break
             }
-            case ColorType.Hsluv: {
+            case ColorMode.Hsluv: {
                 this.gl.uniform3f(this.colorLocation, color.h, color.s, color.l)
                 break
             }

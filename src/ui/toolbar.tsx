@@ -2,17 +2,10 @@ import * as React from "react"
 
 import styled from "../styled"
 import * as Tools from "../tools"
-import * as Color from "../color"
-import * as BrushTool from "../tools/brushTool"
+import * as Brush from "../tools/brush"
+import * as Eraser from "../tools/eraser"
 import { SinkableButton } from "../components/buttons"
-import { Labeled } from "../components/labeled"
-import { Slider } from "../components/slider"
-import { Switch } from "../components/switch"
-import { InlineLabeled } from "../components/inlineLabeled"
-import { ColorDisplay } from "../components/colorDisplay"
-import { ColorWheel } from "../components/colorWheel"
-import { Menu } from "../components/menu"
-import { Surface, SurfaceLook } from "../components/surface"
+import { SurfaceLook } from "../components/surface"
 
 export interface ToolbarProps {
     readonly msgSender: Tools.MsgSender
@@ -67,11 +60,26 @@ export function View(props: ToolbarProps): JSX.Element {
                 </SinkableButton>
             </LeftBar>
             {props.transientState.isDetailsExpanded ? (
-                <BrushDetails
-                    messageSender={props.msgSender}
-                    tool={props.tool}
-                    transientState={props.transientState}
-                />
+                (() => {
+                    switch (currentToolType) {
+                        case Tools.ToolType.Brush:
+                            return (
+                                <Brush.Details
+                                    messageSender={props.msgSender.brush}
+                                    tool={props.tool.brush}
+                                />
+                            )
+                        case Tools.ToolType.Eraser:
+                            return (
+                                <Eraser.Details
+                                    messageSender={props.msgSender.eraser}
+                                    tool={props.tool.eraser}
+                                />
+                            )
+                        default:
+                            return <></>
+                    }
+                })()
             ) : (
                 <></>
             )}
@@ -79,153 +87,6 @@ export function View(props: ToolbarProps): JSX.Element {
     )
 }
 
-const Input = styled.input`
-    background-color: ${p => p.theme.color.surface.toStyle()};
-    color: ${p => p.theme.color.onSurface.toStyle()};
-    padding: 0.25rem 0;
-    border-radius: 0.25rem;
-    font-family: ${p => p.theme.fonts.monospace};
-
-    &:focus {
-        background-color: ${p => p.theme.color.secondary.toStyle()};
-        color: ${p => p.theme.color.onSecondary.toStyle()};
-        padding: 0.25rem 0.5rem;
-    }
-`
-
 export interface TransientState {
     readonly isDetailsExpanded: boolean
-}
-
-const Details = styled(Surface)`
-    background-color: ${p => p.theme.color.surface.toStyle()};
-    color: ${p => p.theme.color.onSurface.toStyle()};
-    flex-direction: column;
-    width: 12rem;
-    padding: 0.5rem 0.75rem;
-`
-
-interface BrushDetailsProps {
-    readonly messageSender: Tools.MsgSender
-    readonly tool: Tools.Tool
-    readonly transientState: TransientState
-}
-
-function BrushDetails(props: BrushDetailsProps): JSX.Element {
-    const sender = props.messageSender.brush
-    const brush = props.tool.brush
-    const color = brush.color
-
-    return (
-        <Details>
-            <div style={{ margin: "0.5rem 0" }}>
-                <Menu
-                    choices={brush.colorMode}
-                    show={BrushTool.showColorType}
-                    onSelect={sender.setColorMode}
-                />
-            </div>
-            <ColorWheel
-                color={brush.color}
-                colorType={brush.colorMode.focus}
-                onChange={sender.setColor}
-            />
-            <div style={{ margin: "0.5rem 0", width: "100%" }}>
-                <ColorDisplay
-                    color={brush.color}
-                    colorSecondary={brush.colorSecondary}
-                    onClick={() => sender.swapColorFrom(brush.color)}
-                />
-            </div>
-            <div style={{ margin: "0.5rem 0" }}>
-                <Input
-                    type="text"
-                    value={brush.color.toStyle()}
-                    style={{ width: "100%" }}
-                    onChange={text => {
-                        const rgb = Color.Rgb.fromCss((text.target as any).value)
-                        if (rgb === null) return
-
-                        sender.setColor(Color.rgbToHsluv(rgb))
-                    }}
-                />
-            </div>
-            <Labeled label="Size" value={brush.diameterPx.toFixed(1) + "px"}>
-                <Slider
-                    percentage={brush.diameterPx / 500}
-                    onChange={pct => sender.setDiameter(pct * 500)}
-                />
-            </Labeled>
-            <Labeled label="Flow" value={brush.flowPct.toFixed(2)}>
-                <Slider percentage={brush.flowPct} onChange={sender.setOpacity} />
-            </Labeled>
-            <Labeled label="Spacing" value={brush.spacingPct.toFixed(2) + "%"}>
-                <Slider percentage={brush.spacingPct} onChange={sender.setSpacing} />
-            </Labeled>
-            <ColorSliders sender={sender} color={color} colorType={brush.colorMode.focus} />
-            <InlineLabeled label="Pressure-Opacity">
-                <Switch
-                    checked={brush.pressureAffectsOpacity}
-                    onCheck={sender.setPressureAffectsOpacity}
-                />
-            </InlineLabeled>
-            <InlineLabeled label="Pressure-Size">
-                <Switch
-                    checked={brush.pressureAffectsSize}
-                    onCheck={sender.setPressureAffectsSize}
-                />
-            </InlineLabeled>
-            <Labeled label="Delay" value={brush.delay.duration.toFixed(0) + "ms"}>
-                <Slider
-                    percentage={brush.delay.duration / 500}
-                    onChange={pct => sender.setDelay(pct * 500)}
-                />
-            </Labeled>
-        </Details>
-    )
-}
-
-function ColorSliders({
-    sender,
-    color,
-    colorType,
-}: Readonly<{
-    sender: BrushTool.MsgSender
-    colorType: BrushTool.ColorType
-    color: Color.Hsluv
-}>): JSX.Element {
-    switch (colorType) {
-        case BrushTool.ColorType.Hsluv:
-            return HsluvSliders({ sender, color })
-        default:
-            return <></>
-    }
-}
-
-function HsluvSliders({
-    sender,
-    color,
-}: Readonly<{ sender: BrushTool.MsgSender; color: Color.Hsluv }>): JSX.Element {
-    return (
-        <>
-            <Labeled label="Hue" value={color.h.toFixed(2)}>
-                <Slider
-                    percentage={color.h / 360}
-                    onChange={pct => sender.setColor(color.withH(pct * 360))}
-                />
-            </Labeled>
-            <Labeled label="Saturation" value={color.s.toFixed(2)}>
-                <Slider
-                    percentage={color.s / 100}
-                    onChange={pct => sender.setColor(color.withS(pct * 100))}
-                />
-            </Labeled>
-            <Labeled label="Luminosity" value={color.l.toFixed(2)}>
-                <Slider
-                    percentage={color.l / 100}
-                    onChange={pct => sender.setColor(color.withL(pct * 100))}
-                />
-            </Labeled>
-        </>
-    )
 }

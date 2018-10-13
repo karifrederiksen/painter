@@ -1,6 +1,7 @@
 import * as Input from "../input"
-import * as Brush from "./brushTool"
-import * as Camera from "./cameratools"
+import * as Brush from "./brush"
+import * as Eraser from "./eraser"
+import * as Camera from "./camera"
 import * as BrushShader from "../rendering/brushShader"
 import { Blend } from "../web-gl"
 import { T2, Case, Action } from "../util"
@@ -15,11 +16,12 @@ export const enum ToolMsgType {
 export type ToolMsg =
     | Action<ToolMsgType.SetTool, ToolType>
     | Action<ToolMsgType.BrushMsg, Brush.Msg>
-    | Action<ToolMsgType.EraserMsg, Brush.Msg>
+    | Action<ToolMsgType.EraserMsg, Eraser.Msg>
     | Action<ToolMsgType.CameraMsg, Camera.Msg>
 
 export interface MsgSender {
     readonly brush: Brush.MsgSender
+    readonly eraser: Eraser.MsgSender
     readonly camera: Camera.MsgSender
     setTool(type: ToolType): void
 }
@@ -28,6 +30,9 @@ export function createSender(sendMessage: (msg: ToolMsg) => void): MsgSender {
     return {
         brush: Brush.createBrushSender(msg =>
             sendMessage({ type: ToolMsgType.BrushMsg, payload: msg })
+        ),
+        eraser: Eraser.createBrushSender(msg =>
+            sendMessage({ type: ToolMsgType.EraserMsg, payload: msg })
         ),
         camera: Camera.createSender(msg =>
             sendMessage({ type: ToolMsgType.CameraMsg, payload: msg })
@@ -46,14 +51,14 @@ export const enum ToolType {
 
 export interface Tool {
     readonly brush: Brush.State
-    readonly eraser: Brush.State
+    readonly eraser: Eraser.State
     readonly camera: Camera.State
     readonly current: CurrentTool
 }
 
 export type CurrentTool =
     | Case<ToolType.Brush, Brush.TempState>
-    | Case<ToolType.Eraser, Brush.TempState>
+    | Case<ToolType.Eraser, Eraser.TempState>
     | Case<ToolType.Move, Input.DragState | null>
     | Case<ToolType.Zoom, Input.DragState | null>
     | Case<ToolType.Rotate, Input.DragState | null>
@@ -77,7 +82,7 @@ function brushToolInit(): CurrentTool {
 function eraserToolInit(): CurrentTool {
     return {
         type: ToolType.Eraser,
-        state: Brush.initTempState(),
+        state: Eraser.initTempState(),
     }
 }
 
@@ -123,7 +128,7 @@ export function update(tool: Tool, msg: ToolMsg): Tool {
         case ToolMsgType.BrushMsg:
             return { ...tool, brush: Brush.update(tool.brush, msg.payload) }
         case ToolMsgType.EraserMsg:
-            return { ...tool, eraser: Brush.update(tool.eraser, msg.payload) }
+            return { ...tool, eraser: Eraser.update(tool.eraser, msg.payload) }
         case ToolMsgType.CameraMsg:
             return { ...tool, camera: Camera.update(tool.camera, msg.payload) }
     }
@@ -140,7 +145,7 @@ export function onClick(
             return [{ ...tool, current: { type: ToolType.Brush, state } }, [brushPoint]]
         }
         case ToolType.Eraser: {
-            const [state, brushPoint] = Brush.onClick(tool.camera, tool.eraser, pointer)
+            const [state, brushPoint] = Eraser.onClick(tool.camera, tool.eraser, pointer)
             return [{ ...tool, current: { type: ToolType.Eraser, state } }, [brushPoint]]
         }
         case ToolType.Move: {
@@ -189,7 +194,7 @@ export function onDrag(
             return [{ ...tool, current: { type: ToolType.Brush, state } }, brushPoints]
         }
         case ToolType.Eraser: {
-            const [state, brushPoints] = Brush.onDrag(
+            const [state, brushPoints] = Eraser.onDrag(
                 tool.camera,
                 tool.eraser,
                 current.state,
@@ -249,7 +254,7 @@ export function onRelease(
             return [{ ...tool, current: { type: ToolType.Brush, state } }, brushPoints]
         }
         case ToolType.Eraser: {
-            const [state, brushPoints] = Brush.onRelease(
+            const [state, brushPoints] = Eraser.onRelease(
                 tool.camera,
                 tool.eraser,
                 current.state,
@@ -293,7 +298,7 @@ export function onFrame(
             }
         }
         case ToolType.Eraser: {
-            const [state, brushPoints] = Brush.onFrame(tool.eraser, current.state, currentTime)
+            const [state, brushPoints] = Eraser.onFrame(tool.eraser, current.state, currentTime)
             if (state === current.state && brushPoints.length === 0) {
                 return [tool, brushPoints]
             } else {

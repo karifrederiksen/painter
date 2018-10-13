@@ -1,5 +1,3 @@
-import { networkInterfaces } from "os"
-
 export interface T0 extends Iterable<never> {
     readonly length: 0
     [Symbol.iterator](): Iterator<never>
@@ -323,4 +321,18 @@ export const FrameStream = {
         let requestId = requestAnimationFrame(callback)
         return () => cancelAnimationFrame(requestId)
     },
+}
+
+export const enum ColorMode {
+    Hsv,
+    Hsluv,
+}
+
+export function colorModeToString(type: ColorMode): string {
+    switch (type) {
+        case ColorMode.Hsv:
+            return "Hsv"
+        case ColorMode.Hsluv:
+            return "Hsluv"
+    }
 }

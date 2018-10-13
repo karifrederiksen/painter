@@ -1,7 +1,11 @@
-import * as Brush from "./brushTool"
 import * as BrushShader from "../rendering/brushShader"
 import * as Color from "../color"
 import { lerp, distance, T2, Vec2 } from "../util"
+
+export interface Interpolatable {
+    readonly diameterPx: number
+    readonly spacingPct: number
+}
 
 export interface InputPoint {
     readonly alpha: number
@@ -20,7 +24,7 @@ export function init(prevPoint: InputPoint): State {
 }
 
 export function interpolate(
-    brush: Brush.State,
+    brush: Interpolatable,
     state: State,
     end: InputPoint
 ): T2<State, ReadonlyArray<BrushShader.BrushPoint>> {
