@@ -4,8 +4,9 @@
     "main": "index.js",
     "license": "MIT",
     "scripts": {
-        "start": "npx webpack-serve --config webpack.config.js --clipboard --log-time",
-        "build": "npx webpack-cli --config webpack.config.js",
+        "start": "npx webpack-serve --config webpack.dev.js --clipboard --log-time",
+        "build-dev": "npx webpack-cli --config webpack.dev.js",
+        "build-prod": "npx webpack-cli --config webpack.prod.js",
         "lint": "npx tslint src/**/*.ts -t verbose",
         "typecheck": "npx tsc --project tsconfig.json --noEmit",
         "test": "npx jest --config jest.config.js"
@@ -28,7 +29,7 @@
         "@types/styled-components": "^3.0.1",
         "babel-loader": "^8.0.2",
         "babel-plugin-styled-components": "^1.6.4",
-        "babel-plugin-transform-inline-environment-variables": "^0.4.3",
+        "babel-plugin-transform-node-env-inline": "^0.4.3",
         "clean-webpack-plugin": "^0.1.19",
         "html-webpack-plugin": "^3.2.0",
         "jasmine-check": "^1.0.0-rc.0",
@@ -39,8 +40,10 @@
         "tslint": "^5.11.0",
         "tslint-language-service": "^0.9.9",
         "typescript": "^3.0.3",
+        "uglifyjs-webpack-plugin": "^2.0.1",
         "webpack": "^4.19.1",
         "webpack-cli": "^3.1.1",
+        "webpack-merge": "^4.1.4",
         "webpack-serve": "^2.0.2"
     }
 }

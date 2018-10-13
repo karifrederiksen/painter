@@ -156,9 +156,8 @@ class Painter extends React.Component<PainterProps, Canvas.State> {
         )
         this.cancelFrameStream.set(this.props.frameStream(this.sender.onFrame))
 
-        {
-            const getState = () => this.state
-            Scenarios.setup(getState, this.sender)
+        if (process.env.NODE_ENV !== "production") {
+            Scenarios.setup(() => this.state, this.sender)
         }
     }
 

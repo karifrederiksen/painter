@@ -1,5 +1,5 @@
-const HtmlPlugin = require("html-webpack-plugin")
 const CleanPlugin = require("clean-webpack-plugin")
+const HtmlPlugin = require("html-webpack-plugin")
 const { resolve } = require("path")
 
 const babelConfig = {
@@ -7,21 +7,16 @@ const babelConfig = {
     plugins: [
         "@babel/plugin-transform-runtime",
         ["babel-plugin-styled-components", { displayName: true }],
-        ["babel-plugin-transform-inline-environment-variables", { include: ["NODE_ENV"] }],
     ],
 }
 
 module.exports = {
-    mode: "development",
     entry: resolve(__dirname, "src/ui/index.tsx"),
     output: {
         path: resolve(__dirname, "dist"),
         filename: "[name].js",
     },
     resolve: {
-        alias: {
-            "webpack-hot-client/client": require.resolve("webpack-hot-client/client"),
-        },
         extensions: [".ts", ".tsx", ".js"],
     },
     module: {
@@ -38,15 +33,7 @@ module.exports = {
         ],
     },
     plugins: [
-        new CleanPlugin(["dist"]),
         new HtmlPlugin({ template: resolve(__dirname, "src/index.html") }),
+        new CleanPlugin(["dist"]),
     ],
-    devtool: "cheap-module-source-map",
-    serve: {
-        clipboard: true,
-        host: "localhost",
-        port: 1234,
-        compress: true,
-        hotClient: true,
-    },
 }
