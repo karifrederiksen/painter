@@ -291,7 +291,7 @@ function render(context: ContextState, { blendMode, nextLayers, resolution }: Re
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, outFramebuffer)
     gl.viewport(0, 0, resolution.x, resolution.y)
-    gl.clearColor(0.6, 0.2, 0.2, 1)
+    gl.clearColor(0.6, 0.6, 0.6, 1)
     gl.clear(gl.COLOR_BUFFER_BIT)
 
     // BELOW
