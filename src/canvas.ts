@@ -7,11 +7,12 @@ import * as Theme from "./theme"
 import * as Context from "./rendering/context"
 import { BrushPoint } from "./rendering/brushShader"
 import { Action, Vec2, T2, Result } from "./util"
+import { Blend } from "./web-gl"
 
 export interface Hooks {
     // readonly onCanvasSnapshot: (snapshot: Snapshot) => void
     // readonly onLayerSnapshot: (snapshot: Snapshot, layerId: number) => void
-    readonly onStats: (stats: Stats.Stats) => void
+    readonly onStats: (stats: ReadonlyArray<Stats.Sample>) => void
 }
 
 export interface State {
@@ -60,7 +61,7 @@ export const enum EffectType {
 
 export type Effect =
     | Action<EffectType.NoOp>
-    | Action<EffectType.Frame, ReadonlyArray<BrushPoint>>
+    | Action<EffectType.Frame, T2<ReadonlyArray<BrushPoint>, State>>
     | Action<EffectType.BrushPoints, ReadonlyArray<BrushPoint>>
     | Action<EffectType.Release, ReadonlyArray<BrushPoint>>
 
@@ -93,7 +94,7 @@ export function update(state: State, msg: CanvasMsg): T2<State, Effect> {
         case MsgType.OnFrame: {
             const [newTool, brushPoints] = Tools.onFrame(state.tool, msg.payload)
             const nextState = { ...state, tool: newTool }
-            const effect: Effect = { type: EffectType.Frame, payload: brushPoints }
+            const effect: Effect = { type: EffectType.Frame, payload: [brushPoints, state] }
             return [nextState, effect]
         }
         case MsgType.OnClick: {
@@ -160,9 +161,14 @@ export class Canvas {
             case EffectType.NoOp:
                 return
             case EffectType.Frame: {
-                this.context.addBrushPoints(eff.payload)
+                this.context.addBrushPoints(eff.payload[0])
                 const resolution = new Vec2(this.canvasElement.width, this.canvasElement.height)
-                this.context.render(resolution, this.splitLayers)
+                const state = eff.payload[1]
+                this.context.render({
+                    blendMode: Tools.getBlendMode(state.tool.current),
+                    nextLayers: this.splitLayers,
+                    resolution,
+                })
                 return
             }
             case EffectType.BrushPoints: {

@@ -1,4 +1,4 @@
-import { createProgram, getUniformLocation } from "../web-gl"
+import { Blend, createProgram, getUniformLocation } from "../web-gl"
 import { Vec2 } from "../util"
 
 const floatsPerVertex = 4
@@ -100,6 +100,8 @@ export class Shader {
         if (args.framebuffer == null) {
             throw "Framebuffer should be defined"
         }
+        const { sfact, dfact } = Blend.factorsNormal
+        gl.blendFunc(sfact, dfact)
         gl.useProgram(this.program)
         gl.bindFramebuffer(gl.FRAMEBUFFER, args.framebuffer)
         const array = this.array

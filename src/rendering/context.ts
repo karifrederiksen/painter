@@ -3,7 +3,7 @@ import * as BrushTextureShader from "./brushTextureGenerator"
 import * as TextureShader from "./textureShader"
 import * as BrushShader from "./brushShader"
 import * as Layers from "../layers"
-import * as BlendMode from "./blendMode"
+import { Blend } from "../web-gl"
 import { T2, Vec4, Result, Vec2, Brand } from "../util"
 
 export interface CreationArgs {
@@ -15,10 +15,16 @@ export interface CreationArgs {
     readonly internalCanvasSize: Vec2
 }
 
+export interface RenderArgs {
+    readonly resolution: Vec2
+    readonly blendMode: Blend.Mode
+    readonly nextLayers: Layers.SplitLayers
+}
+
 export interface Context {
     addBrushPoints(brushPoints: ReadonlyArray<BrushShader.BrushPoint>): void
     endStroke(): void
-    render(resolution: Vec2, newLayers: Layers.SplitLayers): void
+    render(args: RenderArgs): void
     dispose(): void
 }
 
@@ -53,7 +59,7 @@ export function create(canvas: HTMLCanvasElement): Result<Context, string> {
     gl.enable(WebGLRenderingContext.BLEND)
     gl.disable(WebGLRenderingContext.DEPTH_TEST)
 
-    const { sfact, dfact } = BlendMode.modeMap[BlendMode.Mode.Normal]
+    const { sfact, dfact } = Blend.factorsNormal
     gl.blendFunc(sfact, dfact)
 
     const drawpointBatch = BrushShader.Shader.create(gl)
@@ -198,8 +204,8 @@ class InternalContext implements Context, ContextState {
         endStroke(this)
     }
 
-    render(resolution: Vec2, nextLayers: Layers.SplitLayers) {
-        render(this, resolution, nextLayers)
+    render(args: RenderArgs) {
+        render(this, args)
     }
 
     dispose() {
@@ -258,13 +264,14 @@ function endStroke(context: ContextState): void {
     gl.clear(gl.COLOR_BUFFER_BIT)
 }
 
-function render(context: ContextState, resolution: Vec2, nextLayers: Layers.SplitLayers): void {
+function render(context: ContextState, { blendMode, nextLayers, resolution }: RenderArgs): void {
     const { gl, combinedLayers, textureRenderer, outputRenderer } = context
     if (context.drawpointBatch.canFlush) {
         if (nextLayers.current !== null) {
             const currentLayerTex = getTextureIdForLayer(context, nextLayers.current.id)!
             gl.bindFramebuffer(gl.FRAMEBUFFER, context.framebufferMap.get(currentLayerTex)!)
             context.drawpointBatch.flush(gl, {
+                blendMode,
                 resolution,
                 brushTextureIdx: ensureTextureIsBound(context, context.brushTextureId),
             })

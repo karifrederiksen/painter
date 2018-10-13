@@ -1,5 +1,5 @@
 import * as Color from "../color"
-import { createProgram, getUniformLocation } from "../web-gl"
+import { Blend, createProgram, getUniformLocation } from "../web-gl"
 import { Vec2 } from "../util"
 
 const INITIAL_VARRAY_SIZE = 5000
@@ -101,6 +101,9 @@ export class Shader {
         gl.useProgram(this.program)
 
         const arrayView = this.array.subarray(0, this.offset)
+
+        const { sfact, dfact } = Blend.getFactors(uniforms.blendMode)
+        gl.blendFunc(sfact, dfact)
 
         // buffer data
         gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.buffer)
@@ -218,4 +221,5 @@ export interface BrushPoint {
 export interface Uniforms {
     readonly resolution: Readonly<Vec2>
     readonly brushTextureIdx: number
+    readonly blendMode: Blend.Mode
 }

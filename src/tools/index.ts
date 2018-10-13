@@ -2,6 +2,7 @@ import * as Input from "../input"
 import * as Brush from "./brushTool"
 import * as Camera from "./cameratools"
 import * as BrushShader from "../rendering/brushShader"
+import { Blend } from "../web-gl"
 import { T2, Case, Action } from "../util"
 
 export const enum ToolMsgType {
@@ -139,7 +140,8 @@ export function onClick(
             return [{ ...tool, current: { type: ToolType.Brush, state } }, [brushPoint]]
         }
         case ToolType.Eraser: {
-            throw "todo"
+            const [state, brushPoint] = Brush.onClick(tool.camera, tool.eraser, pointer)
+            return [{ ...tool, current: { type: ToolType.Eraser, state } }, [brushPoint]]
         }
         case ToolType.Move: {
             if (current.state !== null) return [tool, []]
@@ -187,7 +189,13 @@ export function onDrag(
             return [{ ...tool, current: { type: ToolType.Brush, state } }, brushPoints]
         }
         case ToolType.Eraser: {
-            throw "todo"
+            const [state, brushPoints] = Brush.onDrag(
+                tool.camera,
+                tool.eraser,
+                current.state,
+                pointer
+            )
+            return [{ ...tool, current: { type: ToolType.Eraser, state } }, brushPoints]
         }
         case ToolType.Move: {
             if (current.state === null) return [tool, []]
@@ -241,7 +249,13 @@ export function onRelease(
             return [{ ...tool, current: { type: ToolType.Brush, state } }, brushPoints]
         }
         case ToolType.Eraser: {
-            throw "todo"
+            const [state, brushPoints] = Brush.onRelease(
+                tool.camera,
+                tool.eraser,
+                current.state,
+                pointer
+            )
+            return [{ ...tool, current: { type: ToolType.Eraser, state } }, brushPoints]
         }
         case ToolType.Move: {
             if (current.state === null) return [tool, []]
@@ -279,9 +293,28 @@ export function onFrame(
             }
         }
         case ToolType.Eraser: {
-            throw "todo"
+            const [state, brushPoints] = Brush.onFrame(tool.eraser, current.state, currentTime)
+            if (state === current.state && brushPoints.length === 0) {
+                return [tool, brushPoints]
+            } else {
+                return [{ ...tool, current: { type: ToolType.Eraser, state } }, brushPoints]
+            }
         }
         default:
             return [tool, []]
+    }
+}
+
+export function getBlendMode(tool: CurrentTool): Blend.Mode {
+    switch (tool.type) {
+        case ToolType.Brush:
+            return Blend.Mode.Normal
+        case ToolType.Eraser:
+            return Blend.Mode.Erase
+        default:
+            console.warn(
+                "Getting BlendMode for type " + tool.type + ", which is neithre a Brush or Eraser"
+            )
+            return Blend.Mode.Normal
     }
 }

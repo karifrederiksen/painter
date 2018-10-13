@@ -1,4 +1,4 @@
-import { getUniformLocation, createProgram } from "../web-gl"
+import { Blend, getUniformLocation, createProgram } from "../web-gl"
 import { Vec2 } from "../util"
 
 const VERT_SRC = `
@@ -88,6 +88,8 @@ export class Generator {
     }
 
     generateBrushTexture(gl: WebGLRenderingContext, args: Args): void {
+        const { sfact, dfact } = Blend.factorsNormal
+        gl.blendFunc(sfact, dfact)
         gl.useProgram(this.program)
         gl.viewport(0, 0, args.size.x, args.size.y)
         gl.bindFramebuffer(gl.FRAMEBUFFER, args.framebuffer)
