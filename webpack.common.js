@@ -30,6 +30,19 @@ module.exports = {
                 test: /\.tsx?$/,
                 use: [{ loader: "babel-loader", options: babelConfig }, { loader: "ts-loader" }],
             },
+            {
+                test: /\.css$/,
+                use: [
+                    { loader: "style-loader" },
+                    { loader: "css-loader", options: { modules: true, importLoaders: 1 } },
+                    {
+                        loader: "postcss-loader",
+                        options: {
+                            plugins: [require("autoprefixer"), require("cssnano")()],
+                        },
+                    },
+                ],
+            },
         ],
     },
     plugins: [
