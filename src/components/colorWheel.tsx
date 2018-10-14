@@ -135,7 +135,17 @@ export class ColorWheel extends React.Component<ColorWheelProps> {
         const hue = rad / (Math.PI * 2) + 0.5
 
         const prevColor = this.props.color
-        this.props.onChange(prevColor.withH(hue * 360))
+        switch (this.props.colorType) {
+            case ColorMode.Hsv: {
+                const hsv = Color.rgbToHsv(this.props.color.toRgb())
+                this.props.onChange(Color.rgbToHsluv(hsv.withH(hue).toRgb()))
+                break
+            }
+            case ColorMode.Hsluv: {
+                this.props.onChange(prevColor.withH(hue * 360))
+                break
+            }
+        }
     }
 
     private signalInner(ev: WithClientXY): void {
