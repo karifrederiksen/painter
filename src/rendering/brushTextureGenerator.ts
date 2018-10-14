@@ -18,8 +18,6 @@ void main() {
 const FRAG_SRC = `
 precision highp float;
 
-${DEFINE_to_linear}
-
 varying vec2 v_position;
 
 uniform float u_softness;
@@ -29,7 +27,7 @@ void main() {
   float dist = sqrt(dot(v_position, v_position));
   float a = 1.0 - smoothstep(radius, radius + u_softness, dist);
 
-  gl_FragColor = vec4(vec3(0.0), to_linear(a));
+  gl_FragColor = vec4(vec3(0.0), (a));
 }
 `
 

@@ -7,7 +7,7 @@ import * as BrushShader from "../rendering/brushShader"
 import * as Camera from "./camera"
 import * as Input from "../input"
 import * as Color from "../color"
-import { T2, Action, Vec2, ColorMode, colorModeToString } from "../util"
+import { T2, Action, Vec2, ColorMode, colorModeToString, clamp } from "../util"
 import { ZipperList } from "../zipperList"
 import { Menu } from "../components/menu"
 import { ColorWheel } from "../components/colorWheel"
@@ -115,20 +115,19 @@ export function init(): State {
 export function update(state: State, msg: Msg): State {
     switch (msg.type) {
         case MsgType.SetDiameter:
-            return { ...state, diameterPx: msg.payload }
+            return { ...state, diameterPx: clamp(0.1, 500, msg.payload) }
         case MsgType.SetSoftness:
-            return { ...state, softness: msg.payload }
+            return { ...state, softness: clamp(0, 1, msg.payload) }
         case MsgType.SetOpacity:
-            return { ...state, flowPct: msg.payload }
+            return { ...state, flowPct: clamp(0.01, 1, msg.payload) }
         case MsgType.SetColor: {
             return { ...state, color: msg.payload }
         }
         case MsgType.SetColorMode: {
-            console.log("changing color mode to", msg.payload)
             return { ...state, colorMode: state.colorMode.focusf(x => x === msg.payload) }
         }
         case MsgType.SetSpacing:
-            return { ...state, spacingPct: msg.payload }
+            return { ...state, spacingPct: clamp(0.01, 1, msg.payload) }
         case MsgType.SetPressureAffectsOpacity:
             return { ...state, pressureAffectsOpacity: msg.payload }
         case MsgType.SetPressureAffectsSize:
@@ -141,7 +140,7 @@ export function update(state: State, msg: Msg): State {
             }
         }
         case MsgType.SetDelay:
-            return { ...state, delay: BrushDelay.delay(msg.payload) }
+            return { ...state, delay: BrushDelay.delay(clamp(0, 500, msg.payload)) }
     }
 }
 

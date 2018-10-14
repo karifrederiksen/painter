@@ -237,6 +237,9 @@ export function lerp(pct: number, start: number, end: number): number {
     return start + (end - start) * pct
 }
 
+export function clamp(min: number, max: number, n: number): number {
+    return n < min ? min : n > max ? max : n
+}
 export class Vec2 {
     constructor(readonly x: number, readonly y: number) {}
 

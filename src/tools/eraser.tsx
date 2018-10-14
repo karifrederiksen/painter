@@ -7,11 +7,8 @@ import * as BrushShader from "../rendering/brushShader"
 import * as Camera from "./camera"
 import * as Input from "../input"
 import * as Color from "../color"
-import { T2, Action, Vec2 } from "../util"
+import { T2, Action, Vec2, clamp } from "../util"
 import { Surface } from "../components/surface"
-import { Menu } from "../components/menu"
-import { ColorWheel } from "../components/colorWheel"
-import { ColorDisplay } from "../components/colorDisplay"
 import { Labeled } from "../components/labeled"
 import { Slider } from "../components/slider"
 import { InlineLabeled } from "../components/inlineLabeled"
@@ -94,19 +91,19 @@ export function init(): State {
 export function update(state: State, msg: Msg): State {
     switch (msg.type) {
         case MsgType.SetDiameter:
-            return { ...state, diameterPx: msg.payload }
+            return { ...state, diameterPx: clamp(0.1, 500, msg.payload) }
         case MsgType.SetSoftness:
-            return { ...state, softness: msg.payload }
+            return { ...state, softness: clamp(0, 1, msg.payload) }
         case MsgType.SetOpacity:
-            return { ...state, flowPct: msg.payload }
+            return { ...state, flowPct: clamp(0.01, 1, msg.payload) }
         case MsgType.SetSpacing:
-            return { ...state, spacingPct: msg.payload }
+            return { ...state, spacingPct: clamp(0.01, 1, msg.payload) }
         case MsgType.SetPressureAffectsOpacity:
             return { ...state, pressureAffectsOpacity: msg.payload }
         case MsgType.SetPressureAffectsSize:
             return { ...state, pressureAffectsSize: msg.payload }
         case MsgType.SetDelay:
-            return { ...state, delay: BrushDelay.delay(msg.payload) }
+            return { ...state, delay: BrushDelay.delay(clamp(0, 500, msg.payload)) }
     }
 }
 
