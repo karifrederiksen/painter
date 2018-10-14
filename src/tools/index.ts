@@ -66,7 +66,7 @@ export type CurrentTool =
 export function init(): Tool {
     return {
         brush: Brush.init(),
-        eraser: Brush.init(),
+        eraser: Eraser.init(),
         camera: Camera.init(),
         current: brushToolInit(),
     }
@@ -321,5 +321,21 @@ export function getBlendMode(tool: CurrentTool): Blend.Mode {
                 "Getting BlendMode for type " + tool.type + ", which is neithre a Brush or Eraser"
             )
             return Blend.Mode.Normal
+    }
+}
+
+export function getSoftness(tool: Tool): number {
+    switch (tool.current.type) {
+        case ToolType.Brush:
+            return tool.brush.softness
+        case ToolType.Eraser:
+            return tool.eraser.softness
+        default:
+            console.warn(
+                "Getting BlendMode for type " +
+                    tool.current.type +
+                    ", which is neithre a Brush or Eraser"
+            )
+            return 0
     }
 }

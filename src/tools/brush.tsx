@@ -20,6 +20,7 @@ import { Surface } from "../components/surface"
 
 const enum MsgType {
     SetDiameter,
+    SetSoftness,
     SetOpacity,
     SetColor,
     SetColorMode,
@@ -32,6 +33,7 @@ const enum MsgType {
 
 export type Msg =
     | Action<MsgType.SetDiameter, number>
+    | Action<MsgType.SetSoftness, number>
     | Action<MsgType.SetOpacity, number>
     | Action<MsgType.SetColor, Color.Hsluv>
     | Action<MsgType.SetColorMode, ColorMode>
@@ -47,6 +49,7 @@ export interface MsgSender {
     setDelay(ms: number): void
     setDiameter(px: number): void
     setOpacity(opacity: number): void
+    setSoftness(softness: number): void
     setSpacing(px: number): void
     setPressureAffectsOpacity(setPressureAffectsOpacity: boolean): void
     setPressureAffectsSize(setPressureAffectsSize: boolean): void
@@ -60,6 +63,7 @@ export function createBrushSender(sendMessage: (msg: Msg) => void): MsgSender {
         setDelay: ms => sendMessage({ type: MsgType.SetDelay, payload: ms }),
         setDiameter: px => sendMessage({ type: MsgType.SetDiameter, payload: px }),
         setOpacity: pct => sendMessage({ type: MsgType.SetOpacity, payload: pct }),
+        setSoftness: pct => sendMessage({ type: MsgType.SetSoftness, payload: pct }),
         setSpacing: px => sendMessage({ type: MsgType.SetSpacing, payload: px }),
         setPressureAffectsOpacity: x =>
             sendMessage({ type: MsgType.SetPressureAffectsOpacity, payload: x }),
@@ -80,6 +84,7 @@ export function initTempState(): TempState {
 
 export interface State extends Interp.Interpolatable {
     readonly diameterPx: number
+    readonly softness: number
     readonly flowPct: number
     readonly colorMode: ZipperList<ColorMode>
     readonly color: Color.Hsluv
@@ -95,6 +100,7 @@ export interface State extends Interp.Interpolatable {
 export function init(): State {
     return {
         diameterPx: 15,
+        softness: 0.4,
         flowPct: 0.3,
         colorMode: ZipperList.fromArray([ColorMode.Hsluv, ColorMode.Hsv])!,
         color: new Color.Hsluv(73, 100, 16),
@@ -110,6 +116,8 @@ export function update(state: State, msg: Msg): State {
     switch (msg.type) {
         case MsgType.SetDiameter:
             return { ...state, diameterPx: msg.payload }
+        case MsgType.SetSoftness:
+            return { ...state, softness: msg.payload }
         case MsgType.SetOpacity:
             return { ...state, flowPct: msg.payload }
         case MsgType.SetColor: {
@@ -328,6 +336,9 @@ export function Details(props: {
                     percentage={brush.diameterPx / 500}
                     onChange={pct => sender.setDiameter(pct * 500)}
                 />
+            </Labeled>
+            <Labeled label="Softness" value={brush.softness.toFixed(2)}>
+                <Slider percentage={brush.softness} onChange={sender.setSoftness} />
             </Labeled>
             <Labeled label="Flow" value={brush.flowPct.toFixed(2)}>
                 <Slider percentage={brush.flowPct} onChange={sender.setOpacity} />

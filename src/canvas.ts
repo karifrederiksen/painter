@@ -168,6 +168,7 @@ export class Canvas {
                     blendMode: Tools.getBlendMode(state.tool.current),
                     nextLayers: this.splitLayers,
                     resolution,
+                    brush: { softness: Tools.getSoftness(state.tool) },
                 })
                 return
             }

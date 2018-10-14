@@ -13,6 +13,17 @@ vec3 from_linear(vec3 color) {
     return vec3(from_linear(color.x), from_linear(color.y), from_linear(color.z));
 }
 `
+export const DEFINE_to_linear = `
+float to_linear(float c) {
+    return c > 0.04045
+        ? pow((c + 0.055) / (1.0 + 0.055), 2.4)
+        : c / 12.92;
+}
+
+vec3 to_linear(vec3 color) {
+    return vec3(to_linear(color.x), to_linear(color.y), to_linear(color.z));
+}
+`
 
 // credit: http://lolengine.net/blog/2013/07/27/rgb-to-hsv-in-glsl - Sam Hocevar
 export const DEFINE_hsvToRgb = `

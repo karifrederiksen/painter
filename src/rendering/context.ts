@@ -18,6 +18,9 @@ export interface CreationArgs {
 export interface RenderArgs {
     readonly resolution: Vec2
     readonly blendMode: Blend.Mode
+    readonly brush: {
+        readonly softness: number
+    }
     readonly nextLayers: Layers.SplitLayers
 }
 
@@ -176,8 +179,7 @@ class InternalContext implements Context, ContextState {
             const size = new Vec2(128, 128)
             this.brushTextureId = createTexture(this, size)
             this.brushTextureGenerator.generateBrushTexture(this.gl, {
-                gamma: 1,
-                softness: 0.4,
+                softness: 0,
                 framebuffer: addFramebuffer(this, this.brushTextureId),
                 size: size,
             })
@@ -264,16 +266,28 @@ function endStroke(context: ContextState): void {
     gl.clear(gl.COLOR_BUFFER_BIT)
 }
 
-function render(context: ContextState, { blendMode, nextLayers, resolution }: RenderArgs): void {
+function render(
+    context: ContextState,
+    { blendMode, nextLayers, resolution, brush }: RenderArgs
+): void {
     const { gl, combinedLayers, textureRenderer, outputRenderer } = context
     if (context.drawpointBatch.canFlush) {
         if (nextLayers.current !== null) {
             const currentLayerTex = getTextureIdForLayer(context, nextLayers.current.id)!
+
+            const { brushTextureId } = context
+
+            context.brushTextureGenerator.generateBrushTexture(gl, {
+                softness: brush.softness,
+                framebuffer: context.framebufferMap.get(brushTextureId)!,
+                size: new Vec2(128, 128),
+            })
+            gl.viewport(0, 0, resolution.x, resolution.y)
             gl.bindFramebuffer(gl.FRAMEBUFFER, context.framebufferMap.get(currentLayerTex)!)
             context.drawpointBatch.flush(gl, {
                 blendMode,
                 resolution,
-                brushTextureIdx: ensureTextureIsBound(context, context.brushTextureId),
+                brushTextureIdx: ensureTextureIsBound(context, brushTextureId),
             })
         } else {
             console.warn("Drawpoint batch has data to flush, but no layer is currently selected")
