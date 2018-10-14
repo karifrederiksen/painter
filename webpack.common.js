@@ -14,7 +14,7 @@ module.exports = {
     entry: resolve(__dirname, "src/ui/index.tsx"),
     output: {
         path: resolve(__dirname, "dist"),
-        filename: "[name].js",
+        filename: "[name]-[hash].js",
     },
     resolve: {
         extensions: [".ts", ".tsx", ".js"],
