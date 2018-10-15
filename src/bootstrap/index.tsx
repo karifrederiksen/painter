@@ -56,6 +56,7 @@ const GlobalStyle = createGlobalStyle`
         background-color: ${p => p.theme.color.background.toStyle()};
     }
 `
+
 class Painter extends React.Component<PainterProps, Canvas.State> {
     private readonly removeInputListeners: SetOnce<Input.RemoveListeners>
     private readonly cancelFrameStream: SetOnce<CancelFrameStream>
@@ -85,33 +86,35 @@ class Painter extends React.Component<PainterProps, Canvas.State> {
         const sender = this.sender
 
         return (
-            <ThemeProvider theme={state.theme}>
-                <AppContainer>
-                    <GlobalStyle />
-                    <Wrapper>
-                        <Toolbar.View
-                            tool={state.tool}
-                            transientState={{ isDetailsExpanded: true }}
-                            msgSender={sender.tool}
-                        />
-                        <canvas
-                            width="800"
-                            height="800"
-                            key="muh-canvas"
-                            ref={x => (this.htmlCanvas = x)}
-                            style={{ cursor: "crosshair" }}
-                        />
-                        <div style={{ width: "14rem" }}>
-                            <Layers.LayersView layers={state.layers} sender={sender.layer} />
-                        </div>
-                    </Wrapper>
-                    <BottomLeft>
-                        <Buttons.PrimaryButton onClick={sender.randomizeTheme}>
-                            Next theme
-                        </Buttons.PrimaryButton>
-                    </BottomLeft>
-                </AppContainer>
-            </ThemeProvider>
+            <React.StrictMode>
+                <ThemeProvider theme={state.theme}>
+                    <AppContainer>
+                        <GlobalStyle />
+                        <Wrapper>
+                            <Toolbar.View
+                                tool={state.tool}
+                                transientState={{ isDetailsExpanded: true }}
+                                msgSender={sender.tool}
+                            />
+                            <canvas
+                                width="800"
+                                height="800"
+                                key="muh-canvas"
+                                ref={x => (this.htmlCanvas = x)}
+                                style={{ cursor: "crosshair" }}
+                            />
+                            <div style={{ width: "14rem" }}>
+                                <Layers.LayersView layers={state.layers} sender={sender.layer} />
+                            </div>
+                        </Wrapper>
+                        <BottomLeft>
+                            <Buttons.PrimaryButton onClick={sender.randomizeTheme}>
+                                Next theme
+                            </Buttons.PrimaryButton>
+                        </BottomLeft>
+                    </AppContainer>
+                </ThemeProvider>
+            </React.StrictMode>
         )
     }
 
