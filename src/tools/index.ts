@@ -2,9 +2,9 @@ import * as Input from "../input"
 import * as Brush from "./brush"
 import * as Eraser from "./eraser"
 import * as Camera from "./camera"
-import * as BrushShader from "../rendering/brushShader"
-import { Blend } from "../web-gl"
-import { T2, Case, Action } from "../util"
+import * as BrushShader from "../canvas/brushShader"
+import { Blend } from "../webgl"
+import { T2, Case } from "../util"
 
 export const enum ToolMsgType {
     SetTool,
@@ -14,10 +14,10 @@ export const enum ToolMsgType {
 }
 
 export type ToolMsg =
-    | Action<ToolMsgType.SetTool, ToolType>
-    | Action<ToolMsgType.BrushMsg, Brush.Msg>
-    | Action<ToolMsgType.EraserMsg, Eraser.Msg>
-    | Action<ToolMsgType.CameraMsg, Camera.Msg>
+    | Case<ToolMsgType.SetTool, ToolType>
+    | Case<ToolMsgType.BrushMsg, Brush.Msg>
+    | Case<ToolMsgType.EraserMsg, Eraser.Msg>
+    | Case<ToolMsgType.CameraMsg, Camera.Msg>
 
 export interface MsgSender {
     readonly brush: Brush.MsgSender
@@ -29,15 +29,15 @@ export interface MsgSender {
 export function createSender(sendMessage: (msg: ToolMsg) => void): MsgSender {
     return {
         brush: Brush.createBrushSender(msg =>
-            sendMessage({ type: ToolMsgType.BrushMsg, payload: msg })
+            sendMessage({ type: ToolMsgType.BrushMsg, value: msg })
         ),
         eraser: Eraser.createBrushSender(msg =>
-            sendMessage({ type: ToolMsgType.EraserMsg, payload: msg })
+            sendMessage({ type: ToolMsgType.EraserMsg, value: msg })
         ),
         camera: Camera.createSender(msg =>
-            sendMessage({ type: ToolMsgType.CameraMsg, payload: msg })
+            sendMessage({ type: ToolMsgType.CameraMsg, value: msg })
         ),
-        setTool: type => sendMessage({ type: ToolMsgType.SetTool, payload: type }),
+        setTool: type => sendMessage({ type: ToolMsgType.SetTool, value: type }),
     }
 }
 
@@ -75,42 +75,42 @@ export function init(): Tool {
 function brushToolInit(): CurrentTool {
     return {
         type: ToolType.Brush,
-        state: Brush.initTempState(),
+        value: Brush.initTempState(),
     }
 }
 
 function eraserToolInit(): CurrentTool {
     return {
         type: ToolType.Eraser,
-        state: Eraser.initTempState(),
+        value: Eraser.initTempState(),
     }
 }
 
 function moveToolInit(): CurrentTool {
     return {
         type: ToolType.Zoom,
-        state: null,
+        value: null,
     }
 }
 
 function zoomToolInit(): CurrentTool {
     return {
         type: ToolType.Zoom,
-        state: null,
+        value: null,
     }
 }
 
 function rotateToolInit(): CurrentTool {
     return {
         type: ToolType.Zoom,
-        state: null,
+        value: null,
     }
 }
 
 export function update(tool: Tool, msg: ToolMsg): Tool {
     switch (msg.type) {
         case ToolMsgType.SetTool: {
-            switch (msg.payload) {
+            switch (msg.value) {
                 case ToolType.Brush:
                     return { ...tool, current: brushToolInit() }
                 case ToolType.Eraser:
@@ -122,15 +122,15 @@ export function update(tool: Tool, msg: ToolMsg): Tool {
                 case ToolType.Rotate:
                     return { ...tool, current: rotateToolInit() }
                 default:
-                    throw "unexpected tool type: " + msg.payload
+                    throw "unexpected tool type: " + msg.value
             }
         }
         case ToolMsgType.BrushMsg:
-            return { ...tool, brush: Brush.update(tool.brush, msg.payload) }
+            return { ...tool, brush: Brush.update(tool.brush, msg.value) }
         case ToolMsgType.EraserMsg:
-            return { ...tool, eraser: Eraser.update(tool.eraser, msg.payload) }
+            return { ...tool, eraser: Eraser.update(tool.eraser, msg.value) }
         case ToolMsgType.CameraMsg:
-            return { ...tool, camera: Camera.update(tool.camera, msg.payload) }
+            return { ...tool, camera: Camera.update(tool.camera, msg.value) }
     }
 }
 
@@ -141,39 +141,39 @@ export function onClick(
     const { current } = tool
     switch (current.type) {
         case ToolType.Brush: {
-            const [state, brushPoint] = Brush.onClick(tool.camera, tool.brush, pointer)
-            return [{ ...tool, current: { type: ToolType.Brush, state } }, [brushPoint]]
+            const [value, brushPoint] = Brush.onClick(tool.camera, tool.brush, pointer)
+            return [{ ...tool, current: { type: ToolType.Brush, value } }, [brushPoint]]
         }
         case ToolType.Eraser: {
-            const [state, brushPoint] = Eraser.onClick(tool.camera, tool.eraser, pointer)
-            return [{ ...tool, current: { type: ToolType.Eraser, state } }, [brushPoint]]
+            const [value, brushPoint] = Eraser.onClick(tool.camera, tool.eraser, pointer)
+            return [{ ...tool, current: { type: ToolType.Eraser, value } }, [brushPoint]]
         }
         case ToolType.Move: {
-            if (current.state !== null) return [tool, []]
+            if (current.value !== null) return [tool, []]
 
             const dragState: Input.DragState = { clickPoint: pointer, prevPoint: pointer }
 
             const cameraMsg = Camera.moveToolUpdate(tool.camera, dragState, pointer)
             const camera = Camera.update(tool.camera, cameraMsg)
-            return [{ ...tool, camera, current: { type: ToolType.Move, state: dragState } }, []]
+            return [{ ...tool, camera, current: { type: ToolType.Move, value: dragState } }, []]
         }
         case ToolType.Zoom: {
-            if (current.state !== null) return [tool, []]
+            if (current.value !== null) return [tool, []]
 
             const dragState: Input.DragState = { clickPoint: pointer, prevPoint: pointer }
 
             const cameraMsg = Camera.zoomToolUpdate(tool.camera, dragState, pointer)
             const camera = Camera.update(tool.camera, cameraMsg)
-            return [{ ...tool, camera, current: { type: ToolType.Zoom, state: dragState } }, []]
+            return [{ ...tool, camera, current: { type: ToolType.Zoom, value: dragState } }, []]
         }
         case ToolType.Rotate: {
-            if (current.state !== null) return [tool, []]
+            if (current.value !== null) return [tool, []]
 
             const dragState: Input.DragState = { clickPoint: pointer, prevPoint: pointer }
 
             const cameraMsg = Camera.rotateToolUpdate(tool.camera, dragState, pointer)
             const camera = Camera.update(tool.camera, cameraMsg)
-            return [{ ...tool, camera, current: { type: ToolType.Rotate, state: dragState } }, []]
+            return [{ ...tool, camera, current: { type: ToolType.Rotate, value: dragState } }, []]
         }
     }
 }
@@ -185,55 +185,55 @@ export function onDrag(
     const { current } = tool
     switch (current.type) {
         case ToolType.Brush: {
-            const [state, brushPoints] = Brush.onDrag(
+            const [value, brushPoints] = Brush.onDrag(
                 tool.camera,
                 tool.brush,
-                current.state,
+                current.value,
                 pointer
             )
-            return [{ ...tool, current: { type: ToolType.Brush, state } }, brushPoints]
+            return [{ ...tool, current: { type: ToolType.Brush, value } }, brushPoints]
         }
         case ToolType.Eraser: {
-            const [state, brushPoints] = Eraser.onDrag(
+            const [value, brushPoints] = Eraser.onDrag(
                 tool.camera,
                 tool.eraser,
-                current.state,
+                current.value,
                 pointer
             )
-            return [{ ...tool, current: { type: ToolType.Eraser, state } }, brushPoints]
+            return [{ ...tool, current: { type: ToolType.Eraser, value } }, brushPoints]
         }
         case ToolType.Move: {
-            if (current.state === null) return [tool, []]
+            if (current.value === null) return [tool, []]
 
-            const cameraMsg = Camera.moveToolUpdate(tool.camera, current.state, pointer)
+            const cameraMsg = Camera.moveToolUpdate(tool.camera, current.value, pointer)
             const camera = Camera.update(tool.camera, cameraMsg)
             const dragState: Input.DragState = {
-                clickPoint: current.state.clickPoint,
+                clickPoint: current.value.clickPoint,
                 prevPoint: pointer,
             }
-            return [{ ...tool, camera, current: { type: ToolType.Move, state: dragState } }, []]
+            return [{ ...tool, camera, current: { type: ToolType.Move, value: dragState } }, []]
         }
         case ToolType.Zoom: {
-            if (current.state === null) return [tool, []]
+            if (current.value === null) return [tool, []]
 
-            const cameraMsg = Camera.zoomToolUpdate(tool.camera, current.state, pointer)
+            const cameraMsg = Camera.zoomToolUpdate(tool.camera, current.value, pointer)
             const camera = Camera.update(tool.camera, cameraMsg)
             const dragState: Input.DragState = {
-                clickPoint: current.state.clickPoint,
+                clickPoint: current.value.clickPoint,
                 prevPoint: pointer,
             }
-            return [{ ...tool, camera, current: { type: ToolType.Zoom, state: dragState } }, []]
+            return [{ ...tool, camera, current: { type: ToolType.Zoom, value: dragState } }, []]
         }
         case ToolType.Rotate: {
-            if (current.state === null) return [tool, []]
+            if (current.value === null) return [tool, []]
 
-            const cameraMsg = Camera.rotateToolUpdate(tool.camera, current.state, pointer)
+            const cameraMsg = Camera.rotateToolUpdate(tool.camera, current.value, pointer)
             const camera = Camera.update(tool.camera, cameraMsg)
             const dragState: Input.DragState = {
-                clickPoint: current.state.clickPoint,
+                clickPoint: current.value.clickPoint,
                 prevPoint: pointer,
             }
-            return [{ ...tool, camera, current: { type: ToolType.Rotate, state: dragState } }, []]
+            return [{ ...tool, camera, current: { type: ToolType.Rotate, value: dragState } }, []]
         }
     }
 }
@@ -245,40 +245,40 @@ export function onRelease(
     const { current } = tool
     switch (current.type) {
         case ToolType.Brush: {
-            const [state, brushPoints] = Brush.onRelease(
+            const [value, brushPoints] = Brush.onRelease(
                 tool.camera,
                 tool.brush,
-                current.state,
+                current.value,
                 pointer
             )
-            return [{ ...tool, current: { type: ToolType.Brush, state } }, brushPoints]
+            return [{ ...tool, current: { type: ToolType.Brush, value } }, brushPoints]
         }
         case ToolType.Eraser: {
-            const [state, brushPoints] = Eraser.onRelease(
+            const [value, brushPoints] = Eraser.onRelease(
                 tool.camera,
                 tool.eraser,
-                current.state,
+                current.value,
                 pointer
             )
-            return [{ ...tool, current: { type: ToolType.Eraser, state } }, brushPoints]
+            return [{ ...tool, current: { type: ToolType.Eraser, value } }, brushPoints]
         }
         case ToolType.Move: {
-            if (current.state === null) return [tool, []]
-            const cameraMsg = Camera.moveToolUpdate(tool.camera, current.state, pointer)
+            if (current.value === null) return [tool, []]
+            const cameraMsg = Camera.moveToolUpdate(tool.camera, current.value, pointer)
             const camera = Camera.update(tool.camera, cameraMsg)
-            return [{ ...tool, camera, current: { type: ToolType.Move, state: null } }, []]
+            return [{ ...tool, camera, current: { type: ToolType.Move, value: null } }, []]
         }
         case ToolType.Zoom: {
-            if (current.state === null) return [tool, []]
-            const cameraMsg = Camera.zoomToolUpdate(tool.camera, current.state, pointer)
+            if (current.value === null) return [tool, []]
+            const cameraMsg = Camera.zoomToolUpdate(tool.camera, current.value, pointer)
             const camera = Camera.update(tool.camera, cameraMsg)
-            return [{ ...tool, camera, current: { type: ToolType.Zoom, state: null } }, []]
+            return [{ ...tool, camera, current: { type: ToolType.Zoom, value: null } }, []]
         }
         case ToolType.Rotate: {
-            if (current.state === null) return [tool, []]
-            const cameraMsg = Camera.rotateToolUpdate(tool.camera, current.state, pointer)
+            if (current.value === null) return [tool, []]
+            const cameraMsg = Camera.rotateToolUpdate(tool.camera, current.value, pointer)
             const camera = Camera.update(tool.camera, cameraMsg)
-            return [{ ...tool, camera, current: { type: ToolType.Rotate, state: null } }, []]
+            return [{ ...tool, camera, current: { type: ToolType.Rotate, value: null } }, []]
         }
     }
 }
@@ -290,19 +290,19 @@ export function onFrame(
     const { current } = tool
     switch (current.type) {
         case ToolType.Brush: {
-            const [state, brushPoints] = Brush.onFrame(tool.brush, current.state, currentTime)
-            if (state === current.state && brushPoints.length === 0) {
+            const [value, brushPoints] = Brush.onFrame(tool.brush, current.value, currentTime)
+            if (value === current.value && brushPoints.length === 0) {
                 return [tool, brushPoints]
             } else {
-                return [{ ...tool, current: { type: ToolType.Brush, state } }, brushPoints]
+                return [{ ...tool, current: { type: ToolType.Brush, value } }, brushPoints]
             }
         }
         case ToolType.Eraser: {
-            const [state, brushPoints] = Eraser.onFrame(tool.eraser, current.state, currentTime)
-            if (state === current.state && brushPoints.length === 0) {
+            const [value, brushPoints] = Eraser.onFrame(tool.eraser, current.value, currentTime)
+            if (value === current.value && brushPoints.length === 0) {
                 return [tool, brushPoints]
             } else {
-                return [{ ...tool, current: { type: ToolType.Eraser, state } }, brushPoints]
+                return [{ ...tool, current: { type: ToolType.Eraser, value } }, brushPoints]
             }
         }
         default:

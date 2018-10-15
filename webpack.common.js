@@ -11,7 +11,7 @@ const babelConfig = {
 }
 
 module.exports = {
-    entry: resolve(__dirname, "src/ui/index.tsx"),
+    entry: resolve(__dirname, "src/bootstrap/index.tsx"),
     output: {
         path: resolve(__dirname, "dist"),
         filename: "[name]-[hash].js",

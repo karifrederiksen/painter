@@ -3,20 +3,20 @@ import styled from "../styled"
 
 import * as Interp from "./interpolation"
 import * as BrushDelay from "./brushDelay"
-import * as BrushShader from "../rendering/brushShader"
+import * as BrushShader from "../canvas/brushShader"
 import * as Camera from "./camera"
 import * as Input from "../input"
 import * as Color from "../color"
-import { T2, Action, Vec2, ColorMode, colorModeToString, clamp } from "../util"
-import { ZipperList } from "../zipperList"
-import { Menu } from "../components/menu"
-import { ColorWheel } from "../components/colorWheel"
-import { Labeled } from "../components/labeled"
-import { Slider } from "../components/slider"
-import { InlineLabeled } from "../components/inlineLabeled"
-import { Switch } from "../components/switch"
-import { ColorDisplay } from "../components/colorDisplay"
-import { Surface } from "../components/surface"
+import { T2, Case, Vec2, ColorMode, colorModeToString, clamp } from "../util"
+import { ZipperList } from "../collections/zipperList"
+import { Menu } from "../views/menu"
+import { ColorWheel } from "../views/colorWheel"
+import { Labeled } from "../views/labeled"
+import { Slider } from "../views/slider"
+import { InlineLabeled } from "../views/inlineLabeled"
+import { Switch } from "../views/switch"
+import { ColorDisplay } from "../views/colorDisplay"
+import { Surface } from "../views/surface"
 
 const enum MsgType {
     SetDiameter,
@@ -32,16 +32,16 @@ const enum MsgType {
 }
 
 export type Msg =
-    | Action<MsgType.SetDiameter, number>
-    | Action<MsgType.SetSoftness, number>
-    | Action<MsgType.SetOpacity, number>
-    | Action<MsgType.SetColor, Color.Hsluv>
-    | Action<MsgType.SetColorMode, ColorMode>
-    | Action<MsgType.SetSpacing, number>
-    | Action<MsgType.SetPressureAffectsOpacity, boolean>
-    | Action<MsgType.SetPressureAffectsSize, boolean>
-    | Action<MsgType.SwapColor>
-    | Action<MsgType.SetDelay, number>
+    | Case<MsgType.SetDiameter, number>
+    | Case<MsgType.SetSoftness, number>
+    | Case<MsgType.SetOpacity, number>
+    | Case<MsgType.SetColor, Color.Hsluv>
+    | Case<MsgType.SetColorMode, ColorMode>
+    | Case<MsgType.SetSpacing, number>
+    | Case<MsgType.SetPressureAffectsOpacity, boolean>
+    | Case<MsgType.SetPressureAffectsSize, boolean>
+    | Case<MsgType.SwapColor>
+    | Case<MsgType.SetDelay, number>
 
 export interface MsgSender {
     setColor(color: Color.Hsluv): void
@@ -58,18 +58,18 @@ export interface MsgSender {
 
 export function createBrushSender(sendMessage: (msg: Msg) => void): MsgSender {
     return {
-        setColor: color => sendMessage({ type: MsgType.SetColor, payload: color }),
-        setColorMode: mode => sendMessage({ type: MsgType.SetColorMode, payload: mode }),
-        setDelay: ms => sendMessage({ type: MsgType.SetDelay, payload: ms }),
-        setDiameter: px => sendMessage({ type: MsgType.SetDiameter, payload: px }),
-        setOpacity: pct => sendMessage({ type: MsgType.SetOpacity, payload: pct }),
-        setSoftness: pct => sendMessage({ type: MsgType.SetSoftness, payload: pct }),
-        setSpacing: px => sendMessage({ type: MsgType.SetSpacing, payload: px }),
+        setColor: color => sendMessage({ type: MsgType.SetColor, value: color }),
+        setColorMode: mode => sendMessage({ type: MsgType.SetColorMode, value: mode }),
+        setDelay: ms => sendMessage({ type: MsgType.SetDelay, value: ms }),
+        setDiameter: px => sendMessage({ type: MsgType.SetDiameter, value: px }),
+        setOpacity: pct => sendMessage({ type: MsgType.SetOpacity, value: pct }),
+        setSoftness: pct => sendMessage({ type: MsgType.SetSoftness, value: pct }),
+        setSpacing: px => sendMessage({ type: MsgType.SetSpacing, value: px }),
         setPressureAffectsOpacity: x =>
-            sendMessage({ type: MsgType.SetPressureAffectsOpacity, payload: x }),
+            sendMessage({ type: MsgType.SetPressureAffectsOpacity, value: x }),
         setPressureAffectsSize: x =>
-            sendMessage({ type: MsgType.SetPressureAffectsSize, payload: x }),
-        swapColorFrom: () => sendMessage({ type: MsgType.SwapColor, payload: undefined }),
+            sendMessage({ type: MsgType.SetPressureAffectsSize, value: x }),
+        swapColorFrom: () => sendMessage({ type: MsgType.SwapColor, value: undefined }),
     }
 }
 
@@ -115,23 +115,23 @@ export function init(): State {
 export function update(state: State, msg: Msg): State {
     switch (msg.type) {
         case MsgType.SetDiameter:
-            return { ...state, diameterPx: clamp(0.1, 500, msg.payload) }
+            return { ...state, diameterPx: clamp(0.1, 500, msg.value) }
         case MsgType.SetSoftness:
-            return { ...state, softness: clamp(0, 1, msg.payload) }
+            return { ...state, softness: clamp(0, 1, msg.value) }
         case MsgType.SetOpacity:
-            return { ...state, flowPct: clamp(0.01, 1, msg.payload) }
+            return { ...state, flowPct: clamp(0.01, 1, msg.value) }
         case MsgType.SetColor: {
-            return { ...state, color: msg.payload }
+            return { ...state, color: msg.value }
         }
         case MsgType.SetColorMode: {
-            return { ...state, colorMode: state.colorMode.focusf(x => x === msg.payload) }
+            return { ...state, colorMode: state.colorMode.focusf(x => x === msg.value) }
         }
         case MsgType.SetSpacing:
-            return { ...state, spacingPct: clamp(0.01, 1, msg.payload) }
+            return { ...state, spacingPct: clamp(0.01, 1, msg.value) }
         case MsgType.SetPressureAffectsOpacity:
-            return { ...state, pressureAffectsOpacity: msg.payload }
+            return { ...state, pressureAffectsOpacity: msg.value }
         case MsgType.SetPressureAffectsSize:
-            return { ...state, pressureAffectsSize: msg.payload }
+            return { ...state, pressureAffectsSize: msg.value }
         case MsgType.SwapColor: {
             return {
                 ...state,
@@ -140,7 +140,7 @@ export function update(state: State, msg: Msg): State {
             }
         }
         case MsgType.SetDelay:
-            return { ...state, delay: BrushDelay.delay(clamp(0, 500, msg.payload)) }
+            return { ...state, delay: BrushDelay.delay(clamp(0, 500, msg.value)) }
     }
 }
 

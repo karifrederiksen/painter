@@ -1,5 +1,5 @@
 import * as Input from "../input"
-import { Action, Vec2 } from "../util"
+import { Case, Vec2 } from "../util"
 
 export interface State {
     readonly offsetPx: Vec2
@@ -14,9 +14,9 @@ export const enum MsgType {
 }
 
 export type Msg =
-    | Action<MsgType.SetZoom, number>
-    | Action<MsgType.SetOffset, Vec2>
-    | Action<MsgType.SetRotation, number>
+    | Case<MsgType.SetZoom, number>
+    | Case<MsgType.SetOffset, Vec2>
+    | Case<MsgType.SetRotation, number>
 
 export function init(): State {
     return {
@@ -29,11 +29,11 @@ export function init(): State {
 export function update(state: State, msg: Msg): State {
     switch (msg.type) {
         case MsgType.SetZoom:
-            return { ...state, zoomPct: msg.payload }
+            return { ...state, zoomPct: msg.value }
         case MsgType.SetOffset:
-            return { ...state, offsetPx: msg.payload }
+            return { ...state, offsetPx: msg.value }
         case MsgType.SetRotation:
-            return { ...state, rotationRad: msg.payload }
+            return { ...state, rotationRad: msg.value }
     }
 }
 
@@ -45,9 +45,9 @@ export interface MsgSender {
 
 export function createSender(sendMessage: (msg: Msg) => void): MsgSender {
     return {
-        setRotation: pct => sendMessage({ type: MsgType.SetRotation, payload: pct }),
-        setOffset: xyPct => sendMessage({ type: MsgType.SetOffset, payload: xyPct }),
-        setZoom: pct => sendMessage({ type: MsgType.SetZoom, payload: pct }),
+        setRotation: pct => sendMessage({ type: MsgType.SetRotation, value: pct }),
+        setOffset: xyPct => sendMessage({ type: MsgType.SetOffset, value: xyPct }),
+        setZoom: pct => sendMessage({ type: MsgType.SetZoom, value: pct }),
     }
 }
 
@@ -58,7 +58,7 @@ export function zoomToolUpdate(
 ): Msg {
     const xd = input.x - dragState.prevPoint.x
     const zoomPct = camera.zoomPct + xd / 150
-    return { type: MsgType.SetZoom, payload: zoomPct }
+    return { type: MsgType.SetZoom, value: zoomPct }
 }
 
 export function rotateToolUpdate(
@@ -70,7 +70,7 @@ export function rotateToolUpdate(
         input.y - dragState.clickPoint.y,
         input.x - dragState.clickPoint.x
     )
-    return { type: MsgType.SetRotation, payload: rotationRad }
+    return { type: MsgType.SetRotation, value: rotationRad }
 }
 
 export function moveToolUpdate(
@@ -81,5 +81,5 @@ export function moveToolUpdate(
     const xd = input.x - dragState.prevPoint.x
     const yd = input.y - dragState.prevPoint.y
     const offset = new Vec2(camera.offsetPx.x + xd, camera.offsetPx.y + yd)
-    return { type: MsgType.SetOffset, payload: offset }
+    return { type: MsgType.SetOffset, value: offset }
 }

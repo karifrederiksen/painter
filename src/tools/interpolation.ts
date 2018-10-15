@@ -1,4 +1,4 @@
-import * as BrushShader from "../rendering/brushShader"
+import * as BrushShader from "../canvas/brushShader"
 import * as Color from "../color"
 import { lerp, distance, T2, Vec2 } from "../util"
 
