@@ -5,12 +5,12 @@ const {
     default: styled,
     css,
     withTheme,
-    injectGlobal,
+    createGlobalStyle,
     keyframes,
     ThemeProvider,
 } = styledComponents as styledComponents.ThemedStyledComponentsModule<Theme>
 
 export default styled /* tslint:disable-line */
-export { css, injectGlobal, keyframes, ThemeProvider, withTheme }
+export { css, createGlobalStyle, keyframes, ThemeProvider, withTheme }
 
 export const Rem = 16

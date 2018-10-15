@@ -14,7 +14,7 @@
     "dependencies": {
         "react": "^16.5.2",
         "react-dom": "^16.5.2",
-        "styled-components": "^3.4.9"
+        "styled-components": "^4.0.0"
     },
     "devDependencies": {
         "@babel/core": "^7.1.0",
@@ -26,11 +26,11 @@
         "@types/node": "^10.10.3",
         "@types/react": "^16.4.14",
         "@types/react-dom": "^16.0.7",
-        "@types/styled-components": "^3.0.1",
+        "@types/styled-components": "^4.0.1",
         "autoprefixer": "^9.1.5",
         "babel-loader": "^8.0.2",
         "babel-plugin-preval": "^3.0.1",
-        "babel-plugin-styled-components": "^1.6.4",
+        "babel-plugin-styled-components": "^1.8.0",
         "babel-plugin-transform-node-env-inline": "^0.4.3",
         "clean-webpack-plugin": "^0.1.19",
         "css-loader": "^1.0.0",

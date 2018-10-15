@@ -1,7 +1,7 @@
 import * as React from "react"
 import * as ReactDOM from "react-dom"
 import styled from "../styled"
-import { ThemeProvider, injectGlobal } from "../styled"
+import { ThemeProvider, createGlobalStyle } from "../styled"
 import * as Toolbar from "../tools/toolbar"
 import * as Layers from "../layers/view"
 import * as Input from "../input"
@@ -50,6 +50,12 @@ const BottomLeft = styled.div`
 const AppContainer = styled.div`
     font-family: ${p => p.theme.fonts.normal};
 `
+
+const GlobalStyle = createGlobalStyle`
+    body {
+        background-color: ${p => p.theme.color.background.toStyle()};
+    }
+`
 class Painter extends React.Component<PainterProps, Canvas.State> {
     private readonly removeInputListeners: SetOnce<Input.RemoveListeners>
     private readonly cancelFrameStream: SetOnce<CancelFrameStream>
@@ -57,7 +63,6 @@ class Painter extends React.Component<PainterProps, Canvas.State> {
     private readonly store: Store<Canvas.State, Canvas.CanvasMsg>
     private readonly sender: Canvas.MsgSender
     private htmlCanvas: HTMLCanvasElement | null
-    private currentGlobalTheme: Theme.Theme
 
     constructor(props: PainterProps) {
         super(props)
@@ -73,33 +78,16 @@ class Painter extends React.Component<PainterProps, Canvas.State> {
         })
         this.sender = Canvas.createSender(this.store.send)
         this.htmlCanvas = null
-        this.setGlobalTheme()
-        this.currentGlobalTheme = this.state.theme
-    }
-
-    private setGlobalTheme() {
-        const theme = this.state.theme
-        if (theme === this.currentGlobalTheme) return
-
-        // In styled-components v4, there will be a component that takes care of global css
-        // currently there is no cleanup of previous styles...
-        injectGlobal`
-            body {
-                background-color: ${theme.color.background.toStyle()};
-            }
-        `
-        this.currentGlobalTheme = this.state.theme
     }
 
     render() {
         const state = this.state
         const sender = this.sender
 
-        this.setGlobalTheme()
-
         return (
             <ThemeProvider theme={state.theme}>
                 <AppContainer>
+                    <GlobalStyle />
                     <Wrapper>
                         <Toolbar.View
                             tool={state.tool}
