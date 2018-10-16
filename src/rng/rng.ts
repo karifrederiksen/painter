@@ -51,7 +51,7 @@ namespace Xorshift {
         t ^= t >>> 8
         t ^= s
         t ^= s >>> 19
-        return [t, [t, s, state[1], state[2]]]
+        return [t >>> 0, [t, s, state[1], state[2]]]
     }
 }
 
@@ -63,7 +63,7 @@ export const nextInt = Pcg.nextInt
 
 export function next(state: Seed): T2<number, Seed> {
     const [result, nextState] = nextInt(state)
-    const floatResult = (result >>> 0) / 4294967295
+    const floatResult = result / 4294967295
     return [floatResult, nextState]
 }
 
@@ -78,28 +78,4 @@ export function next3(state: Seed): T4<number, number, number, Seed> {
     const [second, state3] = next(state2)
     const [third, state4] = next(state3)
     return [first, second, third, state4]
-}
-
-export class StatefulWrapper {
-    private __state: Seed
-
-    get state(): Seed {
-        return this.__state
-    }
-
-    constructor(state: Seed) {
-        this.__state = state
-    }
-
-    next(): number {
-        const [result, nextState] = next(this.__state)
-        this.__state = nextState
-        return result
-    }
-
-    nextInt(): number {
-        const [result, nextState] = nextInt(this.__state)
-        this.__state = nextState
-        return result
-    }
 }

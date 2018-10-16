@@ -8,17 +8,10 @@ export namespace Stack {
         foldl<b>(f: (val: b, next: a) => b, initial: b): b
         reverse(): Stack<a>
         toArray(): Array<a>
+        toString(): string
     }
 
     export class Empty<a> implements Stack<a> {
-        private static instance = new Empty<any>()
-
-        static make<a>(): Empty<a> {
-            return Empty.instance
-        }
-
-        private constructor() {}
-
         isEmpty(): true {
             return true
         }
@@ -28,7 +21,7 @@ export namespace Stack {
         }
 
         cons(value: a): NonEmpty<a> {
-            return NonEmpty.make(value, this)
+            return new NonEmpty(value, this)
         }
 
         foldl<b>(_: (val: b, next: a) => b, initial: b): b {
@@ -44,20 +37,16 @@ export namespace Stack {
         }
 
         toString(): string {
-            return "Nil"
+            return "()"
         }
     }
 
     export class NonEmpty<a> implements Stack<a> {
         static of<a>(value: a): NonEmpty<a> {
-            return new NonEmpty(value, Empty.make())
+            return new NonEmpty(value, empty())
         }
 
-        static make<a>(head: a, tail: Stack<a>): NonEmpty<a> {
-            return new NonEmpty<a>(head, tail)
-        }
-
-        private constructor(readonly head: a, readonly tail: Stack<a>) {}
+        constructor(readonly head: a, readonly tail: Stack<a>) {}
 
         isEmpty(): false {
             return false
@@ -102,13 +91,25 @@ export namespace Stack {
         }
 
         toString(): string {
-            return "Cons (" + this.head + " " + this.tail + ")"
+            let str = "(" + this.head
+            let stack: Stack<a> = this.tail
+            while (stack.isNonEmpty()) {
+                str = str + ", " + stack.head
+                stack = stack.tail
+            }
+
+            return str + ")"
         }
     }
 
+    export function empty<a>(): Empty<a> {
+        return new Empty()
+    }
+
     export function fromArray<a>(arr: ReadonlyArray<a>): Stack<a> {
-        let stack: Stack<a> = Empty.make()
-        for (let i = 0; i < arr.length; i++) {
+        let stack: Stack<a> = empty()
+        let i = arr.length
+        while (i--) {
             stack = stack.cons(arr[i])
         }
         return stack

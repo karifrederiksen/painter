@@ -111,7 +111,7 @@ export class GroupLayer {
         for (let i = 0; i < this.children.length; i++) {
             const child = children[i]
             if (child.isLeaf) {
-                if (child.id === id) return Stack.Empty.make<number>().cons(i)
+                if (child.id === id) return Stack.empty<number>().cons(i)
             } else {
                 const path = child.findPath(id)
                 if (path !== null) return path.cons(i)
@@ -148,7 +148,7 @@ export class GroupLayer {
             return [this.withChildren(newChildren), newSelectedPath.cons(index)]
         } else {
             const newChildren = this.withChildren(arrRemove(this.children, index))
-            if (newChildren.children.length === 0) return [newChildren, Stack.Empty.make()]
+            if (newChildren.children.length === 0) return [newChildren, Stack.empty()]
 
             const newIndex = this.children.length === index + 1 ? index - 1 : index
             const newSelectedPath = index === newIndex ? selectedPath : Stack.NonEmpty.of(newIndex)
@@ -245,7 +245,7 @@ export class State {
         })()
         const leaf = LeafLayer.init(getNextLayerId())
         const group = GroupLayer.init(getNextLayerId()).withChildren([leaf])
-        return new State(getNextLayerId, group, Stack.Empty.make<number>().cons(0))
+        return new State(getNextLayerId, group, Stack.empty<number>().cons(0))
     }
 
     private constructor(

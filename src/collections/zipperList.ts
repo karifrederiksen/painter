@@ -2,18 +2,18 @@ import { Stack } from "./stack"
 
 export class ZipperList<a> {
     static singleton<a>(value: a): ZipperList<a> {
-        return new ZipperList(Stack.Empty.make(), value, Stack.Empty.make())
+        return new ZipperList(Stack.empty(), value, Stack.empty())
     }
 
     static fromArray<a>(arr: ReadonlyArray<a>): ZipperList<a> | null {
         if (arr.length === 0) return null
 
-        let right: Stack.Stack<a> = Stack.Empty.make()
+        let right: Stack.Stack<a> = Stack.empty()
         for (let i = arr.length - 1; i > 0; i--) {
             right = right.cons(arr[i])
         }
 
-        return new ZipperList(Stack.Empty.make(), arr[0], right)
+        return new ZipperList(Stack.empty(), arr[0], right)
     }
 
     private constructor(
