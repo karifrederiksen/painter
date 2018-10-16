@@ -3,12 +3,15 @@ const common = require("./webpack.common")
 
 module.exports = merge(common, {
     mode: "development",
+    devtool: "eval-source-map",
+    optimization: {
+        nodeEnv: "development",
+    },
     resolve: {
         alias: {
             "webpack-hot-client/client": require.resolve("webpack-hot-client/client"),
         },
     },
-    devtool: "cheap-module-source-map",
     serve: {
         clipboard: true,
         host: "localhost",
