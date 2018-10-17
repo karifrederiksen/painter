@@ -225,19 +225,34 @@ class InternalContext implements Context, ContextState {
     }
 }
 
+function mergeAreas(prevArea: Vec4, nextArea: Vec4): Vec4 {
+    // Ternary operator is probably better performance
+    return new Vec4(
+        Math.min(prevArea.x, nextArea.x),
+        Math.min(prevArea.y, nextArea.y),
+        Math.min(prevArea.z, nextArea.z),
+        Math.min(prevArea.w, nextArea.w)
+    )
+}
+
 function addBrushPoints(
     context: ContextState,
     brushPoints: ReadonlyArray<BrushShader.BrushPoint>
 ): void {
+    context.drawpointBatch.addPoints(brushPoints)
     if (context.stroke == null) {
         context.stroke = {
-            affectedArea: new Vec4(0, 0, 0, 0),
             textureId: createTexture(context, context.internalCanvasSize),
+            affectedArea: context.drawpointBatch.getAffectedArea(),
         }
         addFramebuffer(context, context.stroke.textureId)
+    } else {
+        const affectedArea = mergeAreas(
+            context.stroke.affectedArea,
+            context.drawpointBatch.getAffectedArea()
+        )
+        context.stroke = { textureId: context.stroke.textureId, affectedArea }
     }
-    context.drawpointBatch.addPoints(brushPoints)
-    // todo: calculate affected area
 }
 
 function endStroke(context: ContextState): void {

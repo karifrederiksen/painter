@@ -1,6 +1,6 @@
 import * as Color from "../color"
 import { Blend, createProgram, getUniformLocation } from "../webgl"
-import { Vec2 } from "../util"
+import { Vec2, Vec4 } from "../util"
 
 const INITIAL_VARRAY_SIZE = 5000
 
@@ -44,6 +44,36 @@ void main() {
 
 // TODO: Use elements array!
 
+export interface BrushPoint {
+    readonly color: Color.RgbLinear
+    readonly alpha: number
+    readonly position: Vec2
+    readonly scaledDiameter: number
+    readonly rotation: number
+}
+
+export interface Uniforms {
+    readonly resolution: Readonly<Vec2>
+    readonly brushTextureIdx: number
+    readonly blendMode: Blend.Mode
+}
+
+interface AffectedArea {
+    x0: number
+    y0: number
+    x1: number
+    y1: number
+}
+
+function initAffectedArea(): AffectedArea {
+    return {
+        x0: Number.MAX_VALUE,
+        y0: Number.MAX_VALUE,
+        x1: Number.MIN_VALUE,
+        y1: Number.MIN_VALUE,
+    }
+}
+
 export class Shader {
     static create(gl: WebGLRenderingContext): Shader | null {
         const program = createProgram(gl, VERT_SRC, FRAG_SRC)
@@ -65,6 +95,7 @@ export class Shader {
     private readonly buffer: WebGLBuffer
     private array: Float32Array
     private offset: number
+    private affectedArea: AffectedArea
 
     private constructor(
         gl: WebGLRenderingContext,
@@ -77,6 +108,7 @@ export class Shader {
         this.buffer = gl.createBuffer()!
         this.array = new Float32Array(arrayLength)
         this.offset = 0
+        this.affectedArea = initAffectedArea()
     }
 
     get canFlush(): boolean {
@@ -92,9 +124,16 @@ export class Shader {
         const arr = this.array
         const ptsLen = points.length
         let offset = this.offset
-        for (let i = 0; i < ptsLen; i++) offset = addPoint(arr, offset, points[i])
+        for (let i = 0; i < ptsLen; i++) {
+            offset = addPoint(arr, offset, points[i], this.affectedArea)
+        }
 
         this.offset = offset
+    }
+
+    getAffectedArea(): Vec4 {
+        const { affectedArea } = this
+        return new Vec4(affectedArea.x0, affectedArea.y0, affectedArea.x1, affectedArea.y1)
     }
 
     flush(gl: WebGLRenderingContext, uniforms: Uniforms): void {
@@ -131,6 +170,7 @@ export class Shader {
 
         gl.drawArrays(WebGLRenderingContext.TRIANGLES, 0, drawCount)
         this.offset = 0
+        this.affectedArea = initAffectedArea()
     }
 
     dispose(gl: WebGLRenderingContext): void {
@@ -142,12 +182,19 @@ export class Shader {
 function doubleSize(arr: Float32Array): Float32Array {
     const newArr = new Float32Array(arr.length * 2)
 
-    for (let i = 0; i < arr.length; i++) newArr[i] = arr[i]
+    for (let i = 0; i < arr.length; i++) {
+        newArr[i] = arr[i]
+    }
 
     return newArr
 }
 
-function addPoint(arr: Float32Array, offset: number, point: BrushPoint): number {
+function addPoint(
+    arr: Float32Array,
+    offset: number,
+    point: BrushPoint,
+    affectedArea: AffectedArea
+): number {
     // console.log("addPoint", point.color.r, point.color.g, point.color.b)
     const x = point.position.x
     const y = point.position.y
@@ -181,6 +228,21 @@ function addPoint(arr: Float32Array, offset: number, point: BrushPoint): number 
     offset = addCorner(arr, offset, point, 0, 1, x0, y1)
     offset = addCorner(arr, offset, point, 1, 0, x1, y0)
 
+    // investigate performance: use ternaries that always assign instead of conditional assignment
+    // idk, might worth looking into
+    if (x0 < affectedArea.x0) {
+        affectedArea.x0 = x0
+    }
+    if (y0 < affectedArea.y0) {
+        affectedArea.y0 = y0
+    }
+    if (x1 < affectedArea.x1) {
+        affectedArea.x1 = x1
+    }
+    if (y1 < affectedArea.y1) {
+        affectedArea.y1 = y1
+    }
+
     return offset
 }
 
@@ -208,18 +270,4 @@ function addCorner(
     arr[offset++] = y
 
     return offset
-}
-
-export interface BrushPoint {
-    readonly color: Color.RgbLinear
-    readonly alpha: number
-    readonly position: Vec2
-    readonly scaledDiameter: number
-    readonly rotation: number
-}
-
-export interface Uniforms {
-    readonly resolution: Readonly<Vec2>
-    readonly brushTextureIdx: number
-    readonly blendMode: Blend.Mode
 }
