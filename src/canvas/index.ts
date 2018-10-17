@@ -5,7 +5,7 @@ import * as Rng from "../rng"
 import * as Theme from "../theme"
 import * as Context from "./context"
 import { BrushPoint } from "./brushShader"
-import { Case, Vec2, T2, Result, PerfTracker } from "../util"
+import { Case, Vec2, T2, Result, PerfTracker, T3 } from "../util"
 
 export interface Hooks {
     // readonly onCanvasSnapshot: (snapshot: Snapshot) => void
@@ -20,6 +20,10 @@ export interface State {
     readonly layers: Layers.State
 }
 
+export interface EphemeralState {
+    readonly tool: Tools.EphemeralState
+}
+
 export function initState(): State {
     const [theme, rng] = Theme.random(Rng.seed(145264772))
 
@@ -28,6 +32,12 @@ export function initState(): State {
         theme,
         tool: Tools.init(),
         layers: Layers.State.init(),
+    }
+}
+
+export function initEphemeral(): EphemeralState {
+    return {
+        tool: Tools.initEphemeral(),
     }
 }
 
@@ -87,44 +97,66 @@ export function createSender(sendMessage: (msg: CanvasMsg) => void): MsgSender {
 
 const noOp: Effect = { type: EffectType.NoOp, value: undefined }
 
-export function update(state: State, msg: CanvasMsg): T2<State, Effect> {
+export function update(
+    state: State,
+    ephemeral: EphemeralState,
+    msg: CanvasMsg
+): T3<State, EphemeralState, Effect> {
     switch (msg.type) {
         case MsgType.OnFrame: {
-            const [newTool, brushPoints] = Tools.onFrame(state.tool, msg.value)
-            const nextState = { ...state, tool: newTool }
+            const [nextToolEphemeral, brushPoints] = Tools.onFrame(
+                state.tool,
+                ephemeral.tool,
+                msg.value
+            )
             const effect: Effect = { type: EffectType.Frame, value: [brushPoints, state] }
-            return [nextState, effect]
+            return [state, { tool: nextToolEphemeral }, effect]
         }
         case MsgType.OnClick: {
-            const [newTool, brushPoints] = Tools.onClick(state.tool, msg.value)
-            const nextState = { ...state, tool: newTool }
+            const [nextTool, nextToolEphemeral, brushPoints] = Tools.onClick(
+                state.tool,
+                ephemeral.tool,
+                msg.value
+            )
+            const nextState = { ...state, tool: nextTool }
+            const nextEphemeral = { tool: nextToolEphemeral }
             const effect: Effect = { type: EffectType.BrushPoints, value: brushPoints }
-            return [nextState, effect]
+            return [nextState, nextEphemeral, effect]
         }
         case MsgType.OnRelease: {
-            const [newTool, brushPoints] = Tools.onRelease(state.tool, msg.value)
-            const nextState = { ...state, tool: newTool }
+            const [nextTool, nextToolEphemeral, brushPoints] = Tools.onRelease(
+                state.tool,
+                ephemeral.tool,
+                msg.value
+            )
+            const nextState = { ...state, tool: nextTool }
+            const nextEphemeral = { tool: nextToolEphemeral }
             const effect: Effect = { type: EffectType.Release, value: brushPoints }
-            return [nextState, effect]
+            return [nextState, nextEphemeral, effect]
         }
         case MsgType.OnDrag: {
-            const [newTool, brushPoints] = Tools.onDrag(state.tool, msg.value)
-            const nextState = { ...state, tool: newTool }
+            const [nextTool, nextToolEphemeral, brushPoints] = Tools.onDrag(
+                state.tool,
+                ephemeral.tool,
+                msg.value
+            )
+            const nextState = { ...state, tool: nextTool }
+            const nextEphemeral = { tool: nextToolEphemeral }
             const effect: Effect = { type: EffectType.BrushPoints, value: brushPoints }
-            return [nextState, effect]
+            return [nextState, nextEphemeral, effect]
         }
         case MsgType.RandomizeTheme: {
             const [theme, rng] = Theme.random(state.rng)
             const nextState = { ...state, rng, theme }
-            return [nextState, noOp]
+            return [nextState, ephemeral, noOp]
         }
         case MsgType.ToolMsg: {
             const nextState = { ...state, tool: Tools.update(state.tool, msg.value) }
-            return [nextState, noOp]
+            return [nextState, ephemeral, noOp]
         }
         case MsgType.LayersMsg: {
             const nextState = { ...state, layers: state.layers.update(msg.value) }
-            return [nextState, noOp]
+            return [nextState, ephemeral, noOp]
         }
     }
 }
@@ -163,7 +195,7 @@ export class Canvas {
                 const resolution = new Vec2(this.canvasElement.width, this.canvasElement.height)
                 const state = eff.value[1]
                 this.context.render({
-                    blendMode: Tools.getBlendMode(state.tool.current),
+                    blendMode: Tools.getBlendMode(state.tool),
                     nextLayers: this.splitLayers,
                     resolution,
                     brush: { softness: Tools.getSoftness(state.tool) },

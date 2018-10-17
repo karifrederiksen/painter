@@ -73,12 +73,12 @@ export function createBrushSender(sendMessage: (msg: Msg) => void): MsgSender {
     }
 }
 
-export type TempState = {
+export type EphemeralState = {
     readonly interpState: Interp.State
     readonly delayState: BrushDelay.State
 } | null
 
-export function initTempState(): TempState {
+export function initTempState(): EphemeralState {
     return null
 }
 
@@ -148,7 +148,7 @@ export function onClick(
     camera: Camera.State,
     brush: State,
     input: Input.PointerInput
-): T2<TempState, BrushShader.BrushPoint> {
+): T2<EphemeralState, BrushShader.BrushPoint> {
     const brushInput = pointerToBrushInput(camera, input)
     const interpState = Interp.init(createInputPoint(brush, brushInput))
     const delayState = BrushDelay.init(input.time, brushInput)
@@ -158,9 +158,9 @@ export function onClick(
 export function onDrag(
     camera: Camera.State,
     brush: State,
-    state: TempState,
+    state: EphemeralState,
     input: Input.PointerInput
-): T2<TempState, ReadonlyArray<BrushShader.BrushPoint>> {
+): T2<EphemeralState, ReadonlyArray<BrushShader.BrushPoint>> {
     if (state === null) {
         const res = onClick(camera, brush, input)
         return [res[0], [res[1]]]
@@ -185,9 +185,9 @@ export function onDrag(
 
 export function onFrame(
     brush: State,
-    state: TempState,
+    state: EphemeralState,
     currentTime: number
-): T2<TempState, ReadonlyArray<BrushShader.BrushPoint>> {
+): T2<EphemeralState, ReadonlyArray<BrushShader.BrushPoint>> {
     if (state === null) return [null, []]
     if (brush.delay.duration <= 0) return [null, []]
 
@@ -209,9 +209,9 @@ export function onFrame(
 export function onRelease(
     camera: Camera.State,
     brush: State,
-    state: TempState,
+    state: EphemeralState,
     input: Input.PointerInput
-): T2<TempState, ReadonlyArray<BrushShader.BrushPoint>> {
+): T2<EphemeralState, ReadonlyArray<BrushShader.BrushPoint>> {
     if (state === null) return [null, []]
 
     return [null, []]

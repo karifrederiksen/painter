@@ -31,7 +31,7 @@ const ToolBarContainer = styled.div`
     display: flex;
 `
 export function View(props: ToolbarProps): JSX.Element {
-    const currentToolType = props.tool.current.type
+    const currentToolType = props.tool.current
     const setTool = props.msgSender.setTool
 
     return (

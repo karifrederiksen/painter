@@ -6,7 +6,6 @@ import * as Toolbar from "../tools/toolbar"
 import * as Layers from "../layers/view"
 import * as Input from "../input"
 import * as Canvas from "../canvas"
-import * as Theme from "../theme"
 import * as Setup from "./setup"
 import { SetOnce, FrameStream, CancelFrameStream, Lazy, Store } from "../util"
 import * as Buttons from "../views/buttons"
@@ -18,11 +17,6 @@ declare global {
             accept(): void
         }
     }
-}
-
-type PainterProps = {
-    readonly state: Canvas.State
-    readonly frameStream: FrameStream
 }
 
 const Wrapper = styled.div`
@@ -57,24 +51,30 @@ const GlobalStyle = createGlobalStyle`
     }
 `
 
-class Painter extends React.Component<PainterProps, Canvas.State> {
+class Painter extends React.Component<{}, Canvas.State> {
     private readonly removeInputListeners: SetOnce<Input.RemoveListeners>
     private readonly cancelFrameStream: SetOnce<CancelFrameStream>
     private readonly canvas: SetOnce<Canvas.Canvas>
-    private readonly store: Store<Canvas.State, Canvas.CanvasMsg>
+    private readonly store: Store<Canvas.State, Canvas.EphemeralState, Canvas.CanvasMsg>
     private readonly sender: Canvas.MsgSender
     private htmlCanvas: HTMLCanvasElement | null
 
-    constructor(props: PainterProps) {
+    constructor(props: {}) {
         super(props)
-        this.state = props.state
+        this.state = Canvas.initState()
         this.removeInputListeners = new SetOnce()
         this.cancelFrameStream = new SetOnce()
         this.canvas = new SetOnce()
-        this.store = Store.create<Canvas.State, Canvas.CanvasMsg, Canvas.Effect>({
+        this.store = Store.create<
+            Canvas.State,
+            Canvas.EphemeralState,
+            Canvas.CanvasMsg,
+            Canvas.Effect
+        >({
             initialState: this.state,
+            initialEphemeral: Canvas.initEphemeral(),
             effectsHandler: new Lazy(() => (ef: Canvas.Effect) => this.canvas.value.handle(ef)),
-            setState: state => this.setState(state),
+            forceRender: () => this.forceUpdate(),
             update: Canvas.update,
         })
         this.sender = Canvas.createSender(this.store.send)
@@ -82,7 +82,7 @@ class Painter extends React.Component<PainterProps, Canvas.State> {
     }
 
     render() {
-        const state = this.state
+        const state = this.store.getState()
         const sender = this.sender
 
         return (
@@ -144,7 +144,7 @@ class Painter extends React.Component<PainterProps, Canvas.State> {
                 drag: this.sender.onDrag,
             })
         )
-        this.cancelFrameStream.set(this.props.frameStream(this.sender.onFrame))
+        this.cancelFrameStream.set(FrameStream.make(this.sender.onFrame))
 
         if (process.env.NODE_ENV !== "production") {
             Setup.setup(() => this.state, this.sender)
@@ -170,10 +170,7 @@ class Painter extends React.Component<PainterProps, Canvas.State> {
         throw "canvas-root not found"
     }
 
-    ReactDOM.render(
-        <Painter state={Canvas.initState()} frameStream={FrameStream.make} />,
-        rootElement
-    )
+    ReactDOM.render(<Painter />, rootElement)
 
     if (typeof module.hot === "object") {
         module.hot.accept()

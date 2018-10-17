@@ -1,30 +1,39 @@
-import { T2, Lazy } from "."
+import { Lazy, T3 } from "."
 
-export interface Store<state, msg> {
+export interface Store<state, ephemeral, msg> {
     send(msg: msg): void
     getState(): state
 }
 
 export namespace Store {
-    export interface Args<state, msg, effects> {
+    export interface Args<state, ephemeral, msg, effects> {
         readonly initialState: state
-        readonly update: (state: state, msg: msg) => T2<state, effects>
+        readonly initialEphemeral: ephemeral
+        readonly update: (
+            state: state,
+            ephemeral: ephemeral,
+            msg: msg
+        ) => T3<state, ephemeral, effects>
         readonly effectsHandler: Lazy<(eff: effects) => void>
-        readonly setState: (state: state) => void
+        readonly forceRender: () => void
     }
 
-    export function create<state, msg, effects>(
-        args: Args<state, msg, effects>
-    ): Store<state, msg> {
-        const { effectsHandler, initialState, setState, update } = args
+    export function create<state, ephemeral, msg, effects>(
+        args: Args<state, ephemeral, msg, effects>
+    ): Store<state, ephemeral, msg> {
+        const { effectsHandler, initialState, initialEphemeral, forceRender, update } = args
 
         let state = initialState
+        let ephemeral = initialEphemeral
 
         function handleMsg(msg: msg): void {
-            const [nextState, effect] = update(state, msg)
-            state = nextState
+            const [nextState, nextEphemeral, effect] = update(state, ephemeral, msg)
+            if (state !== nextState) {
+                forceRender()
+                state = nextState
+            }
             effectsHandler.value(effect)
-            setState(state)
+            ephemeral = nextEphemeral
         }
 
         return {
