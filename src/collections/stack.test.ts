@@ -10,35 +10,49 @@ describe("Stack", () => {
         Stack.fromArray(new Array(1000).fill(0).map((_, i) => i)),
     ]
 
+    test("(empty) returns an empty stack", () => {
+        expect(Stack.empty().isEmpty()).toBe(true)
+        expect(Stack.empty().isNonEmpty()).toBe(false)
+    })
+
+    test("(fromArray) builds the stack in the correct order", () => {
+        // head of the stack is on the left, so it is equivalent to array[0]
+        // tail is equivalent to array.slice(1)
+        const single = Stack.fromArray(["g"]) as Stack.NonEmpty<string>
+        const double = Stack.fromArray(["h", "g"]) as Stack.NonEmpty<string>
+        expect(Stack.fromArray([])).toEqual(Stack.empty())
+        expect(single.head).toEqual("g")
+        expect(single.tail).toEqual(Stack.empty())
+        expect(double.head).toEqual("h")
+        expect(double.head).toEqual("h")
+        expect(double.tail).toEqual(single)
+    })
+
     test("(cons) adds an element to the front", () => {
-        testStacks.forEach(stk => {
+        for (const stk of testStacks) {
             const n = Math.random()
-            const arr = stk.cons(n).toArray()
-            const arr2 = stk.toArray()
-            arr2.unshift(n)
-            expect(arr).toEqual(arr2)
-        })
+            const stk2 = stk.cons(n)
+            expect(stk2.isEmpty()).toBe(false)
+            expect(stk2.isNonEmpty()).toBe(true)
+            expect(stk2.head).toBe(n)
+            expect(stk2.tail).toEqual(stk)
+        }
     })
 
     test("(toArray) converts the stack to its equivalent array form", () => {
-        testStacks.forEach(stk => {
-            expect(stk.toArray().every(x => x != null)).toBe(true)
-        })
-
-        testStacks.forEach(stk => {
+        for (const stk of testStacks) {
             expect(Stack.fromArray(stk.toArray())).toEqual(stk)
-        })
+        }
     })
 
     test("(reverse >> reverse) is identity", () => {
-        testStacks.forEach(stk => {
-            const doubleReversed = stk.reverse().reverse()
-            expect(stk).toEqual(doubleReversed)
-        })
+        for (const stk of testStacks) {
+            expect(stk).toEqual(stk.reverse().reverse())
+        }
     })
 
     test("(reverse >> toArray) and (toArray >> reverse) are equivalent", () => {
-        testStacks.forEach(stk => {
+        for (const stk of testStacks) {
             const x = stk.toArray().reverse()
             const y = stk.reverse().toArray()
 
@@ -46,7 +60,7 @@ describe("Stack", () => {
             for (let i = 0; i < x.length; i++) {
                 expect(x[i]).toBe(y[i])
             }
-        })
+        }
     })
 
     test("(foldl) and (toArray >> reduce) are equivalent for functions with 2 argument", () => {
@@ -57,13 +71,13 @@ describe("Stack", () => {
             (x: number, y: number) => x % y,
         ]
 
-        testStacks.forEach(stk => {
-            fns.forEach(f => {
+        for (const stk of testStacks) {
+            for (const f of fns) {
                 const initial = Math.floor(Math.random() * 1000)
                 const x = stk.foldl(f, initial)
                 const y = stk.toArray().reduce(f, initial)
-                expect(x).toEqual(y)
-            })
-        })
+                expect(x).toBe(y)
+            }
+        }
     })
 })
