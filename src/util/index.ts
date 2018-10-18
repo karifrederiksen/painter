@@ -66,8 +66,18 @@ export function lerp(pct: number, start: number, end: number): number {
     return start + (end - start) * pct
 }
 
+export function smoothstep(x: number): number {
+    return x * x * (3 - x + x)
+}
+
 export function clamp(min: number, max: number, n: number): number {
     return n < min ? min : n > max ? max : n
+}
+
+export function delay(ms: number): Promise<void> {
+    return new Promise(res => {
+        setTimeout(res, ms)
+    })
 }
 
 export function arrUpdate<a>(array: ReadonlyArray<a>, index: number, value: a): ReadonlyArray<a> {

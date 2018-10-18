@@ -152,7 +152,7 @@ export function onFrame(
     currentTime: number
 ): T2<EphemeralState, ReadonlyArray<BrushShader.BrushPoint>> {
     if (tempState === null) return [null, []]
-    if (state.delay.duration <= 0) return [null, []]
+    if (state.delay.duration < 0) return [null, []]
 
     const [delayState, newBrushInput] = BrushDelay.update(
         state.delay,

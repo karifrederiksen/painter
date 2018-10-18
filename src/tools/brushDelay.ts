@@ -1,17 +1,11 @@
-import { T2 } from "../util"
+import { T2, lerp } from "../util"
 
 export interface Config {
-    readonly easing: (pct: number) => number
     readonly duration: number
 }
 
 export const noDelay: Config = {
-    easing: x => x,
     duration: 0,
-}
-
-function smoothstep(x: number): number {
-    return x * x * (3 - x + x)
 }
 
 function easing(x: number): number {
@@ -19,13 +13,22 @@ function easing(x: number): number {
 }
 
 export function delay(duration: number): Config {
-    return { easing, duration }
+    console.assert(duration >= 0, "Delay can't be negative")
+    return { duration }
 }
 
 export interface Input {
     readonly x: number
     readonly y: number
     readonly pressure: number
+}
+
+function inputLerp(pct: number, start: Input, end: Input): Input {
+    return {
+        pressure: lerp(pct, start.pressure, end.pressure),
+        x: lerp(pct, start.x, end.x),
+        y: lerp(pct, start.y, end.y),
+    }
 }
 
 export interface State {
@@ -44,32 +47,22 @@ export function updateWithInput(
     currentTime: number,
     end: Input
 ): T2<State, Input> {
-    if (config.duration <= 0) return [state, end]
-
-    const deltaTime = currentTime - state.startTime
-    const pct = config.easing(Math.min(deltaTime / config.duration, 1))
-    const start = state.start
-    const output: Input = {
-        x: start.x + (end.x - start.x) * pct,
-        y: start.y + (end.y - start.y) * pct,
-        pressure: start.pressure + (end.pressure - start.pressure) * pct,
+    if (config.duration === 0) {
+        return [{ startTime: currentTime, start: end, end }, end]
     }
+    const deltaTime = currentTime - state.startTime
+    const pct = easing(Math.min(deltaTime / config.duration, 1))
+    const output: Input = inputLerp(pct, state.start, end)
     return [{ startTime: currentTime, start: output, end }, output]
 }
 
 export function update(config: Config, state: State, currentTime: number): T2<State, Input> {
-    if (config.duration <= 0) return [state, state.end]
-
     const deltaTime = currentTime - state.startTime
-    if (deltaTime >= config.duration) return [state, state.end]
-
-    const pct = config.easing(Math.min(deltaTime / config.duration, 1))
-    const { start, end } = state
-    const output: Input = {
-        x: start.x + (end.x - start.x) * pct,
-        y: start.y + (end.y - start.y) * pct,
-        pressure: start.pressure + (end.pressure - start.pressure) * pct,
+    if (deltaTime >= config.duration) {
+        return [state, state.end]
     }
 
+    const pct = easing(Math.min(deltaTime / config.duration, 1))
+    const output: Input = inputLerp(pct, state.start, state.end)
     return [state, output]
 }
