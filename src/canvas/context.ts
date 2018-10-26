@@ -498,30 +498,40 @@ function ensureTextureIsBound(context: ContextState, id: TextureId): number {
     }
 }
 
+function setupFb(context: ContextState, id: TextureId): WebGLFramebuffer {
+    const { gl, framebufferMap } = context
+    const fb = framebufferMap.get(id)
+    if (fb == null) {
+        throw "framebuffer should exist"
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fb)
+    gl.clearColor(0, 0, 0, 0)
+    gl.clear(gl.COLOR_BUFFER_BIT)
+    return fb
+}
+
+function layersRequireRerender(
+    prev: ReadonlyArray<Layers.CollectedLayer>,
+    next: ReadonlyArray<Layers.CollectedLayer>
+): boolean {
+    if (prev.length !== next.length) return true
+    for (let i = 0; i < next.length; i++) {
+        if (prev[i].id !== next[i].id) {
+            return true
+        }
+    }
+    return false
+}
+
 function combineLayers(context: ContextState, nextLayers: Layers.SplitLayers): void {
     const { gl, prevLayers, combinedLayers, textureRenderer, internalCanvasSize } = context
+
     {
         // ABOVE
         const prev = prevLayers.above
         const next = nextLayers.above
-        let requiresRerender = prev.length !== next.length
-        if (!requiresRerender) {
-            for (let i = 0; i < next.length; i++) {
-                if (prev[i].id !== next[i].id) {
-                    requiresRerender = true
-                    break
-                }
-            }
-        }
-        if (requiresRerender) {
-            console.log("context", context, nextLayers)
-            const fb = context.framebufferMap.get(combinedLayers.above)
-            if (fb == null) {
-                throw "framebuffer should exist"
-            }
-            gl.bindFramebuffer(gl.FRAMEBUFFER, fb)
-            gl.clearColor(0, 0, 0, 0)
-            gl.clear(gl.COLOR_BUFFER_BIT)
+        if (layersRequireRerender(prev, next)) {
+            const fb = setupFb(context, combinedLayers.above)
             for (let i = 0; i < next.length; i++) {
                 const layer = next[i]
                 if (layer.opacity === 0) continue
@@ -549,24 +559,8 @@ function combineLayers(context: ContextState, nextLayers: Layers.SplitLayers): v
         // BELOW
         const prev = prevLayers.below
         const next = nextLayers.below
-        let requiresRerender = prev.length !== next.length
-        if (!requiresRerender) {
-            for (let i = 0; i < next.length; i++) {
-                if (prev[i].id !== next[i].id) {
-                    requiresRerender = true
-                    break
-                }
-            }
-        }
-        if (requiresRerender) {
-            console.log("context", context, nextLayers)
-            const fb = context.framebufferMap.get(combinedLayers.below)
-            if (fb == null) {
-                throw "framebuffer should exist"
-            }
-            gl.bindFramebuffer(gl.FRAMEBUFFER, fb)
-            gl.clearColor(0, 0, 0, 0)
-            gl.clear(gl.COLOR_BUFFER_BIT)
+        if (layersRequireRerender(prev, next)) {
+            const fb = setupFb(context, combinedLayers.below)
             for (let i = next.length - 1; i >= 0; i--) {
                 const layer = next[i]
                 if (layer.opacity === 0) continue
@@ -589,13 +583,7 @@ function combineLayers(context: ContextState, nextLayers: Layers.SplitLayers): v
     {
         // CURRENT
         const layerId = nextLayers.current
-        const fb = context.framebufferMap.get(combinedLayers.current)
-        if (fb == null) {
-            throw "framebuffer should exist"
-        }
-        gl.bindFramebuffer(gl.FRAMEBUFFER, fb)
-        gl.clearColor(0, 0, 0, 0)
-        gl.clear(gl.COLOR_BUFFER_BIT)
+        const fb = setupFb(context, combinedLayers.current)
         if (layerId !== null) {
             const layerTextureId = getTextureIdForLayer(context, layerId.id)!
             textureRenderer.render(gl, {
