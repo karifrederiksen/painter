@@ -1,5 +1,3 @@
-export * from "./ordmap"
-export * from "./ordset"
 export * from "./stack"
 
 export interface PushArray<T> extends ReadonlyArray<T> {
