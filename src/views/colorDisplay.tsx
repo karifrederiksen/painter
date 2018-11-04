@@ -1,6 +1,6 @@
 import * as React from "react"
 import styled from "../styled"
-import { Hsluv } from "../color"
+import { Hsluv } from "color"
 
 export type ColorDisplay = {
     readonly color: Hsluv

@@ -6,7 +6,7 @@ import * as BrushDelay from "./brushDelay"
 import * as BrushShader from "../canvas/brushShader"
 import * as Camera from "./camera"
 import * as Input from "../input"
-import * as Color from "../color"
+import * as Color from "color"
 import { T2, Case, Vec2, ColorMode, colorModeToString, clamp } from "../util"
 import { ZipperList } from "../collections/zipperList"
 import { Menu } from "../views/menu"
@@ -391,19 +391,19 @@ function HsluvSliders(sender: MsgSender, color: Color.Hsluv): JSX.Element {
             <Labeled label="Hue" value={color.h.toFixed(2)}>
                 <Slider
                     percentage={color.h / 360}
-                    onChange={pct => sender.setColor(color.withH(pct * 360))}
+                    onChange={pct => sender.setColor(color.with({ h: pct * 360 }))}
                 />
             </Labeled>
             <Labeled label="Saturation" value={color.s.toFixed(2)}>
                 <Slider
                     percentage={color.s / 100}
-                    onChange={pct => sender.setColor(color.withS(pct * 100))}
+                    onChange={pct => sender.setColor(color.with({ s: pct * 100 }))}
                 />
             </Labeled>
             <Labeled label="Luminosity" value={color.l.toFixed(2)}>
                 <Slider
                     percentage={color.l / 100}
-                    onChange={pct => sender.setColor(color.withL(pct * 100))}
+                    onChange={pct => sender.setColor(color.with({ l: pct * 100 }))}
                 />
             </Labeled>
         </>
@@ -416,19 +416,25 @@ function HsvSliders(sender: MsgSender, color: Color.Hsv): JSX.Element {
             <Labeled label="Hue" value={color.h.toFixed(2)}>
                 <Slider
                     percentage={color.h}
-                    onChange={pct => sender.setColor(Color.rgbToHsluv(color.withH(pct).toRgb()))}
+                    onChange={pct =>
+                        sender.setColor(Color.rgbToHsluv(color.with({ h: pct }).toRgb()))
+                    }
                 />
             </Labeled>
             <Labeled label="Saturation" value={color.s.toFixed(2)}>
                 <Slider
                     percentage={color.s}
-                    onChange={pct => sender.setColor(Color.rgbToHsluv(color.withS(pct).toRgb()))}
+                    onChange={pct =>
+                        sender.setColor(Color.rgbToHsluv(color.with({ s: pct }).toRgb()))
+                    }
                 />
             </Labeled>
             <Labeled label="Value" value={color.v.toFixed(2)}>
                 <Slider
                     percentage={color.v}
-                    onChange={pct => sender.setColor(Color.rgbToHsluv(color.withV(pct).toRgb()))}
+                    onChange={pct =>
+                        sender.setColor(Color.rgbToHsluv(color.with({ v: pct }).toRgb()))
+                    }
                 />
             </Labeled>
         </>

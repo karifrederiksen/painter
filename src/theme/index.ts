@@ -1,4 +1,4 @@
-import * as Color from "../color"
+import * as Color from "color"
 import { Generators as Gen } from "../rng"
 
 export interface Theme {

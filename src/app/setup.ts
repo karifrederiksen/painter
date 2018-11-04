@@ -1,6 +1,6 @@
 import * as Canvas from "../canvas"
 import * as Input from "../input"
-import * as Color from "../color"
+import * as Color from "color"
 import { delay } from "../util"
 
 export async function setup(getState: () => Canvas.State, sender: Canvas.MsgSender): Promise<void> {

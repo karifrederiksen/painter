@@ -1,8 +1,6 @@
 {
     "name": "painter",
     "version": "0.1.0",
-    "main": "index.js",
-    "license": "MIT",
     "scripts": {
         "start": "npx webpack-serve --config webpack.dev.js --clipboard --log-time",
         "start-css": "npx tcm src --camelCase --watch",
@@ -12,6 +10,7 @@
         "test": "npx jest --config jest.config.js"
     },
     "dependencies": {
+        "color": "git+https://github.com/karifrederiksen/color.git",
         "react": "^16.5.2",
         "react-dom": "^16.5.2",
         "styled-components": "^4.0.0"

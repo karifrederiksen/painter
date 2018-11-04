@@ -1,5 +1,5 @@
 import * as BrushShader from "../canvas/brushShader"
-import * as Color from "../color"
+import * as Color from "color"
 import { lerp, distance, T2, Vec2 } from "../util"
 
 export interface Interpolatable {
@@ -52,7 +52,7 @@ export function interpolate(
 
     const pressureIsEq = start.pressure === end.pressure
     const alphaIsEq = start.alpha === end.alpha
-    const colorIsEq = start.color.eq(end.color)
+    const colorIsEq = start.color.is(end.color)
     const rotationIsEq = start.rotation === end.rotation
 
     const pctsLen = pcts.length

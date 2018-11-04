@@ -1,4 +1,4 @@
-import * as Color from "../color"
+import * as Color from "color"
 import { Blend, createProgram, getUniformLocation } from "../webgl"
 import { Vec2, Vec4 } from "../util"
 

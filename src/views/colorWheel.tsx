@@ -1,6 +1,6 @@
 import * as React from "react"
 import styled from "../styled"
-import * as Color from "../color"
+import * as Color from "color"
 import { DEFINE_TAU, createProgram, DEFINE_hsluv_etc, DEFINE_hsvToRgb } from "../webgl"
 import { ColorMode } from "../util"
 
@@ -63,7 +63,7 @@ export class ColorWheel extends React.Component<ColorWheelProps> {
     }
 
     shouldComponentUpdate(prevProps: ColorWheelProps) {
-        return !this.props.color.eq(prevProps.color) || this.props.colorType !== prevProps.colorType
+        return !this.props.color.is(prevProps.color) || this.props.colorType !== prevProps.colorType
     }
 
     private initialize = (canvas: HTMLCanvasElement | null): void => {
@@ -138,11 +138,11 @@ export class ColorWheel extends React.Component<ColorWheelProps> {
         switch (this.props.colorType) {
             case ColorMode.Hsv: {
                 const hsv = Color.rgbToHsv(this.props.color.toRgb())
-                this.props.onChange(Color.rgbToHsluv(hsv.withH(hue).toRgb()))
+                this.props.onChange(Color.rgbToHsluv(hsv.with({ h: hue }).toRgb()))
                 break
             }
             case ColorMode.Hsluv: {
-                this.props.onChange(prevColor.withH(hue * 360))
+                this.props.onChange(prevColor.with({ h: hue * 360 }))
                 break
             }
         }
@@ -412,7 +412,7 @@ export class SatValRenderer {
     render(colorType: ColorMode, color: Color.Hsluv): void {
         const gl = this.gl
 
-        if (!this.program || this.prevColor!.eq(color)) {
+        if (!this.program || this.prevColor!.is(color)) {
             if (this.program) {
                 gl.deleteProgram(this.program)
             }
