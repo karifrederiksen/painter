@@ -12,8 +12,8 @@
     "dependencies": {
         "color": "git+https://github.com/karifrederiksen/color.git",
         "ordered-collections": "git+https://github.com/karifrederiksen/ordered-collections.git",
-        "react": "^16.5.2",
-        "react-dom": "^16.5.2",
+        "react": "^16.6.1",
+        "react-dom": "^16.6.1",
         "styled-components": "^4.0.0"
     },
     "devDependencies": {
@@ -24,8 +24,8 @@
         "@babel/runtime": "^7.0.0",
         "@types/jest": "^23.3.2",
         "@types/node": "^10.10.3",
-        "@types/react": "^16.4.14",
-        "@types/react-dom": "^16.0.7",
+        "@types/react": "^16.7.3",
+        "@types/react-dom": "^16.0.9",
         "@types/styled-components": "^4.0.1",
         "autoprefixer": "^9.1.5",
         "babel-loader": "^8.0.2",
