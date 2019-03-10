@@ -30,14 +30,14 @@ export function createProgram(
 
 function compileShader(gl: WebGLRenderingContext, src: string, shaderType: number) {
     const shader = gl.createShader(shaderType)
-    gl.shaderSource(shader, src)
-    gl.compileShader(shader)
+    gl.shaderSource(shader!, src)
+    gl.compileShader(shader!)
 
-    if (gl.getShaderParameter(shader, WebGLRenderingContext.COMPILE_STATUS)) return shader
+    if (gl.getShaderParameter(shader!, WebGLRenderingContext.COMPILE_STATUS)) return shader
 
     console.group("Shader compilation")
     console.error("failed to compile shader")
-    console.log("shader info log: ", gl.getShaderInfoLog(shader))
+    console.log("shader info log: ", gl.getShaderInfoLog(shader!))
     const prettySrc = withNumberedLines(src)
     console.log(prettySrc)
     console.groupEnd()

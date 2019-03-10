@@ -28,103 +28,21 @@ type WithClientXY = Readonly<{
     clientY: number
 }>
 
-export class ColorWheel extends React.Component<ColorWheelProps> {
-    private container: HTMLDivElement | null = null
-    private pointerState: PointerState = PointerState.Default
-    private gl: WebGLRenderingContext | null = null
-    private ringRenderer: RingRenderer | null = null
-    private satValRenderer: SatValRenderer | null = null
+interface GlState {
+    readonly gl: WebGLRenderingContext
+    readonly ringRenderer: RingRenderer
+    readonly satValRenderer: SatValRenderer
+}
 
-    render(): JSX.Element {
-        return (
-            <Container>
-                <div onMouseDown={this.onDown} ref={el => (this.container = el)}>
-                    <canvas width="160" height="160" ref={this.initialize} />
-                </div>
-            </Container>
-        )
-    }
+export function ColorWheel(props: ColorWheelProps): JSX.Element {
+    const container = React.useRef<HTMLDivElement | null>(null)
+    const canvas = React.useRef<HTMLCanvasElement | null>(null)
+    const [glState, setGlState] = React.useState<GlState | null>(null)
+    const pointerState = React.useRef(PointerState.Default)
 
-    componentDidUpdate() {
-        this.renderGL()
-    }
-
-    componentDidMount(): void {
-        this.renderGL()
-        document.body.addEventListener("mousemove", this.onMove, { passive: true })
-        document.body.addEventListener("mouseup", this.onUp, { passive: true })
-    }
-
-    componentWillUnmount(): void {
-        document.body.removeEventListener("mousemove", this.onMove)
-        document.body.removeEventListener("mouseup", this.onUp)
-        if (this.ringRenderer !== null) this.ringRenderer.dispose()
-        if (this.satValRenderer !== null) this.satValRenderer.dispose()
-    }
-
-    shouldComponentUpdate(prevProps: ColorWheelProps) {
-        return !this.props.color.is(prevProps.color) || this.props.colorType !== prevProps.colorType
-    }
-
-    private initialize = (canvas: HTMLCanvasElement | null): void => {
-        if (canvas === null) return
-
-        const gl = canvas.getContext("webgl")
-        if (gl === null) throw "Failed to init webgl"
-
-        this.gl = gl
-        this.ringRenderer = new RingRenderer(gl)
-        this.satValRenderer = new SatValRenderer(gl)
-    }
-
-    private renderGL() {
-        this.gl!.clearColor(0, 0, 0, 0)
-        this.gl!.clear(WebGLRenderingContext.COLOR_BUFFER_BIT)
-        this.ringRenderer!.render(this.props.colorType, this.props.color)
-        this.satValRenderer!.render(this.props.colorType, this.props.color)
-    }
-
-    private onDown = (ev: WithClientXY): void => {
-        const bounds = this.container!.getBoundingClientRect()
-        const x = clamp(ev.clientX - bounds.left, 0, bounds.width)
-        const y = clamp(ev.clientY - bounds.top, 0, bounds.height)
-
-        const marginX = bounds.width * MARGIN
-        const marginY = bounds.height * MARGIN
-
-        const isInner =
-            isInclusive(x, marginX, bounds.width - marginX) &&
-            isInclusive(y, marginY, bounds.height - marginY)
-
-        if (isInner) {
-            this.pointerState = PointerState.DownOnInner
-            this.signalInner(ev)
-        } else {
-            this.pointerState = PointerState.DownOnOuter
-            this.signalOuter(ev)
-        }
-    }
-
-    private onUp = (_ev: WithClientXY): void => {
-        this.pointerState = PointerState.Default
-    }
-
-    private onMove = (ev: WithClientXY): void => {
-        switch (this.pointerState) {
-            case PointerState.Default:
-                break
-            case PointerState.DownOnInner:
-                this.signalInner(ev)
-                break
-            case PointerState.DownOnOuter:
-                this.signalOuter(ev)
-                break
-        }
-    }
-
-    private signalOuter(ev: WithClientXY) {
+    function signalOuter(ev: WithClientXY) {
         // get xy delta from the center of the ring
-        const bounds = this.container!.getBoundingClientRect()
+        const bounds = container.current!.getBoundingClientRect()
         const x = ev.clientX - bounds.left - bounds.width * 0.5
         const y = ev.clientY - bounds.top - bounds.height * 0.5
 
@@ -134,22 +52,22 @@ export class ColorWheel extends React.Component<ColorWheelProps> {
         // get hue from radians (keep in mind the ring is turned 50%)
         const hue = rad / (Math.PI * 2) + 0.5
 
-        const prevColor = this.props.color
-        switch (this.props.colorType) {
+        const prevColor = props.color
+        switch (props.colorType) {
             case ColorMode.Hsv: {
-                const hsv = Color.rgbToHsv(this.props.color.toRgb())
-                this.props.onChange(Color.rgbToHsluv(hsv.with({ h: hue }).toRgb()))
+                const hsv = Color.rgbToHsv(props.color.toRgb())
+                props.onChange(Color.rgbToHsluv(hsv.with({ h: hue }).toRgb()))
                 break
             }
             case ColorMode.Hsluv: {
-                this.props.onChange(prevColor.with({ h: hue * 360 }))
+                props.onChange(prevColor.with({ h: hue * 360 }))
                 break
             }
         }
     }
 
-    private signalInner(ev: WithClientXY): void {
-        const bounds = this.container!.getBoundingClientRect()
+    function signalInner(ev: WithClientXY) {
+        const bounds = container.current!.getBoundingClientRect()
         const marginX = bounds.width * MARGIN
         const marginY = bounds.height * MARGIN
 
@@ -162,21 +80,116 @@ export class ColorWheel extends React.Component<ColorWheelProps> {
         const pctX = x / width
         const pctY = 1 - y / height
 
-        switch (this.props.colorType) {
+        switch (props.colorType) {
             case ColorMode.Hsv: {
-                const hue = Color.rgbToHsv(this.props.color.toRgb()).h
-                this.props.onChange(
+                const hue = Color.rgbToHsv(props.color.toRgb()).h
+                props.onChange(
                     Color.rgbToHsluv(Color.hsvToRgb(new Color.Hsv(hue, pctX, pctY)))
                 )
                 break
             }
             case ColorMode.Hsluv: {
-                const hue = this.props.color.h
-                this.props.onChange(new Color.Hsluv(hue, pctX * 100, pctY * 100))
+                const hue = props.color.h
+                props.onChange(new Color.Hsluv(hue, pctX * 100, pctY * 100))
                 break
             }
         }
     }
+
+    function onDown(ev: WithClientXY) {
+        const bounds = container.current!.getBoundingClientRect()
+        const x = clamp(ev.clientX - bounds.left, 0, bounds.width)
+        const y = clamp(ev.clientY - bounds.top, 0, bounds.height)
+
+        const marginX = bounds.width * MARGIN
+        const marginY = bounds.height * MARGIN
+
+        const isInner =
+            isInclusive(x, marginX, bounds.width - marginX) &&
+            isInclusive(y, marginY, bounds.height - marginY)
+
+        if (isInner) {
+            pointerState.current = PointerState.DownOnInner
+            signalInner(ev)
+        } else {
+            pointerState.current = PointerState.DownOnOuter
+            signalOuter(ev)
+        }
+    }
+
+    function onUp(_ev: WithClientXY) {
+        pointerState.current = PointerState.Default
+    }
+
+    function onMove(ev: WithClientXY) {
+        switch (pointerState.current) {
+            case PointerState.Default:
+                break
+            case PointerState.DownOnInner:
+                signalInner(ev)
+                break
+            case PointerState.DownOnOuter:
+                signalOuter(ev)
+                break
+        }
+    }
+
+    React.useEffect(() => {
+        if (canvas.current === null) {
+            return
+        }
+
+        const gl = canvas.current.getContext("webgl")
+        if (gl === null) throw "Failed to init webgl"
+
+        const x = {
+            gl,
+            ringRenderer: new RingRenderer(gl),
+            satValRenderer: new SatValRenderer(gl),
+        }
+
+        setGlState(x)
+
+        return () => {
+            x.ringRenderer.dispose()
+            x.satValRenderer.dispose()
+        }
+    }, [canvas.current])
+
+    React.useEffect(() => {
+        if (glState === null) {
+            return
+        }
+        // render
+        glState!.gl.clearColor(0, 0, 0, 0)
+        glState!.gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT)
+        glState!.ringRenderer!.render(props.colorType, props.color)
+        glState!.satValRenderer!.render(props.colorType, props.color)
+    }, [glState, props.color, props.colorType])
+
+    React.useEffect(() => {
+        document.body.addEventListener("mousemove", onMove, { passive: true })
+        return () => {
+            document.body.removeEventListener("mousemove", onMove)
+        }
+    }, [props.color, props.colorType, props.onChange])
+
+    React.useEffect(() => {
+        document.body.addEventListener("mouseup", onUp)
+        return () => {
+            document.body.removeEventListener("mouseup", onUp)
+        }
+    }, [])
+
+
+
+    return (
+        <Container>
+            <div onMouseDown={onDown} ref={container}>
+                <canvas width="160" height="160" ref={canvas} />
+            </div>
+        </Container>
+    )
 }
 
 function clamp(x: number, min: number, max: number): number {
@@ -250,7 +263,7 @@ vec3 toRgb(vec3 color, vec3 xyz) {
 }
 `)
 
-export class RingRenderer {
+class RingRenderer {
     private readonly buffer: WebGLBuffer
     private program: WebGLProgram | null = null
     private colorLocation: WebGLUniformLocation | null = null
@@ -373,7 +386,7 @@ vec3 toRgb(float hue, float x, float y) {
 }
 `)
 
-export class SatValRenderer {
+class SatValRenderer {
     private readonly buffer: WebGLBuffer
     private colorLocation: WebGLUniformLocation | null = null
     private program: WebGLProgram | null = null

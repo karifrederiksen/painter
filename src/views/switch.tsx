@@ -43,30 +43,26 @@ const SwitchBar = styled.span`
     transition: 150ms background-color, 150ms opacity;
 `
 
-export const Switch = withTheme(
-    class UnwrappedSwitch extends React.PureComponent<SwitchProps & { readonly theme: Theme }> {
-        render(): JSX.Element {
-            const { checked, color, onCheck } = this.props
-            const theme = this.props.theme as Theme
-            const color_ = color || theme.color.primary.toStyle()
-            return (
-                <Switch_ onClick={() => onCheck(!checked)}>
-                    <SwitchButtonContainer
-                        style={{
-                            transform: checked
-                                ? "translate(0.75rem, -0.125rem)"
-                                : "translate(0, -0.125rem)",
-                        }}
-                    >
-                        <SwitchButton
-                            style={{
-                                backgroundColor: checked ? color_ : theme.color.secondary.toStyle(),
-                            }}
-                        />
-                    </SwitchButtonContainer>
-                    <SwitchBar />
-                </Switch_>
-            )
-        }
-    }
-)
+export const Switch = React.memo(withTheme((props: SwitchProps & { readonly theme: Theme }) => {
+    const { checked, color, onCheck } = props
+    const theme = props.theme as Theme
+    const color_ = color || theme.color.primary.toStyle()
+    return (
+        <Switch_ onClick={() => onCheck(!checked)}>
+            <SwitchButtonContainer
+                style={{
+                    transform: checked
+                        ? "translate(0.75rem, -0.125rem)"
+                        : "translate(0, -0.125rem)",
+                }}
+            >
+                <SwitchButton
+                    style={{
+                        backgroundColor: checked ? color_ : theme.color.secondary.toStyle(),
+                    }}
+                />
+            </SwitchButtonContainer>
+            <SwitchBar />
+        </Switch_>
+    )
+}))

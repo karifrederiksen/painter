@@ -64,79 +64,80 @@ function clamp(x: number, min: number, max: number): number {
     return x < min ? min : x > max ? max : x
 }
 
-type WithClientX = Readonly<{ clientX: number }>
+interface WithClientX { readonly clientX: number }
 
-export class Slider extends React.Component<SliderProps> {
-    private container: HTMLDivElement | null = null
-    private isDown: boolean = false
+export const Slider = React.memo((props: SliderProps) => {
+    const container = React.useRef<HTMLDivElement | null>(null)
+    const [isDown, setIsDown] = React.useState(false)
+    const color = props.color !== undefined ? props.color.toStyle() : undefined
+    const percentage = Math.max(0, Math.min(1, props.percentage))
 
-    render(): JSX.Element {
-        const props = this.props
-        const color = props.color !== undefined ? props.color.toStyle() : undefined
-        const percentage = Math.max(0, Math.min(1, props.percentage))
-        return (
-            <Container onMouseDown={this.onDown}>
-                <div ref={el => (this.container = el)}>
-                    {percentage === 0 ? (
-                        <EmptyButton
-                            style={{
-                                left: "calc(" + percentage + " * calc(100% - 0.75rem))",
-                                backgroundColor: color,
-                            }}
-                        />
-                    ) : (
-                            <Button
-                                style={{
-                                    left: "calc(" + percentage + " * calc(100% - 0.75rem))",
-                                    backgroundColor: color,
-                                }}
-                            />
-                        )}
-
-                    <FilledLineClass
-                        style={{
-                            width: percentage * 100 + "%",
-                            backgroundColor: color,
-                        }}
-                    />
-                    <BaseLine />
-                </div>
-            </Container>
-        )
-    }
-
-    componentDidMount(): void {
-        document.body.addEventListener("mousemove", this.onMove, {
-            passive: true,
-        })
-        document.body.addEventListener("mouseup", this.onUp, { passive: true })
-    }
-
-    componentWillUnmount(): void {
-        document.body.removeEventListener("mousemove", this.onMove)
-        document.body.removeEventListener("mouseup", this.onUp)
-    }
-
-    private onDown = (ev: WithClientX): void => {
-        this.signal(ev)
-        this.isDown = true
-    }
-
-    private onUp = (): void => {
-        this.isDown = false
-    }
-
-    private onMove = (ev: WithClientX): void => {
-        if (this.isDown) this.signal(ev)
-    }
-
-    private signal(ev: WithClientX): void {
-        const bounds = this.container!.getBoundingClientRect()
+    function signal(ev: WithClientX): void {
+        const bounds = container.current!.getBoundingClientRect()
         const dotWidth = Rem * 0.75
         const width = bounds.width - dotWidth
 
         const localX = clamp(ev.clientX - bounds.left - dotWidth / 2, 0, width)
 
-        this.props.onChange(localX / width)
+        props.onChange(localX / width)
     }
-}
+
+    function onDown(ev: WithClientX) {
+        signal(ev)
+        setIsDown(true)
+    }
+
+    function onUp() {
+        setIsDown(false)
+    }
+
+    function onMove(ev: WithClientX) {
+        if (isDown) signal(ev)
+    }
+
+    React.useEffect(() => {
+        document.body.addEventListener("mousemove", onMove, {
+            passive: true,
+        })
+        return () => {
+            document.body.removeEventListener("mousemove", onMove)
+        }
+    }, [isDown])
+
+    React.useEffect(() => {
+        document.body.addEventListener("mouseup", onUp, { passive: true })
+        return () => {
+            document.body.removeEventListener("mouseup", onUp)
+        }
+    }, [])
+
+    return (
+        <Container onMouseDown={onDown}>
+            <div ref={container}>
+                {percentage === 0 ? (
+                    <EmptyButton
+                        style={{
+                            left: "calc(" + percentage + " * calc(100% - 0.75rem))",
+                            backgroundColor: color,
+                        }}
+                    />
+                ) : (
+                    <Button
+                        style={{
+                            left: "calc(" + percentage + " * calc(100% - 0.75rem))",
+                            backgroundColor: color,
+                        }}
+                    />
+                )}
+
+                <FilledLineClass
+                    style={{
+                        width: percentage * 100 + "%",
+                        backgroundColor: color,
+                    }}
+                />
+                <BaseLine />
+            </div>
+        </Container>
+    )
+})

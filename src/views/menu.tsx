@@ -2,11 +2,6 @@ import * as React from "react"
 import styled, { Rem } from "../styled"
 import { ZipperList } from "../collections/zipperList"
 
-export interface Props<a> {
-    readonly choices: ZipperList<a>
-    readonly show: (val: a) => string
-    readonly onSelect: (val: a) => void
-}
 
 const Container = styled.div`
     background-color: ${p => p.theme.color.surface.toStyle()};
@@ -73,97 +68,101 @@ interface State {
     readonly isExpanded: boolean
 }
 
-export class Menu<a> extends React.Component<Props<a>, State> {
-    state = { isExpanded: false }
-    container: HTMLDivElement | null = null
-    listeningToGlobalClick: boolean = false
+export interface Props<a> {
+    readonly choices: ZipperList<a>
+    readonly show: (val: a) => string
+    readonly onSelect: (val: a) => void
+}
 
-    render(): JSX.Element {
-        const { choices, show } = this.props
+export function Menu<a>(props: Props<a>) {
+    return React.createElement(Menu_, props as any, [])
+}
 
-        return (
-            <Container onBlur={this.closeMenu}>
-                <div ref={x => (this.container = x)}>
-                    {this.state.isExpanded ? (
-                        <>
-                            <SelectedDisplayExpanded onMouseDown={this.closeMenu}>
-                                {show(choices.focus)}
-                            </SelectedDisplayExpanded>
-                            <SelectableOptions
-                                style={{
-                                    marginTop:
-                                        "calc(-0.5rem - " +
-                                        this.container!.getBoundingClientRect().height +
-                                        "px)",
-                                }}
-                            >
-                                {choices.getLeft().map(value => (
-                                    <OptionDefault
-                                        key={show(value)}
-                                        onClick={() => this.closeAndCallback(value)}
-                                    >
-                                        {show(value)}
-                                    </OptionDefault>
-                                ))}
-                                <OptionSelected key={show(choices.focus)} onClick={this.closeMenu}>
-                                    {show(choices.focus)}
-                                </OptionSelected>
-                                {choices.getRight().map(value => (
-                                    <OptionDefault
-                                        key={show(value)}
-                                        onClick={() => this.closeAndCallback(value)}
-                                    >
-                                        {show(value)}
-                                    </OptionDefault>
-                                ))}
-                            </SelectableOptions>
-                        </>
-                    ) : (
-                        <SelectedDisplay onMouseDown={this.openMenu}>
-                            {/* {show(choices.focus)} */}
-                        </SelectedDisplay>
-                    )} 
-                </div>
-            </Container>
-        )
-    }
+const Menu_ = React.memo(function<a>(props: Props<a>) {
+    const { choices, show } = props
+    const container = React.useRef<HTMLDivElement | null>(null)
+    const [isExpanded, setIsExpanded] = React.useState(false)
+    const [listeningToGlobal, setListeningToGlobal] = React.useState(false)
 
-    componentDidUpdate() {
-        if (this.state.isExpanded) {
-            if (!this.listeningToGlobalClick) {
-                document.body.addEventListener("mousedown", this.onGlobalClick, {
-                    passive: true,
-                })
-                this.listeningToGlobalClick = true
-            }
-        } else {
-            if (this.listeningToGlobalClick) {
-                document.body.removeEventListener("mousedown", this.onGlobalClick)
-                this.listeningToGlobalClick = false
-            }
-        }
-    }
 
-    componentWillUnmount() {
-        document.body.removeEventListener("mousedown", this.onGlobalClick)
-    }
-
-    onGlobalClick = (ev: MouseEvent) => {
+    function onGlobalClick(ev: MouseEvent) {
         let target = ev.target as HTMLElement
         while (target.parentElement !== null) {
-            if (target === this.container) return
+            if (target === container.current) return
 
             target = target.parentElement
         }
-        this.closeMenu()
+        closeMenu()
     }
 
-    closeAndCallback = (val: a) => {
-        this.closeMenu()
-        this.props.onSelect(val)
+    function closeAndCallback(val: a) {
+        closeMenu()
+        props.onSelect(val)
     }
 
-    openMenu = () => this.setState({ isExpanded: true })
+    function openMenu() { setIsExpanded(true) }
 
-    closeMenu = () => this.setState({ isExpanded: false })
-}
+    function closeMenu() { setIsExpanded(false) }
+
+    React.useEffect(() => {
+        if (isExpanded && !listeningToGlobal) {
+            document.body.addEventListener("mousedown", onGlobalClick, {
+                passive: true,
+            })
+            setListeningToGlobal(true)
+            return () => {
+                document.body.removeEventListener("mousedown", onGlobalClick)
+            }
+        } 
+        if (listeningToGlobal) {
+            setListeningToGlobal(false)
+        }
+        return () => { }
+    }, [isExpanded, listeningToGlobal])
+
+    return (
+        <Container onBlur={closeMenu}>
+            <div ref={container}>
+                {isExpanded ? (
+                    <>
+                        <SelectedDisplayExpanded onMouseDown={closeMenu}>
+                            {show(choices.focus)}
+                        </SelectedDisplayExpanded>
+                        <SelectableOptions
+                            style={{
+                                marginTop:
+                                    "calc(-0.5rem - " +
+                                    container.current!.getBoundingClientRect().height +
+                                    "px)",
+                            }}
+                        >
+                            {choices.getLeft().map(value => (
+                                <OptionDefault
+                                    key={show(value)}
+                                    onClick={() => closeAndCallback(value)}
+                                >
+                                    {show(value)}
+                                </OptionDefault>
+                            ))}
+                            <OptionSelected key={show(choices.focus)} onClick={closeMenu}>
+                                {show(choices.focus)}
+                            </OptionSelected>
+                            {choices.getRight().map(value => (
+                                <OptionDefault
+                                    key={show(value)}
+                                    onClick={() => closeAndCallback(value)}
+                                >
+                                    {show(value)}
+                                </OptionDefault>
+                            ))}
+                        </SelectableOptions>
+                    </>
+                ) : (
+                    <SelectedDisplay onMouseDown={openMenu}>
+                        {show(choices.focus)}
+                    </SelectedDisplay>
+                )} 
+            </div>
+        </Container>
+    )
+})
