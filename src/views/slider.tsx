@@ -4,7 +4,7 @@ import { Hsv } from "color"
 
 // Generic slider
 
-export type SliderProps = {
+export interface SliderProps {
     readonly percentage: number
     readonly onChange: (pct: number) => void
     readonly color?: Hsv
@@ -85,13 +85,13 @@ export class Slider extends React.Component<SliderProps> {
                             }}
                         />
                     ) : (
-                        <Button
-                            style={{
-                                left: "calc(" + percentage + " * calc(100% - 0.75rem))",
-                                backgroundColor: color,
-                            }}
-                        />
-                    )}
+                            <Button
+                                style={{
+                                    left: "calc(" + percentage + " * calc(100% - 0.75rem))",
+                                    backgroundColor: color,
+                                }}
+                            />
+                        )}
 
                     <FilledLineClass
                         style={{

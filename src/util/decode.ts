@@ -77,9 +77,11 @@ export namespace Decode {
         return val => object_(decoders, val)
     }
 
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     function object_<a>(decoders: ObjectProps<a>, val: any): DecodeResult<a> {
         if (typeof val !== "object") return err()
 
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
         const resObj: any = {}
         for (const propName in decoders) {
             if (!decoders.hasOwnProperty(propName)) continue

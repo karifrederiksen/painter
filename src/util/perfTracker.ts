@@ -32,6 +32,7 @@ export class PerfTracker {
     end() {
         console.assert(this.startTimeMs !== null, "Performance tracker should be started")
         const endMs = performance.now()
+        /* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
         const startMs = this.startTimeMs!
         this.startTimeMs = null
 

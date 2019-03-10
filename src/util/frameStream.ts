@@ -9,9 +9,10 @@ export interface CancelFrameStream {
 export const FrameStream = {
     make: (fn: (time: number) => void): CancelFrameStream => {
         let shouldStop = false
+            /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
         ;(window as any)["painterStop"] = () => (shouldStop = true)
 
-        const callback = () => {
+        let requestId = requestAnimationFrame(function callback() {
             if (shouldStop) return
             try {
                 fn(performance.now())
@@ -19,8 +20,7 @@ export const FrameStream = {
                 console.error(e)
             }
             requestId = requestAnimationFrame(callback)
-        }
-        let requestId = requestAnimationFrame(callback)
+        })
         return () => cancelAnimationFrame(requestId)
     },
 }

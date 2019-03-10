@@ -2,7 +2,7 @@ import * as React from "react"
 import styled from "../styled"
 import { Hsluv } from "color"
 
-export type ColorDisplay = {
+export interface ColorDisplay {
     readonly color: Hsluv
     readonly colorSecondary: Hsluv
     readonly onClick: () => void

@@ -94,12 +94,14 @@ export namespace Generators {
     }
 
     function object_<a>(gens: ObjectProps<a>, rng: Rng.Seed): GenResult<a> {
+        /* eslint-disable */
         const obj = {} as a
         for (const prop in gens) {
             const [val, nextRng] = gens[prop](rng)
             obj[prop] = val
             rng = nextRng
         }
+        /* eslint-enable */
         return [obj, rng]
     }
 

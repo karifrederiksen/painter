@@ -208,7 +208,7 @@ function createInputPoint(state: State, input: BrushDelay.Input): Interp.InputPo
 /*
  *
  * Views
- * 
+ *
  */
 
 const DetailsContainer = styled(Surface)`

@@ -263,7 +263,7 @@ function createInputPoint(brush: State, input: BrushDelay.Input): Interp.InputPo
 /*
  *
  * Views
- * 
+ *
  */
 
 const TextInput = styled.input`

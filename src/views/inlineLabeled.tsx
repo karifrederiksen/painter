@@ -1,7 +1,7 @@
 import * as React from "react"
 import styled from "../styled"
 
-export type InlineLabeledProps = {
+export interface InlineLabeledProps {
     readonly label: string
     readonly children: React.ReactChild
 }

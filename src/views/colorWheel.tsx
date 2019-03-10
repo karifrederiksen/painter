@@ -4,7 +4,7 @@ import * as Color from "color"
 import { DEFINE_TAU, createProgram, DEFINE_hsluv_etc, DEFINE_hsvToRgb } from "../webgl"
 import { ColorMode } from "../util"
 
-export type ColorWheelProps = {
+export interface ColorWheelProps {
     readonly color: Color.Hsluv
     readonly colorType: ColorMode
     readonly onChange: (color: Color.Hsluv) => void
@@ -283,8 +283,8 @@ export class RingRenderer {
                     this.program = createProgram(gl, RING_VERT_SRC, RING_FRAG_SRC_HSLUV)!
                     break
             }
-            gl.bindAttribLocation(this.program, 0, "a_position")
-            this.colorLocation = gl.getUniformLocation(this.program, "u_color")!
+            gl.bindAttribLocation(this.program!, 0, "a_position")
+            this.colorLocation = gl.getUniformLocation(this.program!, "u_color")!
             this.prevColorType = colorType
         }
 
@@ -425,8 +425,8 @@ export class SatValRenderer {
                     this.program = createProgram(gl, SATVAL_VERT_SRC, SATVAL_FRAG_SRC_HSLUV)!
                     break
             }
-            gl.bindAttribLocation(this.program, 0, "a_position")
-            this.colorLocation = gl.getUniformLocation(this.program, "u_color")!
+            gl.bindAttribLocation(this.program!, 0, "a_position")
+            this.colorLocation = gl.getUniformLocation(this.program!, "u_color")!
             this.prevColorType = colorType
         }
 

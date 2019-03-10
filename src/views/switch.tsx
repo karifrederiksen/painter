@@ -3,7 +3,7 @@ import styled from "../styled"
 import { withTheme } from "../styled"
 import { Theme } from "../theme"
 
-export type SwitchProps = {
+export interface SwitchProps {
     readonly checked: boolean
     readonly onCheck: (checked: boolean) => void
     readonly color?: string

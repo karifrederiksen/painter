@@ -120,9 +120,9 @@ export class Menu<a> extends React.Component<Props<a>, State> {
                         </>
                     ) : (
                         <SelectedDisplay onMouseDown={this.openMenu}>
-                            {show(choices.focus)}
+                            {/* {show(choices.focus)} */}
                         </SelectedDisplay>
-                    )}
+                    )} 
                 </div>
             </Container>
         )
