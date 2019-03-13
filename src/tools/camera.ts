@@ -1,5 +1,5 @@
 import * as Input from "../input"
-import { Case, Vec2 } from "../util"
+import { Vec2 } from "../util"
 
 export interface State {
     readonly offsetPx: Vec2
@@ -7,16 +7,23 @@ export interface State {
     readonly rotationRad: number
 }
 
-export const enum MsgType {
-    SetZoom,
-    SetOffset,
-    SetRotation,
+class SetZoomMsg {
+    private nominal: void
+    constructor(readonly zoomPct: number) {}
+}
+class SetOffsetMsg {
+    private nominal: void
+    constructor(readonly offsetPx: Vec2) {}
+}
+class SetRotationMsg {
+    private nominal: void
+    constructor(readonly rotationRad: number) {}
 }
 
 export type Msg =
-    | Case<MsgType.SetZoom, number>
-    | Case<MsgType.SetOffset, Vec2>
-    | Case<MsgType.SetRotation, number>
+    | SetZoomMsg
+    | SetOffsetMsg
+    | SetRotationMsg
 
 export function init(): State {
     return {
@@ -27,14 +34,17 @@ export function init(): State {
 }
 
 export function update(state: State, msg: Msg): State {
-    switch (msg.type) {
-        case MsgType.SetZoom:
-            return { ...state, zoomPct: msg.value }
-        case MsgType.SetOffset:
-            return { ...state, offsetPx: msg.value }
-        case MsgType.SetRotation:
-            return { ...state, rotationRad: msg.value }
+    if (msg instanceof SetZoomMsg) {
+        return { ...state, zoomPct: msg.zoomPct }
     }
+    if (msg instanceof SetOffsetMsg) {
+        return { ...state, offsetPx: msg.offsetPx }
+    }
+    if (msg instanceof SetRotationMsg) {
+        return { ...state, rotationRad: msg.rotationRad }
+    }
+    const never: never = msg
+    throw { "unexpected msg": msg }
 }
 
 export interface MsgSender {
@@ -45,9 +55,9 @@ export interface MsgSender {
 
 export function createSender(sendMessage: (msg: Msg) => void): MsgSender {
     return {
-        setRotation: pct => sendMessage({ type: MsgType.SetRotation, value: pct }),
-        setOffset: xyPct => sendMessage({ type: MsgType.SetOffset, value: xyPct }),
-        setZoom: pct => sendMessage({ type: MsgType.SetZoom, value: pct }),
+        setRotation: pct => sendMessage(new SetRotationMsg(pct)),
+        setOffset: xyPx => sendMessage(new SetOffsetMsg(xyPx)),
+        setZoom: pct => sendMessage(new SetZoomMsg(pct)),
     }
 }
 
@@ -58,7 +68,7 @@ export function zoomToolUpdate(
 ): Msg {
     const xd = input.x - dragState.prevPoint.x
     const zoomPct = camera.zoomPct + xd / 150
-    return { type: MsgType.SetZoom, value: zoomPct }
+    return new SetZoomMsg(zoomPct)
 }
 
 export function rotateToolUpdate(
@@ -70,7 +80,7 @@ export function rotateToolUpdate(
         input.y - dragState.clickPoint.y,
         input.x - dragState.clickPoint.x
     )
-    return { type: MsgType.SetRotation, value: rotationRad }
+    return new SetRotationMsg(rotationRad)
 }
 
 export function moveToolUpdate(
@@ -81,5 +91,5 @@ export function moveToolUpdate(
     const xd = input.x - dragState.prevPoint.x
     const yd = input.y - dragState.prevPoint.y
     const offset = new Vec2(camera.offsetPx.x + xd, camera.offsetPx.y + yd)
-    return { type: MsgType.SetOffset, value: offset }
+    return new SetOffsetMsg(offset)
 }

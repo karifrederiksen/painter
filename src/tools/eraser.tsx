@@ -7,31 +7,50 @@ import * as BrushShader from "../canvas/brushShader"
 import * as Camera from "./camera"
 import * as Input from "../input"
 import * as Color from "color"
-import { T2, Case, Vec2, clamp } from "../util"
+import { T2, Vec2, clamp } from "../util"
 import { Surface } from "../views/surface"
 import { Labeled } from "../views/labeled"
 import { Slider } from "../views/slider"
 import { InlineLabeled } from "../views/inlineLabeled"
 import { Switch } from "../views/switch"
 
-const enum MsgType {
-    SetDiameter,
-    SetSoftness,
-    SetOpacity,
-    SetSpacing,
-    SetPressureAffectsOpacity,
-    SetPressureAffectsSize,
-    SetDelay,
+class SetDiameterMsg {
+    private nominal: void
+    constructor(readonly diameterPx: number) {}
+}
+class SetSoftnessMsg {
+    private nominal: void
+    constructor(readonly softnessPct: number) {}
+}
+class SetOpacityMsg {
+    private nominal: void
+    constructor(readonly opacityPct: number) {}
+}
+class SetSpacingMsg {
+    private nominal: void
+    constructor(readonly spacingPct: number) {}
+}
+class SetPressureAffectsOpacityMsg {
+    private nominal: void
+    constructor(readonly pressureAffectsOpacity: boolean) {}
+}
+class SetPressureAffectsSizeMsg {
+    private nominal: void
+    constructor(readonly pressureAffectsSize: boolean) {}
+}
+class SetDelayMsg {
+    private nominal: void
+    constructor(readonly delayMs: number) {}
 }
 
 export type Msg =
-    | Case<MsgType.SetDiameter, number>
-    | Case<MsgType.SetSoftness, number>
-    | Case<MsgType.SetOpacity, number>
-    | Case<MsgType.SetSpacing, number>
-    | Case<MsgType.SetPressureAffectsOpacity, boolean>
-    | Case<MsgType.SetPressureAffectsSize, boolean>
-    | Case<MsgType.SetDelay, number>
+    | SetDiameterMsg
+    | SetSoftnessMsg
+    | SetOpacityMsg
+    | SetSpacingMsg
+    | SetPressureAffectsOpacityMsg
+    | SetPressureAffectsSizeMsg
+    | SetDelayMsg
 
 export interface MsgSender {
     setDelay(ms: number): void
@@ -45,15 +64,15 @@ export interface MsgSender {
 
 export function createBrushSender(sendMessage: (msg: Msg) => void): MsgSender {
     return {
-        setDelay: ms => sendMessage({ type: MsgType.SetDelay, value: ms }),
-        setDiameter: px => sendMessage({ type: MsgType.SetDiameter, value: px }),
-        setSoftness: pct => sendMessage({ type: MsgType.SetSoftness, value: pct }),
-        setOpacity: pct => sendMessage({ type: MsgType.SetOpacity, value: pct }),
-        setSpacing: px => sendMessage({ type: MsgType.SetSpacing, value: px }),
+        setDelay: ms => sendMessage(new SetDelayMsg(ms)),
+        setDiameter: px => sendMessage(new SetDiameterMsg(px)),
+        setSoftness: pct => sendMessage(new SetSoftnessMsg(pct)),
+        setOpacity: pct => sendMessage(new SetOpacityMsg(pct)),
+        setSpacing: px => sendMessage(new SetSpacingMsg(px)),
         setPressureAffectsOpacity: x =>
-            sendMessage({ type: MsgType.SetPressureAffectsOpacity, value: x }),
+            sendMessage(new SetPressureAffectsOpacityMsg(x)),
         setPressureAffectsSize: x =>
-            sendMessage({ type: MsgType.SetPressureAffectsSize, value: x }),
+            sendMessage(new SetPressureAffectsSizeMsg(x)),
     }
 }
 
@@ -89,22 +108,29 @@ export function init(): State {
 }
 
 export function update(state: State, msg: Msg): State {
-    switch (msg.type) {
-        case MsgType.SetDiameter:
-            return { ...state, diameterPx: clamp(0.1, 500, msg.value) }
-        case MsgType.SetSoftness:
-            return { ...state, softness: clamp(0, 1, msg.value) }
-        case MsgType.SetOpacity:
-            return { ...state, flowPct: clamp(0.01, 1, msg.value) }
-        case MsgType.SetSpacing:
-            return { ...state, spacingPct: clamp(0.01, 1, msg.value) }
-        case MsgType.SetPressureAffectsOpacity:
-            return { ...state, pressureAffectsOpacity: msg.value }
-        case MsgType.SetPressureAffectsSize:
-            return { ...state, pressureAffectsSize: msg.value }
-        case MsgType.SetDelay:
-            return { ...state, delay: BrushDelay.delay(clamp(0, 500, msg.value)) }
+    if (msg instanceof SetDiameterMsg) {
+        return { ...state, diameterPx: clamp(0.1, 500, msg.diameterPx) }
     }
+    if (msg instanceof SetSoftnessMsg) {
+        return { ...state, softness: clamp(0, 1, msg.softnessPct) }
+    }
+    if (msg instanceof SetOpacityMsg) {
+        return { ...state, flowPct: clamp(0.01, 1, msg.opacityPct) }
+    }
+    if (msg instanceof SetSpacingMsg) {
+        return { ...state, spacingPct: clamp(0.01, 1, msg.spacingPct) }
+    }
+    if (msg instanceof SetPressureAffectsOpacityMsg) {
+        return { ...state, pressureAffectsOpacity: msg.pressureAffectsOpacity }
+    }
+    if (msg instanceof SetPressureAffectsSizeMsg) {
+        return { ...state, pressureAffectsSize: msg.pressureAffectsSize }
+    }
+    if (msg instanceof SetDelayMsg) {
+        return { ...state, delay: BrushDelay.delay(clamp(0, 500, msg.delayMs)) }
+    }
+    const never: never = msg
+    throw { "unexpected message": msg } 
 }
 
 export function onClick(

@@ -10,11 +10,6 @@ export * from "./frameStream"
 
 export * from "./perfTracker"
 
-export interface Case<type, value = undefined> {
-    readonly type: type
-    readonly value: value
-}
-
 export type Brand<a, brand> = a & { "@..brand": brand }
 
 export class Lazy<a> {

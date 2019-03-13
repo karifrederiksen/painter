@@ -1,4 +1,4 @@
-import { Brand, orDefault, arrUpdate, arrInsert, T2, arrRemove, Case } from "../util"
+import { Brand, orDefault, arrUpdate, arrInsert, T2, arrRemove } from "../util"
 import { Stack, PushArray } from "../collections"
 
 export type Id = Brand<number, "LayerId">
@@ -202,20 +202,33 @@ export interface SplitLayers {
     readonly below: ReadonlyArray<CollectedLayer>
 }
 
-export enum LayersMsgType {
-    NewLayer,
-    Remove,
-    Select,
-    SetOpacity,
-    SetHidden,
+class NewLayerMsg {
+    private nominal: void
+    constructor(readonly id: Id) {}
+}
+class RemoveMsg {
+    private nominal: void
+    constructor(readonly id: Id) {}
+}
+class SelectMsg {
+    private nominal: void
+    constructor(readonly id: Id) {}
+}
+class SetOpacityMsg {
+    private nominal: void
+    constructor(readonly id: Id, readonly opacity: number) {}
+}
+class SetHiddenMsg {
+    private nominal: void
+    constructor(readonly id: Id, readonly isHidden: boolean) {}
 }
 
 export type Msg =
-    | Case<LayersMsgType.NewLayer, Id>
-    | Case<LayersMsgType.Remove, Id>
-    | Case<LayersMsgType.Select, Id>
-    | Case<LayersMsgType.SetOpacity, T2<Id, number>>
-    | Case<LayersMsgType.SetHidden, T2<Id, boolean>>
+    | NewLayerMsg
+    | RemoveMsg
+    | SelectMsg
+    | SetOpacityMsg
+    | SetHiddenMsg
 
 export interface MsgSender {
     newLayer(id: Id): void
@@ -227,13 +240,11 @@ export interface MsgSender {
 
 export function createSender(sendMessage: (msg: Msg) => void): MsgSender {
     return {
-        newLayer: id => sendMessage({ type: LayersMsgType.NewLayer, value: id }),
-        removeLayer: id => sendMessage({ type: LayersMsgType.Remove, value: id }),
-        selectLayer: id => sendMessage({ type: LayersMsgType.Select, value: id }),
-        setOpacity: (id, opacity) =>
-            sendMessage({ type: LayersMsgType.SetOpacity, value: [id, opacity] }),
-        setHidden: (id, isHidden) =>
-            sendMessage({ type: LayersMsgType.SetHidden, value: [id, isHidden] }),
+        newLayer: id => sendMessage(new NewLayerMsg(id)),
+        removeLayer: id => sendMessage(new RemoveMsg(id)),
+        selectLayer: id => sendMessage(new SelectMsg(id)),
+        setOpacity: (id, opacity) => sendMessage(new SetOpacityMsg(id, opacity)),
+        setHidden: (id, isHidden) => sendMessage(new SetHiddenMsg(id, isHidden)),
     }
 }
 
@@ -259,37 +270,33 @@ export class State {
     }
 
     update(msg: Msg): State {
-        switch (msg.type) {
-            case LayersMsgType.NewLayer: {
-                return this.current().id === msg.value ? this.newLayer() : this
-            }
-
-            case LayersMsgType.Remove: {
-                return this.current().id === msg.value ? this.removeCurrent() : this
-            }
-
-            case LayersMsgType.Select: {
-                return this.current().id === msg.value ? this : this.select(msg.value)
-            }
-
-            case LayersMsgType.SetOpacity: {
-                const [msgLayerId, opacity] = msg.value
-                const current = this.current()
-
-                return current.id === msgLayerId
-                    ? this.updateCurrent(x => x.with({ opacity }))
-                    : this
-            }
-
-            case LayersMsgType.SetHidden: {
-                const [msgLayerId, isHidden] = msg.value
-                const current = this.current()
-
-                return current.id === msgLayerId
-                    ? this.updateCurrent(x => x.with({ isHidden }))
-                    : this
-            }
+        if (msg instanceof NewLayerMsg) {
+            return this.current().id === msg.id ? this.newLayer() : this
         }
+        if (msg instanceof RemoveMsg) {
+            return this.current().id === msg.id ? this.removeCurrent() : this
+        }
+        if (msg instanceof SelectMsg) {
+            return this.current().id === msg.id ? this : this.select(msg.id)
+        }
+        if (msg instanceof SetOpacityMsg) {
+            const { id, opacity } = msg
+            const current = this.current()
+
+            return current.id === id
+                ? this.updateCurrent(x => x.with({ opacity }))
+                : this
+        }
+        if (msg instanceof SetHiddenMsg) {
+            const { id, isHidden } = msg
+            const current = this.current()
+
+            return current.id === id
+                ? this.updateCurrent(x => x.with({ isHidden }))
+                : this
+        }
+        const never: never = msg
+        throw { "unexpected msg": msg }
     }
 
     split(): SplitLayers {

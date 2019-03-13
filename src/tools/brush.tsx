@@ -7,7 +7,7 @@ import * as BrushShader from "../canvas/brushShader"
 import * as Camera from "./camera"
 import * as Input from "../input"
 import * as Color from "color"
-import { T2, Case, Vec2, ColorMode, colorModeToString, clamp } from "../util"
+import { T2, Vec2, ColorMode, colorModeToString, clamp } from "../util"
 import { ZipperList } from "../collections/zipperList"
 import { Menu } from "../views/menu"
 import { ColorWheel } from "../views/colorWheel"
@@ -18,30 +18,58 @@ import { Switch } from "../views/switch"
 import { ColorDisplay } from "../views/colorDisplay"
 import { Surface } from "../views/surface"
 
-const enum MsgType {
-    SetDiameter,
-    SetSoftness,
-    SetOpacity,
-    SetColor,
-    SetColorMode,
-    SetSpacing,
-    SetPressureAffectsOpacity,
-    SetPressureAffectsSize,
-    SwapColor,
-    SetDelay,
+class SetDiameterMsg {
+    private nominal: void
+    constructor(readonly diameterPx: number) {}
+}
+class SetSoftnessMsg {
+    private nominal: void
+    constructor(readonly softnessPct: number) {}
+}
+class SetOpacityMsg {
+    private nominal: void
+    constructor(readonly opacityPct: number) {}
+}
+class SetColorMsg {
+    private nominal: void
+    constructor(readonly color: Color.Hsluv) {}
+}
+class SetColorModeMsg {
+    private nominal: void
+    constructor(readonly mode: ColorMode) {}
+}
+class SetSpacingMsg {
+    private nominal: void
+    constructor(readonly spacingPct: number) {}
+}
+class SetPressureAffectsOpacityMsg {
+    private nominal: void
+    constructor(readonly pressureAffectsOpacity: boolean) {}
+}
+class SetPressureAffectsSizeMsg {
+    private nominal: void
+    constructor(readonly pressureAffectsSize: boolean) {}
+}
+class SwapColorMsg {
+    private nominal: void
+    constructor() {}
+}
+class SetDelayMsg {
+    private nominal: void
+    constructor(readonly delayMs: number) {}
 }
 
 export type Msg =
-    | Case<MsgType.SetDiameter, number>
-    | Case<MsgType.SetSoftness, number>
-    | Case<MsgType.SetOpacity, number>
-    | Case<MsgType.SetColor, Color.Hsluv>
-    | Case<MsgType.SetColorMode, ColorMode>
-    | Case<MsgType.SetSpacing, number>
-    | Case<MsgType.SetPressureAffectsOpacity, boolean>
-    | Case<MsgType.SetPressureAffectsSize, boolean>
-    | Case<MsgType.SwapColor>
-    | Case<MsgType.SetDelay, number>
+    | SetDiameterMsg
+    | SetSoftnessMsg
+    | SetOpacityMsg
+    | SetColorMsg
+    | SetColorModeMsg
+    | SetSpacingMsg
+    | SetPressureAffectsOpacityMsg
+    | SetPressureAffectsSizeMsg
+    | SwapColorMsg
+    | SetDelayMsg
 
 export interface MsgSender {
     setColor(color: Color.Hsluv): void
@@ -58,18 +86,18 @@ export interface MsgSender {
 
 export function createBrushSender(sendMessage: (msg: Msg) => void): MsgSender {
     return {
-        setColor: color => sendMessage({ type: MsgType.SetColor, value: color }),
-        setColorMode: mode => sendMessage({ type: MsgType.SetColorMode, value: mode }),
-        setDelay: ms => sendMessage({ type: MsgType.SetDelay, value: ms }),
-        setDiameter: px => sendMessage({ type: MsgType.SetDiameter, value: px }),
-        setOpacity: pct => sendMessage({ type: MsgType.SetOpacity, value: pct }),
-        setSoftness: pct => sendMessage({ type: MsgType.SetSoftness, value: pct }),
-        setSpacing: px => sendMessage({ type: MsgType.SetSpacing, value: px }),
+        setColor: color => sendMessage(new SetColorMsg(color)),
+        setColorMode: mode => sendMessage(new SetColorModeMsg(mode)),
+        setDelay: ms => sendMessage(new SetDelayMsg(ms)),
+        setDiameter: px => sendMessage(new SetDiameterMsg(px)),
+        setOpacity: pct => sendMessage(new SetOpacityMsg(pct)),
+        setSoftness: pct => sendMessage(new SetSoftnessMsg(pct)),
+        setSpacing: px => sendMessage(new SetSpacingMsg(px)),
         setPressureAffectsOpacity: x =>
-            sendMessage({ type: MsgType.SetPressureAffectsOpacity, value: x }),
+            sendMessage(new SetPressureAffectsOpacityMsg(x)),
         setPressureAffectsSize: x =>
-            sendMessage({ type: MsgType.SetPressureAffectsSize, value: x }),
-        swapColorFrom: () => sendMessage({ type: MsgType.SwapColor, value: undefined }),
+            sendMessage(new SetPressureAffectsSizeMsg(x)),
+        swapColorFrom: () => sendMessage(new SwapColorMsg()),
     }
 }
 
@@ -113,35 +141,42 @@ export function init(): State {
 }
 
 export function update(state: State, msg: Msg): State {
-    switch (msg.type) {
-        case MsgType.SetDiameter:
-            return { ...state, diameterPx: clamp(0.1, 500, msg.value) }
-        case MsgType.SetSoftness:
-            return { ...state, softness: clamp(0, 1, msg.value) }
-        case MsgType.SetOpacity:
-            return { ...state, flowPct: clamp(0.01, 1, msg.value) }
-        case MsgType.SetColor: {
-            return { ...state, color: msg.value }
-        }
-        case MsgType.SetColorMode: {
-            return { ...state, colorMode: state.colorMode.focusf(x => x === msg.value) }
-        }
-        case MsgType.SetSpacing:
-            return { ...state, spacingPct: clamp(0.01, 1, msg.value) }
-        case MsgType.SetPressureAffectsOpacity:
-            return { ...state, pressureAffectsOpacity: msg.value }
-        case MsgType.SetPressureAffectsSize:
-            return { ...state, pressureAffectsSize: msg.value }
-        case MsgType.SwapColor: {
-            return {
-                ...state,
-                color: state.colorSecondary,
-                colorSecondary: state.color,
-            }
-        }
-        case MsgType.SetDelay:
-            return { ...state, delay: BrushDelay.delay(clamp(0, 500, msg.value)) }
+    if (msg instanceof SetDiameterMsg) {
+        return { ...state, diameterPx: clamp(0.1, 500, msg.diameterPx) }
     }
+    if (msg instanceof SetSoftnessMsg) {
+        return { ...state, softness: clamp(0, 1, msg.softnessPct) }
+    }
+    if (msg instanceof SetOpacityMsg) {
+        return { ...state, flowPct: clamp(0.01, 1, msg.opacityPct) }
+    }
+    if (msg instanceof SetColorMsg) {
+        return { ...state, color: msg.color }
+    }
+    if (msg instanceof SetColorModeMsg) {
+        return { ...state, colorMode: state.colorMode.focusf(x => x === msg.mode) }
+    }
+    if (msg instanceof SetSpacingMsg) {
+        return { ...state, spacingPct: clamp(0.01, 1, msg.spacingPct) }
+    }
+    if (msg instanceof SetPressureAffectsOpacityMsg) {
+        return { ...state, pressureAffectsOpacity: msg.pressureAffectsOpacity }
+    }
+    if (msg instanceof SetPressureAffectsSizeMsg) {
+        return { ...state, pressureAffectsSize: msg.pressureAffectsSize }
+    }
+    if (msg instanceof SwapColorMsg) {
+        return {
+            ...state,
+            color: state.colorSecondary,
+            colorSecondary: state.color,
+        }
+    }
+    if (msg instanceof SetDelayMsg) {
+        return { ...state, delay: BrushDelay.delay(clamp(0, 500, msg.delayMs)) }
+    }
+    const never: never = msg
+    throw { "unexpected msg": msg }
 }
 
 export function onClick(
