@@ -1,7 +1,7 @@
 import { Stack } from "./stack"
 
 describe("Stack", () => {
-    const testStacks: ReadonlyArray<Stack.Stack<any>> = [
+    const testStacks: readonly Stack.Stack<any>[] = [
         Stack.empty(),
         Stack.empty().cons(1),
         Stack.fromArray([1, 2, 3, 4]),
@@ -64,7 +64,7 @@ describe("Stack", () => {
     })
 
     test("(foldl) and (toArray >> reduce) are equivalent for functions with 2 argument", () => {
-        const fns: ReadonlyArray<(x: number, y: number) => any> = [
+        const fns: readonly ((x: number, y: number) => any)[] = [
             (x: number, y: number) => x + y,
             (x: number, y: number) => x * y,
             (x: number, y: number) => x + ", " + y,

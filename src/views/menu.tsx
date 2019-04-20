@@ -2,7 +2,6 @@ import * as React from "react"
 import styled, { Rem } from "../styled"
 import { ZipperList } from "../collections/zipperList"
 
-
 const Container = styled.div`
     background-color: ${p => p.theme.color.surface.toStyle()};
     color: ${p => p.theme.color.onSurface.toStyle()};
@@ -84,7 +83,6 @@ const Menu_ = React.memo(function<a>(props: Props<a>) {
     const [isExpanded, setIsExpanded] = React.useState(false)
     const [listeningToGlobal, setListeningToGlobal] = React.useState(false)
 
-
     function onGlobalClick(ev: MouseEvent) {
         let target = ev.target as HTMLElement
         while (target.parentElement !== null) {
@@ -100,9 +98,13 @@ const Menu_ = React.memo(function<a>(props: Props<a>) {
         props.onSelect(val)
     }
 
-    function openMenu() { setIsExpanded(true) }
+    function openMenu() {
+        setIsExpanded(true)
+    }
 
-    function closeMenu() { setIsExpanded(false) }
+    function closeMenu() {
+        setIsExpanded(false)
+    }
 
     React.useEffect(() => {
         if (isExpanded && !listeningToGlobal) {
@@ -113,11 +115,11 @@ const Menu_ = React.memo(function<a>(props: Props<a>) {
             return () => {
                 document.body.removeEventListener("mousedown", onGlobalClick)
             }
-        } 
+        }
         if (listeningToGlobal) {
             setListeningToGlobal(false)
         }
-        return () => { }
+        return () => {}
     }, [isExpanded, listeningToGlobal])
 
     return (
@@ -158,10 +160,8 @@ const Menu_ = React.memo(function<a>(props: Props<a>) {
                         </SelectableOptions>
                     </>
                 ) : (
-                    <SelectedDisplay onMouseDown={openMenu}>
-                        {show(choices.focus)}
-                    </SelectedDisplay>
-                )} 
+                    <SelectedDisplay onMouseDown={openMenu}>{show(choices.focus)}</SelectedDisplay>
+                )}
             </div>
         </Container>
     )

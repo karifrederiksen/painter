@@ -115,7 +115,7 @@ export class Shader {
         return this.offset > 0
     }
 
-    addPoints(points: ReadonlyArray<BrushPoint>): void {
+    addPoints(points: readonly BrushPoint[]): void {
         const nextOffset = 6 * floatsPerVertex * points.length + this.offset
         while (nextOffset > this.array.length) {
             this.array = doubleSize(this.array)

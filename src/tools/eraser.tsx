@@ -14,35 +14,6 @@ import { Slider } from "../views/slider"
 import { InlineLabeled } from "../views/inlineLabeled"
 import { Switch } from "../views/switch"
 
-class SetDiameterMsg {
-    private nominal: void
-    constructor(readonly diameterPx: number) {}
-}
-class SetSoftnessMsg {
-    private nominal: void
-    constructor(readonly softnessPct: number) {}
-}
-class SetOpacityMsg {
-    private nominal: void
-    constructor(readonly opacityPct: number) {}
-}
-class SetSpacingMsg {
-    private nominal: void
-    constructor(readonly spacingPct: number) {}
-}
-class SetPressureAffectsOpacityMsg {
-    private nominal: void
-    constructor(readonly pressureAffectsOpacity: boolean) {}
-}
-class SetPressureAffectsSizeMsg {
-    private nominal: void
-    constructor(readonly pressureAffectsSize: boolean) {}
-}
-class SetDelayMsg {
-    private nominal: void
-    constructor(readonly delayMs: number) {}
-}
-
 export type Msg =
     | SetDiameterMsg
     | SetSoftnessMsg
@@ -51,6 +22,52 @@ export type Msg =
     | SetPressureAffectsOpacityMsg
     | SetPressureAffectsSizeMsg
     | SetDelayMsg
+
+export const enum MsgType {
+    SetDiameterMsg,
+    SetSoftnessMsg,
+    SetOpacityMsg,
+    SetSpacingMsg,
+    SetPressureAffectsOpacityMsg,
+    SetPressureAffectsSizeMsg,
+    SetDelayMsg,
+}
+
+class SetDiameterMsg {
+    readonly type: MsgType.SetDiameterMsg = MsgType.SetDiameterMsg
+    private nominal: void
+    constructor(readonly diameterPx: number) {}
+}
+class SetSoftnessMsg {
+    readonly type: MsgType.SetSoftnessMsg = MsgType.SetSoftnessMsg
+    private nominal: void
+    constructor(readonly softnessPct: number) {}
+}
+class SetOpacityMsg {
+    readonly type: MsgType.SetOpacityMsg = MsgType.SetOpacityMsg
+    private nominal: void
+    constructor(readonly opacityPct: number) {}
+}
+class SetSpacingMsg {
+    readonly type: MsgType.SetSpacingMsg = MsgType.SetSpacingMsg
+    private nominal: void
+    constructor(readonly spacingPct: number) {}
+}
+class SetPressureAffectsOpacityMsg {
+    readonly type: MsgType.SetPressureAffectsOpacityMsg = MsgType.SetPressureAffectsOpacityMsg
+    private nominal: void
+    constructor(readonly pressureAffectsOpacity: boolean) {}
+}
+class SetPressureAffectsSizeMsg {
+    readonly type: MsgType.SetPressureAffectsSizeMsg = MsgType.SetPressureAffectsSizeMsg
+    private nominal: void
+    constructor(readonly pressureAffectsSize: boolean) {}
+}
+class SetDelayMsg {
+    readonly type: MsgType.SetDelayMsg = MsgType.SetDelayMsg
+    private nominal: void
+    constructor(readonly delayMs: number) {}
+}
 
 export interface MsgSender {
     setDelay(ms: number): void
@@ -69,10 +86,8 @@ export function createBrushSender(sendMessage: (msg: Msg) => void): MsgSender {
         setSoftness: pct => sendMessage(new SetSoftnessMsg(pct)),
         setOpacity: pct => sendMessage(new SetOpacityMsg(pct)),
         setSpacing: px => sendMessage(new SetSpacingMsg(px)),
-        setPressureAffectsOpacity: x =>
-            sendMessage(new SetPressureAffectsOpacityMsg(x)),
-        setPressureAffectsSize: x =>
-            sendMessage(new SetPressureAffectsSizeMsg(x)),
+        setPressureAffectsOpacity: x => sendMessage(new SetPressureAffectsOpacityMsg(x)),
+        setPressureAffectsSize: x => sendMessage(new SetPressureAffectsSizeMsg(x)),
     }
 }
 
@@ -108,29 +123,25 @@ export function init(): State {
 }
 
 export function update(state: State, msg: Msg): State {
-    if (msg instanceof SetDiameterMsg) {
-        return { ...state, diameterPx: clamp(0.1, 500, msg.diameterPx) }
+    switch (msg.type) {
+        case MsgType.SetDiameterMsg:
+            return { ...state, diameterPx: clamp(0.1, 500, msg.diameterPx) }
+        case MsgType.SetSoftnessMsg:
+            return { ...state, softness: clamp(0, 1, msg.softnessPct) }
+        case MsgType.SetOpacityMsg:
+            return { ...state, flowPct: clamp(0.01, 1, msg.opacityPct) }
+        case MsgType.SetSpacingMsg:
+            return { ...state, spacingPct: clamp(0.01, 1, msg.spacingPct) }
+        case MsgType.SetPressureAffectsOpacityMsg:
+            return { ...state, pressureAffectsOpacity: msg.pressureAffectsOpacity }
+        case MsgType.SetPressureAffectsSizeMsg:
+            return { ...state, pressureAffectsSize: msg.pressureAffectsSize }
+        case MsgType.SetDelayMsg:
+            return { ...state, delay: BrushDelay.delay(clamp(0, 500, msg.delayMs)) }
+        default:
+            const never: never = msg
+            throw { "unexpected message": msg }
     }
-    if (msg instanceof SetSoftnessMsg) {
-        return { ...state, softness: clamp(0, 1, msg.softnessPct) }
-    }
-    if (msg instanceof SetOpacityMsg) {
-        return { ...state, flowPct: clamp(0.01, 1, msg.opacityPct) }
-    }
-    if (msg instanceof SetSpacingMsg) {
-        return { ...state, spacingPct: clamp(0.01, 1, msg.spacingPct) }
-    }
-    if (msg instanceof SetPressureAffectsOpacityMsg) {
-        return { ...state, pressureAffectsOpacity: msg.pressureAffectsOpacity }
-    }
-    if (msg instanceof SetPressureAffectsSizeMsg) {
-        return { ...state, pressureAffectsSize: msg.pressureAffectsSize }
-    }
-    if (msg instanceof SetDelayMsg) {
-        return { ...state, delay: BrushDelay.delay(clamp(0, 500, msg.delayMs)) }
-    }
-    const never: never = msg
-    throw { "unexpected message": msg } 
 }
 
 export function onClick(
@@ -149,7 +160,7 @@ export function onDrag(
     state: State,
     tempState: EphemeralState,
     input: Input.PointerInput
-): T2<EphemeralState, ReadonlyArray<BrushShader.BrushPoint>> {
+): T2<EphemeralState, readonly BrushShader.BrushPoint[]> {
     if (tempState === null) {
         const res = onClick(camera, state, input)
         return [res[0], [res[1]]]
@@ -176,7 +187,7 @@ export function onFrame(
     state: State,
     tempState: EphemeralState,
     currentTime: number
-): T2<EphemeralState, ReadonlyArray<BrushShader.BrushPoint>> {
+): T2<EphemeralState, readonly BrushShader.BrushPoint[]> {
     if (tempState === null) return [null, []]
     if (state.delay.duration < 0) return [null, []]
 
@@ -200,7 +211,7 @@ export function onRelease(
     state: State,
     tempState: EphemeralState,
     input: Input.PointerInput
-): T2<EphemeralState, ReadonlyArray<BrushShader.BrushPoint>> {
+): T2<EphemeralState, readonly BrushShader.BrushPoint[]> {
     if (tempState === null) return [null, []]
 
     return [null, []]

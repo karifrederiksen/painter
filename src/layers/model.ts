@@ -47,7 +47,7 @@ export class GroupLayer {
         readonly name: string,
         readonly opacity: number,
         readonly isHidden: boolean,
-        readonly children: ReadonlyArray<Layer>
+        readonly children: readonly Layer[]
     ) {}
 
     get isLeaf(): false {
@@ -68,7 +68,7 @@ export class GroupLayer {
         )
     }
 
-    withChildren(children: ReadonlyArray<Layer>): GroupLayer {
+    withChildren(children: readonly Layer[]): GroupLayer {
         return new GroupLayer(this.id, this.name, this.opacity, this.isHidden, children)
     }
 
@@ -197,39 +197,46 @@ export class GroupLayer {
 export type Layer = LeafLayer | GroupLayer
 
 export interface SplitLayers {
-    readonly above: ReadonlyArray<CollectedLayer>
+    readonly above: readonly CollectedLayer[]
     readonly current: CollectedLayer | null
-    readonly below: ReadonlyArray<CollectedLayer>
+    readonly below: readonly CollectedLayer[]
+}
+
+export type Msg = NewLayerMsg | RemoveMsg | SelectMsg | SetOpacityMsg | SetHiddenMsg
+
+export const enum MsgType {
+    NewLayerMsg,
+    RemoveMsg,
+    SelectMsg,
+    SetOpacityMsg,
+    SetHiddenMsg,
 }
 
 class NewLayerMsg {
+    readonly type: MsgType.NewLayerMsg = MsgType.NewLayerMsg
     private nominal: void
     constructor(readonly id: Id) {}
 }
 class RemoveMsg {
+    readonly type: MsgType.RemoveMsg = MsgType.RemoveMsg
     private nominal: void
     constructor(readonly id: Id) {}
 }
 class SelectMsg {
+    readonly type: MsgType.SelectMsg = MsgType.SelectMsg
     private nominal: void
     constructor(readonly id: Id) {}
 }
 class SetOpacityMsg {
+    readonly type: MsgType.SetOpacityMsg = MsgType.SetOpacityMsg
     private nominal: void
     constructor(readonly id: Id, readonly opacity: number) {}
 }
 class SetHiddenMsg {
+    readonly type: MsgType.SetHiddenMsg = MsgType.SetHiddenMsg
     private nominal: void
     constructor(readonly id: Id, readonly isHidden: boolean) {}
 }
-
-export type Msg =
-    | NewLayerMsg
-    | RemoveMsg
-    | SelectMsg
-    | SetOpacityMsg
-    | SetHiddenMsg
-
 export interface MsgSender {
     newLayer(id: Id): void
     removeLayer(id: Id): void
@@ -270,33 +277,29 @@ export class State {
     }
 
     update(msg: Msg): State {
-        if (msg instanceof NewLayerMsg) {
-            return this.current().id === msg.id ? this.newLayer() : this
-        }
-        if (msg instanceof RemoveMsg) {
-            return this.current().id === msg.id ? this.removeCurrent() : this
-        }
-        if (msg instanceof SelectMsg) {
-            return this.current().id === msg.id ? this : this.select(msg.id)
-        }
-        if (msg instanceof SetOpacityMsg) {
-            const { id, opacity } = msg
-            const current = this.current()
+        switch (msg.type) {
+            case MsgType.NewLayerMsg:
+                return this.current().id === msg.id ? this.newLayer() : this
+            case MsgType.RemoveMsg:
+                return this.current().id === msg.id ? this.removeCurrent() : this
+            case MsgType.SelectMsg:
+                return this.current().id === msg.id ? this : this.select(msg.id)
+            case MsgType.SetOpacityMsg: {
+                const { id, opacity } = msg
+                const current = this.current()
 
-            return current.id === id
-                ? this.updateCurrent(x => x.with({ opacity }))
-                : this
-        }
-        if (msg instanceof SetHiddenMsg) {
-            const { id, isHidden } = msg
-            const current = this.current()
+                return current.id === id ? this.updateCurrent(x => x.with({ opacity })) : this
+            }
+            case MsgType.SetHiddenMsg: {
+                const { id, isHidden } = msg
+                const current = this.current()
 
-            return current.id === id
-                ? this.updateCurrent(x => x.with({ isHidden }))
-                : this
+                return current.id === id ? this.updateCurrent(x => x.with({ isHidden })) : this
+            }
+            default:
+                const never: never = msg
+                throw { "unexpected msg": msg }
         }
-        const never: never = msg
-        throw { "unexpected msg": msg }
     }
 
     split(): SplitLayers {
@@ -304,7 +307,7 @@ export class State {
         const selectedIdx = this.selectedPath.head
         const above: PushArray<CollectedLayer> = []
         const below: PushArray<CollectedLayer> = []
-        const baseOpacity: number = 1
+        const baseOpacity = 1
 
         for (let i = 0; i < selectedIdx; i++) {
             const child = children[i]

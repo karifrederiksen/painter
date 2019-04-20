@@ -64,7 +64,9 @@ function clamp(x: number, min: number, max: number): number {
     return x < min ? min : x > max ? max : x
 }
 
-interface WithClientX { readonly clientX: number }
+interface WithClientX {
+    readonly clientX: number
+}
 
 export const Slider = React.memo((props: SliderProps) => {
     const container = React.useRef<HTMLDivElement | null>(null)

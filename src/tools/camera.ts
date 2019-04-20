@@ -7,23 +7,29 @@ export interface State {
     readonly rotationRad: number
 }
 
+export type Msg = SetZoomMsg | SetOffsetMsg | SetRotationMsg
+
+export const enum MsgType {
+    SetZoomMsg,
+    SetOffsetMsg,
+    SetRotationMsg,
+}
+
 class SetZoomMsg {
+    readonly type: MsgType.SetZoomMsg = MsgType.SetZoomMsg
     private nominal: void
     constructor(readonly zoomPct: number) {}
 }
 class SetOffsetMsg {
+    readonly type: MsgType.SetOffsetMsg = MsgType.SetOffsetMsg
     private nominal: void
     constructor(readonly offsetPx: Vec2) {}
 }
 class SetRotationMsg {
+    readonly type: MsgType.SetRotationMsg = MsgType.SetRotationMsg
     private nominal: void
     constructor(readonly rotationRad: number) {}
 }
-
-export type Msg =
-    | SetZoomMsg
-    | SetOffsetMsg
-    | SetRotationMsg
 
 export function init(): State {
     return {
@@ -34,17 +40,17 @@ export function init(): State {
 }
 
 export function update(state: State, msg: Msg): State {
-    if (msg instanceof SetZoomMsg) {
-        return { ...state, zoomPct: msg.zoomPct }
+    switch (msg.type) {
+        case MsgType.SetZoomMsg:
+            return { ...state, zoomPct: msg.zoomPct }
+        case MsgType.SetOffsetMsg:
+            return { ...state, offsetPx: msg.offsetPx }
+        case MsgType.SetRotationMsg:
+            return { ...state, rotationRad: msg.rotationRad }
+        default:
+            const never: never = msg
+            throw { "unexpected msg": msg }
     }
-    if (msg instanceof SetOffsetMsg) {
-        return { ...state, offsetPx: msg.offsetPx }
-    }
-    if (msg instanceof SetRotationMsg) {
-        return { ...state, rotationRad: msg.rotationRad }
-    }
-    const never: never = msg
-    throw { "unexpected msg": msg }
 }
 
 export interface MsgSender {

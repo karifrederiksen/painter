@@ -7,7 +7,7 @@ export namespace Stack {
         cons(value: a): NonEmpty<a>
         foldl<b>(f: (val: b, next: a) => b, initial: b): b
         reverse(): Stack<a>
-        toArray(): Array<a>
+        toArray(): a[]
         toString(): string
     }
 
@@ -32,7 +32,7 @@ export namespace Stack {
             return this
         }
 
-        toArray(): Array<a> {
+        toArray(): a[] {
             return []
         }
 
@@ -80,8 +80,8 @@ export namespace Stack {
             return reversed
         }
 
-        toArray(): Array<a> {
-            const arr: Array<a> = [this.head]
+        toArray(): a[] {
+            const arr: a[] = [this.head]
             let stack = this.tail
             while (stack.isNonEmpty()) {
                 arr.push(stack.head)
@@ -106,7 +106,7 @@ export namespace Stack {
         return new Empty()
     }
 
-    export function fromArray<a>(arr: ReadonlyArray<a>): Stack<a> {
+    export function fromArray<a>(arr: readonly a[]): Stack<a> {
         let stack: Stack<a> = empty()
         let i = arr.length
         while (i--) {

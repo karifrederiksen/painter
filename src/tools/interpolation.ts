@@ -27,7 +27,7 @@ export function interpolate(
     brush: Interpolatable,
     state: State,
     end: InputPoint
-): T2<State, ReadonlyArray<BrushShader.BrushPoint>> {
+): T2<State, readonly BrushShader.BrushPoint[]> {
     if (state === null) {
         const brushPoint = {
             alpha: end.alpha,
@@ -94,7 +94,7 @@ function interpolateNormal(
     spacingPx: number,
     start: InputPoint,
     end: InputPoint
-): ReadonlyArray<number> {
+): readonly number[] {
     const totalDist = Vec2.distance(start.position, end.position)
 
     const count = Math.floor(totalDist / spacingPx)
@@ -110,8 +110,8 @@ function interpolateWithPressureScaling(
     spacingPx: number,
     start: InputPoint,
     end: InputPoint
-): ReadonlyArray<number> {
-    const arr: Array<number> = []
+): readonly number[] {
+    const arr: number[] = []
     const endX = end.position.x
     const endY = end.position.y
     const endPressure = end.pressure

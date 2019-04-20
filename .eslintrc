@@ -6,11 +6,7 @@
         },
         "ecmaVersion": 2018
     },
-    "plugins": [
-        "@typescript-eslint",
-        "prettier",
-        "react"
-    ],
+    "plugins": ["@typescript-eslint", "prettier", "react"],
     "extends": [
         "plugin:@typescript-eslint/recommended",
         "prettier",
@@ -26,10 +22,7 @@
     },
     "rules": {
         "prettier/prettier": "error",
-        "eqeqeq": [
-            "error",
-            "smart"
-        ],
+        "eqeqeq": ["error", "smart"],
         "semi": ["error", "never"],
         "guard-for-in": "error",
         "no-alert": "error",
@@ -60,10 +53,7 @@
         "@typescript-eslint/explicit-member-accessibility": "off",
         "@typescript-eslint/camelcase": "off",
         "@typescript-eslint/no-parameter-properties": "off",
-        "@typescript-eslint/array-type": [
-            "error",
-            "generic"
-        ],
-        "@typescript-eslint/no-inferrable-types"
+        "@typescript-eslint/array-type": ["error", "array"],
+        "@typescript-eslint/no-inferrable-types": "warn"
     }
 }

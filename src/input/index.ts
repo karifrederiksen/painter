@@ -50,8 +50,8 @@ function getPressure(ev: PointerEvent): number {
     return pointerSupportsPressure[ev.pointerId]
         ? ev.pressure
         : ev.pressure === 0.5
-            ? 1.0
-            : ev.pressure
+        ? 1.0
+        : ev.pressure
 }
 
 function listenForPointers(canvas: HTMLCanvasElement, listeners: Listeners): RemoveListeners {

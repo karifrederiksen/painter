@@ -25,7 +25,7 @@ export interface RenderArgs {
 }
 
 export interface Context {
-    addBrushPoints(brushPoints: ReadonlyArray<BrushShader.BrushPoint>): void
+    addBrushPoints(brushPoints: readonly BrushShader.BrushPoint[]): void
     endStroke(): void
     render(args: RenderArgs): void
     dispose(): void
@@ -121,7 +121,7 @@ interface ContextState {
     readonly drawpointBatch: BrushShader.Shader
     readonly textureMap: Map<TextureId, WebGLTexture>
     readonly framebufferMap: Map<TextureId, WebGLFramebuffer>
-    readonly textureBindings: Array<T2<TextureId | null, number>>
+    readonly textureBindings: T2<TextureId | null, number>[]
     readonly layerTextureMap: Map<Layers.Id, TextureId>
     internalCanvasSize: Vec2
     stroke: Stroke | null
@@ -136,6 +136,24 @@ interface ContextState {
     }
 }
 
+const createTexture = (() => {
+    let nextId = 1
+
+    function createTexture(context: ContextState, size: Vec2): TextureId {
+        const texture = context.gl.createTexture()!
+        const id = (nextId++ as any) as TextureId
+
+        console.info("created texture with id", id)
+
+        context.textureMap.set(id, texture)
+        setTextureSize(context, id, size)
+
+        return id
+    }
+
+    return createTexture
+})()
+
 class InternalContext implements Context, ContextState {
     readonly gl: WebGLRenderingContext
     readonly brushTextureGenerator: BrushTextureShader.Generator
@@ -144,7 +162,7 @@ class InternalContext implements Context, ContextState {
     readonly drawpointBatch: BrushShader.Shader
     readonly textureMap: Map<TextureId, WebGLTexture>
     readonly framebufferMap: Map<TextureId, WebGLFramebuffer>
-    readonly textureBindings: Array<T2<TextureId | null, number>>
+    readonly textureBindings: T2<TextureId | null, number>[]
     readonly layerTextureMap: Map<Layers.Id, TextureId>
     internalCanvasSize: Vec2
     stroke: Stroke | null
@@ -198,7 +216,7 @@ class InternalContext implements Context, ContextState {
         console.info("context", this)
     }
 
-    addBrushPoints(brushPoints: ReadonlyArray<BrushShader.BrushPoint>) {
+    addBrushPoints(brushPoints: readonly BrushShader.BrushPoint[]) {
         addBrushPoints(this, brushPoints)
     }
 
@@ -237,7 +255,7 @@ function mergeAreas(prevArea: Vec4, nextArea: Vec4): Vec4 {
 
 function addBrushPoints(
     context: ContextState,
-    brushPoints: ReadonlyArray<BrushShader.BrushPoint>
+    brushPoints: readonly BrushShader.BrushPoint[]
 ): void {
     context.drawpointBatch.addPoints(brushPoints)
     if (context.stroke == null) {
@@ -374,24 +392,6 @@ function render(
     context.prevLayers = nextLayers
 }
 
-const createTexture = (() => {
-    let nextId = 1
-
-    function createTexture(context: ContextState, size: Vec2): TextureId {
-        const texture = context.gl.createTexture()!
-        const id = (nextId++ as any) as TextureId
-
-        console.info("created texture with id", id)
-
-        context.textureMap.set(id, texture)
-        setTextureSize(context, id, size)
-
-        return id
-    }
-
-    return createTexture
-})()
-
 function addFramebuffer(context: ContextState, id: TextureId): WebGLFramebuffer {
     if (id === null) {
         throw "Id should not be null"
@@ -511,8 +511,8 @@ function setupFb(context: ContextState, id: TextureId): WebGLFramebuffer {
 }
 
 function layersRequireRerender(
-    prev: ReadonlyArray<Layers.CollectedLayer>,
-    next: ReadonlyArray<Layers.CollectedLayer>
+    prev: readonly Layers.CollectedLayer[],
+    next: readonly Layers.CollectedLayer[]
 ): boolean {
     if (prev.length !== next.length) return true
     for (let i = 0; i < next.length; i++) {

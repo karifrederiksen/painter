@@ -5,7 +5,7 @@ export class ZipperList<a> {
         return new ZipperList(Stack.empty(), value, Stack.empty())
     }
 
-    static fromArray<a>(arr: ReadonlyArray<a>): ZipperList<a> | null {
+    static fromArray<a>(arr: readonly a[]): ZipperList<a> | null {
         if (arr.length === 0) return null
 
         let right: Stack.Stack<a> = Stack.empty()
@@ -22,11 +22,11 @@ export class ZipperList<a> {
         private readonly __right: Stack.Stack<a>
     ) {}
 
-    getLeft(): Array<a> {
+    getLeft(): a[] {
         return this.__left.reverse().toArray()
     }
 
-    getRight(): Array<a> {
+    getRight(): a[] {
         return this.__right.toArray()
     }
 
@@ -80,8 +80,8 @@ export class ZipperList<a> {
         return this
     }
 
-    toArray(): Array<a> {
-        const arr: Array<a> = []
+    toArray(): a[] {
+        const arr: a[] = []
         let stack = this.__left.reverse()
         while (stack.isNonEmpty()) {
             arr.push(stack.head)

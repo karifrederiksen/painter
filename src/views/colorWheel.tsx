@@ -83,9 +83,7 @@ export function ColorWheel(props: ColorWheelProps): JSX.Element {
         switch (props.colorType) {
             case ColorMode.Hsv: {
                 const hue = Color.rgbToHsv(props.color.toRgb()).h
-                props.onChange(
-                    Color.rgbToHsluv(Color.hsvToRgb(new Color.Hsv(hue, pctX, pctY)))
-                )
+                props.onChange(Color.rgbToHsluv(Color.hsvToRgb(new Color.Hsv(hue, pctX, pctY))))
                 break
             }
             case ColorMode.Hsluv: {
@@ -180,8 +178,6 @@ export function ColorWheel(props: ColorWheelProps): JSX.Element {
             document.body.removeEventListener("mouseup", onUp)
         }
     }, [])
-
-
 
     return (
         <Container>

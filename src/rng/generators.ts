@@ -73,11 +73,11 @@ export namespace Generators {
         return [[valA, valB, valC], rng3]
     }
 
-    export function array<a>(length: number, gen: Generators<a>): Generators<Array<a>> {
+    export function array<a>(length: number, gen: Generators<a>): Generators<a[]> {
         return rng => array_(length, gen, rng)
     }
 
-    function array_<a>(length: number, gen: Generators<a>, rng: Rng.Seed): GenResult<Array<a>> {
+    function array_<a>(length: number, gen: Generators<a>, rng: Rng.Seed): GenResult<a[]> {
         const arr = new Array(length)
         for (let i = 0; i < length; i++) {
             const [val, nextRng] = gen(rng)
