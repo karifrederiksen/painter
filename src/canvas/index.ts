@@ -10,7 +10,7 @@ import { Vec2, Result, PerfTracker, T3 } from "../util"
 export interface Hooks {
     // readonly onCanvasSnapshot: (snapshot: Snapshot) => void
     // readonly onLayerSnapshot: (snapshot: Snapshot, layerId: number) => void
-    readonly onStats: (stats: readonly PerfTracker.Sample[]) => void
+    readonly onStats: (stats: ReadonlyArray<PerfTracker.Sample>) => void
 }
 
 export interface State {
@@ -114,17 +114,17 @@ class NoOpEffect {
 class FrameEffect {
     readonly type: EffectType.FrameEffect = EffectType.FrameEffect
     private nominal: void
-    constructor(readonly brushPoints: readonly BrushPoint[], readonly state: State) {}
+    constructor(readonly brushPoints: ReadonlyArray<BrushPoint>, readonly state: State) {}
 }
 class BrushPointsEffect {
     readonly type: EffectType.BrushPointsEffect = EffectType.BrushPointsEffect
     private nominal: void
-    constructor(readonly brushPoints: readonly BrushPoint[]) {}
+    constructor(readonly brushPoints: ReadonlyArray<BrushPoint>) {}
 }
 class ReleaseEffect {
     readonly type: EffectType.ReleaseEffect = EffectType.ReleaseEffect
     private nominal: void
-    constructor(readonly brushPoints: readonly BrushPoint[]) {}
+    constructor(readonly brushPoints: ReadonlyArray<BrushPoint>) {}
 }
 
 export interface MsgSender {

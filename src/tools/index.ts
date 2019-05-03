@@ -190,7 +190,7 @@ export function onClick(
     tool: Tool,
     ephemeral_: EphemeralState,
     pointer: Input.PointerInput
-): T3<Tool, EphemeralState, readonly BrushShader.BrushPoint[]> {
+): T3<Tool, EphemeralState, ReadonlyArray<BrushShader.BrushPoint>> {
     const ephemeral = syncEphemeral(tool, ephemeral_)
 
     switch (ephemeral.type) {
@@ -236,7 +236,7 @@ export function onDrag(
     tool: Tool,
     ephemeral_: EphemeralState,
     pointer: Input.PointerInput
-): T3<Tool, EphemeralState, readonly BrushShader.BrushPoint[]> {
+): T3<Tool, EphemeralState, ReadonlyArray<BrushShader.BrushPoint>> {
     const ephemeral = syncEphemeral(tool, ephemeral_)
 
     switch (ephemeral.type) {
@@ -300,7 +300,7 @@ export function onRelease(
     tool: Tool,
     ephemeral_: EphemeralState,
     pointer: Input.PointerInput
-): T3<Tool, EphemeralState, readonly BrushShader.BrushPoint[]> {
+): T3<Tool, EphemeralState, ReadonlyArray<BrushShader.BrushPoint>> {
     const ephemeral = syncEphemeral(tool, ephemeral_)
 
     switch (ephemeral.type) {
@@ -353,7 +353,7 @@ export function onFrame(
     tool: Tool,
     ephemeral_: EphemeralState,
     currentTime: number
-): T2<EphemeralState, readonly BrushShader.BrushPoint[]> {
+): T2<EphemeralState, ReadonlyArray<BrushShader.BrushPoint>> {
     const ephemeral = syncEphemeral(tool, ephemeral_)
 
     switch (ephemeral.type) {

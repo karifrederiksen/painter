@@ -18,7 +18,7 @@ function create(env) {
 
     return {
         mode: env,
-        entry: resolve(__dirname, "src/app/index.tsx"),
+        entry: resolve(__dirname, "src", "app", "index.tsx"),
         output: {
             path: resolve(__dirname, "dist"),
             filename: "[name]-[hash].js",
@@ -47,12 +47,7 @@ function create(env) {
                   ],
         },
         resolve: {
-            extensions: [".ts", ".tsx", ".js", ".json"],
-            alias: isDev
-                ? {
-                      "webpack-hot-client/client": require.resolve("webpack-hot-client/client"),
-                  }
-                : undefined,
+            extensions: [".mjs", ".js", ".ts", ".tsx", ".json"],
         },
         module: {
             rules: [
@@ -60,10 +55,13 @@ function create(env) {
                     test: /\.(jsx?|tsx?)$/,
                     exclude: /node_modules/,
                     use: [
-                        isDev ? null : { loader: "babel-loader", options: babelConfig },
+                        { loader: "babel-loader", options: babelConfig },
                         {
                             loader: "ts-loader",
-                            options: { transpileOnly: true, experimentalWatchApi: true },
+                            options: {
+                                transpileOnly: true,
+                                experimentalWatchApi: true,
+                            },
                         },
                     ].filter(Boolean),
                 },
@@ -83,8 +81,10 @@ function create(env) {
             ],
         },
         plugins: [
-            new ForkTsCheckerPlugin(),
-            new HtmlPlugin({ template: resolve(__dirname, "src/index.html") }),
+            new ForkTsCheckerPlugin({
+                reportFiles: ["src/**/*.{ts,tsx}"],
+            }),
+            new HtmlPlugin({ template: resolve(__dirname, "src", "index.html") }),
             new CleanPlugin(["dist"]),
         ],
         serve: {

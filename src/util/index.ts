@@ -42,7 +42,7 @@ export function orDefault<a>(value: a | undefined, def: a): a {
     return value !== undefined ? value : def
 }
 
-export function range(start: number, end: number): readonly number[] {
+export function range(start: number, end: number): ReadonlyArray<number> {
     const length = end - start + 1
     const arr = new Array<number>(length)
     for (let i = 0; i < length; i++) {
@@ -75,19 +75,19 @@ export function delay(ms: number): Promise<void> {
     })
 }
 
-export function arrUpdate<a>(array: readonly a[], index: number, value: a): readonly a[] {
+export function arrUpdate<a>(array: ReadonlyArray<a>, index: number, value: a): ReadonlyArray<a> {
     const newArr = array.slice()
     newArr.splice(index, 1, value)
     return newArr
 }
 
-export function arrInsert<a>(array: readonly a[], index: number, value: a): readonly a[] {
+export function arrInsert<a>(array: ReadonlyArray<a>, index: number, value: a): ReadonlyArray<a> {
     const newArr = array.slice()
     newArr.splice(index, 0, value)
     return newArr
 }
 
-export function arrRemove<a>(array: readonly a[], index: number): readonly a[] {
+export function arrRemove<a>(array: ReadonlyArray<a>, index: number): ReadonlyArray<a> {
     const newArr = array.slice()
     newArr.splice(index, 1)
     return newArr

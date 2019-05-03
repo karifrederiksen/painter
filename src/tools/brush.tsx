@@ -209,7 +209,7 @@ export function onDrag(
     brush: State,
     state: EphemeralState,
     input: Input.PointerInput
-): T2<EphemeralState, readonly BrushShader.BrushPoint[]> {
+): T2<EphemeralState, ReadonlyArray<BrushShader.BrushPoint>> {
     if (state === null) {
         const res = onClick(camera, brush, input)
         return [res[0], [res[1]]]
@@ -236,7 +236,7 @@ export function onFrame(
     brush: State,
     state: EphemeralState,
     currentTime: number
-): T2<EphemeralState, readonly BrushShader.BrushPoint[]> {
+): T2<EphemeralState, ReadonlyArray<BrushShader.BrushPoint>> {
     if (state === null) return [null, []]
     // if (brush.delay.duration <= 0) return [null, []]
 
@@ -260,7 +260,7 @@ export function onRelease(
     brush: State,
     state: EphemeralState,
     input: Input.PointerInput
-): T2<EphemeralState, readonly BrushShader.BrushPoint[]> {
+): T2<EphemeralState, ReadonlyArray<BrushShader.BrushPoint>> {
     if (state === null) return [null, []]
 
     return [null, []]

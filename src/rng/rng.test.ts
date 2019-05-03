@@ -1,7 +1,7 @@
 import * as Rng from "./rng"
 
 describe("rng", () => {
-    const seeds: readonly Rng.Seed[] = [
+    const seeds: ReadonlyArray<Rng.Seed> = [
         Rng.seed(0),
         Rng.seed(1),
         Rng.seed(2),

@@ -3,7 +3,7 @@ import styled from "../styled"
 
 export interface RowProps {
     readonly spacing?: string
-    readonly children: readonly React.ReactChild[]
+    readonly children: ReadonlyArray<React.ReactChild>
 }
 
 const Row_ = styled.div`

@@ -9,7 +9,8 @@ import * as Canvas from "../canvas"
 import * as Setup from "./setup"
 import { SetOnce, FrameStream, CancelFrameStream, Lazy, Store } from "../util"
 import * as Buttons from "../views/buttons"
-
+import * as Debugging from "../debugging"
+console.log(Debugging)
 // HMR hooks
 declare global {
     interface NodeModule {

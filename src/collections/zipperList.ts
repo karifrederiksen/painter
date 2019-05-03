@@ -5,7 +5,7 @@ export class ZipperList<a> {
         return new ZipperList(Stack.empty(), value, Stack.empty())
     }
 
-    static fromArray<a>(arr: readonly a[]): ZipperList<a> | null {
+    static fromArray<a>(arr: ReadonlyArray<a>): ZipperList<a> | null {
         if (arr.length === 0) return null
 
         let right: Stack.Stack<a> = Stack.empty()

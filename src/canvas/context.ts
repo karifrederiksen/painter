@@ -25,7 +25,7 @@ export interface RenderArgs {
 }
 
 export interface Context {
-    addBrushPoints(brushPoints: readonly BrushShader.BrushPoint[]): void
+    addBrushPoints(brushPoints: ReadonlyArray<BrushShader.BrushPoint>): void
     endStroke(): void
     render(args: RenderArgs): void
     dispose(): void
@@ -216,7 +216,7 @@ class InternalContext implements Context, ContextState {
         console.info("context", this)
     }
 
-    addBrushPoints(brushPoints: readonly BrushShader.BrushPoint[]) {
+    addBrushPoints(brushPoints: ReadonlyArray<BrushShader.BrushPoint>) {
         addBrushPoints(this, brushPoints)
     }
 
@@ -255,7 +255,7 @@ function mergeAreas(prevArea: Vec4, nextArea: Vec4): Vec4 {
 
 function addBrushPoints(
     context: ContextState,
-    brushPoints: readonly BrushShader.BrushPoint[]
+    brushPoints: ReadonlyArray<BrushShader.BrushPoint>
 ): void {
     context.drawpointBatch.addPoints(brushPoints)
     if (context.stroke == null) {
@@ -511,8 +511,8 @@ function setupFb(context: ContextState, id: TextureId): WebGLFramebuffer {
 }
 
 function layersRequireRerender(
-    prev: readonly Layers.CollectedLayer[],
-    next: readonly Layers.CollectedLayer[]
+    prev: ReadonlyArray<Layers.CollectedLayer>,
+    next: ReadonlyArray<Layers.CollectedLayer>
 ): boolean {
     if (prev.length !== next.length) return true
     for (let i = 0; i < next.length; i++) {
