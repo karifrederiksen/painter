@@ -2,6 +2,7 @@ import * as React from "react"
 import styled from "../styled"
 
 const ButtonCommon = styled.button`
+    font-size: 1rem;
     cursor: pointer;
     display: inline-flex;
     justify-content: center;

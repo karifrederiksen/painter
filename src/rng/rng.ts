@@ -25,6 +25,10 @@ namespace Pcg {
     export function nextInt(s: Seed): T2<number, Seed> {
         return [output(s), step(s)]
     }
+
+    export function display(state: Seed): string {
+        return `PCG (${state[0]}, ${state[1]})`
+    }
 }
 
 namespace Xorshift {
@@ -53,13 +57,19 @@ namespace Xorshift {
         t ^= s >>> 19
         return [t >>> 0, [t, s, state[1], state[2]]]
     }
+
+    export function display(state: Seed): string {
+        return `Xorshift 128 (${state[0]}, ${state[1]}, ${state[2]}, ${state[3]})`
+    }
 }
 
-export type Seed = Pcg.Seed
+export type Seed = Xorshift.Seed
 
-export const seed = Pcg.seed
+export const seed = Xorshift.seed
 
-export const nextInt = Pcg.nextInt
+export const nextInt = Xorshift.nextInt
+
+export const display = Xorshift.display
 
 export function next(state: Seed): T2<number, Seed> {
     const [result, nextState] = nextInt(state)

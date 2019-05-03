@@ -10,7 +10,7 @@ import * as Setup from "./setup"
 import { SetOnce, FrameStream, CancelFrameStream, Lazy, Store } from "../util"
 import * as Buttons from "../views/buttons"
 import * as Debugging from "../debugging"
-console.log(Debugging)
+
 // HMR hooks
 declare global {
     interface NodeModule {
@@ -39,6 +39,12 @@ const Wrapper = styled.div`
 const BottomLeft = styled.div`
     position: absolute;
     left: 0.5rem;
+    bottom: 0.5rem;
+`
+
+const BottomRight = styled.div`
+    position: absolute;
+    right: 0.5rem;
     bottom: 0.5rem;
 `
 
@@ -113,6 +119,11 @@ class Painter extends React.Component<{}, Canvas.State> {
                                 Next theme
                             </Buttons.PrimaryButton>
                         </BottomLeft>
+                        {process.env.NODE_ENV === "development" && (
+                            <BottomRight>
+                                <Debugging.DebugWindow state={state} />
+                            </BottomRight>
+                        )}
                     </AppContainer>
                 </ThemeProvider>
             </React.StrictMode>
