@@ -18,6 +18,7 @@ export interface State {
     readonly theme: Theme.Theme
     readonly tool: Tools.Tool
     readonly layers: Layers.State
+    readonly hasPressedDown: boolean
 }
 
 export interface EphemeralState {
@@ -32,6 +33,7 @@ export function initState(): State {
         theme,
         tool: Tools.init(),
         layers: Layers.State.init(),
+        hasPressedDown: false,
     }
 }
 
@@ -170,7 +172,7 @@ export function update(
                 ephemeral.tool,
                 msg.input
             )
-            const nextState = { ...state, tool: nextTool }
+            const nextState = { ...state, hasPressedDown: true, tool: nextTool }
             const nextEphemeral = { tool: nextToolEphemeral }
             const effect = new BrushPointsEffect(brushPoints)
             return [nextState, nextEphemeral, effect]
@@ -181,12 +183,15 @@ export function update(
                 ephemeral.tool,
                 msg.input
             )
-            const nextState = { ...state, tool: nextTool }
+            const nextState = { ...state, hasPressedDown: false, tool: nextTool }
             const nextEphemeral = { tool: nextToolEphemeral }
             const effect = new ReleaseEffect(brushPoints)
             return [nextState, nextEphemeral, effect]
         }
         case CanvasMsgType.OnDrag: {
+            if (!state.hasPressedDown) {
+                return [state, ephemeral, NoOpEffect.value]
+            }
             const [nextTool, nextToolEphemeral, brushPoints] = Tools.onDrag(
                 state.tool,
                 ephemeral.tool,
