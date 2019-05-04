@@ -23,7 +23,7 @@ void main() {
     vec2 pos = (a_position / u_resolution) * vec2(2.0, -2.0) + vec2(-1.0, 1.0);
     gl_Position = vec4(pos, 0.0, 1.0);
 
-    v_color = a_color;
+    v_color = vec4(a_color.rgb * a_color.a, a_color.a);
     v_tex_coords = a_tex_coords;
 }
 `
@@ -236,10 +236,10 @@ function addPoint(
     if (y0 < affectedArea.y0) {
         affectedArea.y0 = y0
     }
-    if (x1 < affectedArea.x1) {
+    if (x1 > affectedArea.x1) {
         affectedArea.x1 = x1
     }
-    if (y1 < affectedArea.y1) {
+    if (y1 > affectedArea.y1) {
         affectedArea.y1 = y1
     }
 
