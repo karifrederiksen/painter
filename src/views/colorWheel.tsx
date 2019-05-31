@@ -34,6 +34,29 @@ interface GlState {
     readonly satValRenderer: SatValRenderer
 }
 
+const CicleThumb = styled.div`
+    z-index: 100;
+    position: absolute;
+    width: 1rem;
+    height: 0.5rem;
+    margin-left: calc(-0.5rem - 0.05rem);
+    margin-top: calc(-0.25rem - 0.05rem);
+    border-width: 0.1rem;
+    border-style: solid;
+`
+
+const AreaThumb = styled.div`
+    z-index: 100;
+    position: absolute;
+    width: 0.75rem;
+    height: 0.75rem;
+    margin-left: calc(-0.375rem - 0.05rem);
+    margin-top: calc(-0.375rem - 0.05rem);
+    border-width: 0.1rem;
+    border-style: solid;
+    border-radius: 0.375rem;
+`
+
 export function ColorWheel(props: ColorWheelProps): JSX.Element {
     const container = React.useRef<HTMLDivElement | null>(null)
     const canvas = React.useRef<HTMLCanvasElement | null>(null)
@@ -140,17 +163,21 @@ export function ColorWheel(props: ColorWheelProps): JSX.Element {
         const gl = canvas.current.getContext("webgl")
         if (gl === null) throw "Failed to init webgl"
 
-        const x = {
+        gl.blendFunc(WebGLRenderingContext.ONE, WebGLRenderingContext.ONE_MINUS_SRC_ALPHA)
+        gl.enable(WebGLRenderingContext.BLEND)
+        gl.disable(WebGLRenderingContext.DEPTH_TEST)
+
+        const glState: GlState = {
             gl,
             ringRenderer: new RingRenderer(gl),
             satValRenderer: new SatValRenderer(gl),
         }
 
-        setGlState(x)
+        setGlState(glState)
 
         return () => {
-            x.ringRenderer.dispose()
-            x.satValRenderer.dispose()
+            glState.ringRenderer.dispose()
+            glState.satValRenderer.dispose()
         }
     }, [canvas.current])
 
@@ -159,10 +186,10 @@ export function ColorWheel(props: ColorWheelProps): JSX.Element {
             return
         }
         // render
-        glState!.gl.clearColor(0, 0, 0, 0)
-        glState!.gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT)
-        glState!.ringRenderer!.render(props.colorType, props.color)
-        glState!.satValRenderer!.render(props.colorType, props.color)
+        glState.gl.clearColor(0, 0, 0, 0)
+        glState.gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT)
+        glState.ringRenderer!.render(props.colorType, props.color)
+        glState.satValRenderer!.render(props.colorType, props.color)
     }, [glState, props.color, props.colorType])
 
     React.useEffect(() => {
@@ -179,10 +206,68 @@ export function ColorWheel(props: ColorWheelProps): JSX.Element {
         }
     }, [])
 
+    const canvasRect = canvas.current !== null ? canvas.current.getBoundingClientRect() : null
+
+    let angle: number
+    let xPct: number
+    let yPct: number
+    if (props.colorType === ColorMode.Hsluv) {
+        angle = (props.color.h + 180) % 360
+        xPct = props.color.s / 100
+        yPct = props.color.l / 100
+    } else {
+        const hsv = Color.rgbToHsv(props.color.toRgb())
+        angle = (hsv.h * 360 + 180) % 360
+        xPct = hsv.s
+        yPct = hsv.v
+    }
+
+    let circleThumbX = 0
+    let circleThumbY = 0
+    if (canvasRect !== null) {
+        const radius = 80
+        const cx = canvasRect.left + radius
+        const cy = canvasRect.top + radius
+
+        const theta = (angle * Math.PI) / 180
+        const dx = (radius - 8) * Math.cos(theta)
+        const dy = (radius - 8) * Math.sin(theta)
+
+        circleThumbX = cx + dx
+        circleThumbY = cy + dy
+    }
+
+    let areaThumbX = 0
+    let areaThumbY = 0
+    if (canvasRect !== null) {
+        const offset = canvasRect.width * 0.225
+        const width = canvasRect.width * 0.55
+
+        areaThumbX = canvasRect.left + offset + width * xPct
+        areaThumbY = canvasRect.top + offset + width * (1 - yPct)
+    }
+
     return (
         <Container>
             <div onMouseDown={onDown} ref={container}>
                 <canvas width="160" height="160" ref={canvas} />
+                <CicleThumb
+                    style={{
+                        left: circleThumbX,
+                        top: circleThumbY,
+                        backgroundColor: props.color.toStyle(),
+                        borderColor: props.color.l > 50 ? "black" : "white",
+                        transform: "rotate(" + angle + "deg)",
+                    }}
+                />
+                <AreaThumb
+                    style={{
+                        left: areaThumbX,
+                        top: areaThumbY,
+                        backgroundColor: props.color.toStyle(),
+                        borderColor: props.color.l > 50 ? "black" : "white",
+                    }}
+                />
             </div>
         </Container>
     )
@@ -264,7 +349,6 @@ class RingRenderer {
     private program: WebGLProgram | null = null
     private colorLocation: WebGLUniformLocation | null = null
     private prevColorType: ColorMode | null = null
-    private prevColor: Color.Hsluv | null = null
 
     constructor(private readonly gl: WebGLRenderingContext) {
         this.buffer = gl.createBuffer()!
@@ -277,31 +361,29 @@ class RingRenderer {
     }
 
     render(colorType: ColorMode, color: Color.Hsluv): void {
-        const gl = this.gl
-
         if (!this.program || this.prevColorType !== colorType) {
             if (this.program) {
-                gl.deleteProgram(this.program)
+                this.gl.deleteProgram(this.program)
             }
 
             switch (colorType) {
                 case ColorMode.Hsv:
-                    this.program = createProgram(gl, RING_VERT_SRC, RING_FRAG_SRC_HSV)!
+                    this.program = createProgram(this.gl, RING_VERT_SRC, RING_FRAG_SRC_HSV)!
                     break
                 case ColorMode.Hsluv:
-                    this.program = createProgram(gl, RING_VERT_SRC, RING_FRAG_SRC_HSLUV)!
+                    this.program = createProgram(this.gl, RING_VERT_SRC, RING_FRAG_SRC_HSLUV)!
                     break
             }
-            gl.bindAttribLocation(this.program!, 0, "a_position")
-            this.colorLocation = gl.getUniformLocation(this.program!, "u_color")!
+            this.gl.bindAttribLocation(this.program!, 0, "a_position")
+            this.colorLocation = this.gl.getUniformLocation(this.program!, "u_color")!
             this.prevColorType = colorType
         }
 
-        gl.useProgram(this.program)
-        gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.buffer)
+        this.gl.useProgram(this.program)
+        this.gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.buffer)
 
-        gl.vertexAttribPointer(0, 2, WebGLRenderingContext.FLOAT, false, 0, 0)
-        gl.enableVertexAttribArray(0)
+        this.gl.vertexAttribPointer(0, 2, WebGLRenderingContext.FLOAT, false, 0, 0)
+        this.gl.enableVertexAttribArray(0)
 
         switch (colorType) {
             case ColorMode.Hsv: {
@@ -314,15 +396,13 @@ class RingRenderer {
                 break
             }
         }
-        this.prevColor = color
 
-        gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, 4)
+        this.gl.drawArrays(WebGLRenderingContext.TRIANGLE_STRIP, 0, 4)
     }
 
     dispose(): void {
-        const gl = this.gl
-        gl.deleteBuffer(this.buffer)
-        gl.deleteProgram(this.program)
+        this.gl.deleteBuffer(this.buffer)
+        this.gl.deleteProgram(this.program)
     }
 }
 
@@ -386,7 +466,6 @@ class SatValRenderer {
     private readonly buffer: WebGLBuffer
     private colorLocation: WebGLUniformLocation | null = null
     private program: WebGLProgram | null = null
-    private prevColorType: ColorMode | null = null
     private prevColor: Color.Hsluv | null = null
 
     constructor(private readonly gl: WebGLRenderingContext) {
@@ -436,7 +515,6 @@ class SatValRenderer {
             }
             gl.bindAttribLocation(this.program!, 0, "a_position")
             this.colorLocation = gl.getUniformLocation(this.program!, "u_color")!
-            this.prevColorType = colorType
         }
 
         gl.useProgram(this.program)
