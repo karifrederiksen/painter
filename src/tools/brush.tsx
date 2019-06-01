@@ -18,6 +18,31 @@ import { Switch } from "../views/switch"
 import { ColorDisplay } from "../views/colorDisplay"
 import { Surface } from "../views/surface"
 
+export const enum MsgType {
+    SetDiameterMsg,
+    SetSoftnessMsg,
+    SetOpacityMsg,
+    SetColorMsg,
+    SetColorModeMsg,
+    SetSpacingMsg,
+    SetPressureAffectsOpacityMsg,
+    SetPressureAffectsSizeMsg,
+    SwapColorMsg,
+    SetDelayMsg,
+}
+
+export type Msg =
+    | SetDiameterMsg
+    | SetSoftnessMsg
+    | SetOpacityMsg
+    | SetColorMsg
+    | SetColorModeMsg
+    | SetSpacingMsg
+    | SetPressureAffectsOpacityMsg
+    | SetPressureAffectsSizeMsg
+    | SwapColorMsg
+    | SetDelayMsg
+
 class SetDiameterMsg {
     readonly type: MsgType.SetDiameterMsg = MsgType.SetDiameterMsg
     private nominal: void
@@ -67,31 +92,6 @@ class SetDelayMsg {
     readonly type: MsgType.SetDelayMsg = MsgType.SetDelayMsg
     private nominal: void
     constructor(readonly delayMs: number) {}
-}
-
-export type Msg =
-    | SetDiameterMsg
-    | SetSoftnessMsg
-    | SetOpacityMsg
-    | SetColorMsg
-    | SetColorModeMsg
-    | SetSpacingMsg
-    | SetPressureAffectsOpacityMsg
-    | SetPressureAffectsSizeMsg
-    | SwapColorMsg
-    | SetDelayMsg
-
-export const enum MsgType {
-    SetDiameterMsg,
-    SetSoftnessMsg,
-    SetOpacityMsg,
-    SetColorMsg,
-    SetColorModeMsg,
-    SetSpacingMsg,
-    SetPressureAffectsOpacityMsg,
-    SetPressureAffectsSizeMsg,
-    SwapColorMsg,
-    SetDelayMsg,
 }
 
 export interface MsgSender {
@@ -337,13 +337,22 @@ const DetailsContainer = styled(Surface)`
     padding: 0.5rem 0.75rem;
 `
 
-export function Details(props: {
+export interface DetailsProps {
     readonly messageSender: MsgSender
     readonly tool: State
-}): JSX.Element {
+}
+
+export const Details = React.memo((props: DetailsProps) => {
     const sender = props.messageSender
     const brush = props.tool
     const color = brush.color
+
+    function onColorText(text: string) {
+        const rgb = Color.Rgb.fromCss(text)
+        if (rgb === null) return
+
+        sender.setColor(Color.rgbToHsluv(rgb))
+    }
 
     return (
         <DetailsContainer>
@@ -371,12 +380,8 @@ export function Details(props: {
                     type="text"
                     value={brush.color.toStyle()}
                     style={{ width: "100%" }}
-                    onChange={text => {
-                        const rgb = Color.Rgb.fromCss((text.target as any).value)
-                        if (rgb === null) return
-
-                        sender.setColor(Color.rgbToHsluv(rgb))
-                    }}
+                    onPaste={ev => onColorText((ev.target as any).value)}
+                    onChange={text => onColorText(text.target.value)}
                 />
             </div>
             <Labeled label="Size" value={brush.diameterPx.toFixed(1) + "px"}>
@@ -415,7 +420,7 @@ export function Details(props: {
             </Labeled>
         </DetailsContainer>
     )
-}
+})
 
 function ColorSliders({
     sender,

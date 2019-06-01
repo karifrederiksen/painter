@@ -56,6 +56,9 @@ function getPressure(ev: PointerEvent): number {
 
 function listenForPointers(canvas: HTMLCanvasElement, listeners: Listeners): RemoveListeners {
     const pointerDown = (ev: PointerEvent) => {
+        if (ev.button === 1 || ev.button === 2) {
+            return
+        }
         const bounds = canvas.getBoundingClientRect()
         const time = performance.now()
         listeners.click(localizePointer(bounds, time, ev))
@@ -115,6 +118,9 @@ function listenForMouse(canvas: HTMLCanvasElement, listeners: Listeners): Remove
     let isDown = false
 
     const mouseDown = (ev: MouseEvent) => {
+        if (ev.button === 1 || ev.button === 2) {
+            return
+        }
         const bounds = canvas.getBoundingClientRect()
         const time = performance.now()
         listeners.click(localizeMouse(bounds, time, ev, false))

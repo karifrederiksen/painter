@@ -31,7 +31,9 @@ export interface Context {
     dispose(): void
 }
 
-export function create(canvas: HTMLCanvasElement): Result<Context, string> {
+export function create(
+    canvas: HTMLCanvasElement
+): Result<[Context, WebGLRenderingContext], string> {
     const wglArgs: WebGLContextAttributes = {
         antialias: false,
         depth: false,
@@ -103,7 +105,7 @@ export function create(canvas: HTMLCanvasElement): Result<Context, string> {
         textureRenderer,
         internalCanvasSize: new Vec2(canvas.width, canvas.height),
     })
-    return Result.ok(context)
+    return Result.ok<[Context, WebGLRenderingContext], string>([context, gl])
 }
 
 type TextureId = Brand<"Texture Id", number>
@@ -126,6 +128,7 @@ interface ContextState {
     internalCanvasSize: Vec2
     stroke: Stroke | null
     prevLayers: Layers.SplitLayers
+    isDirty: boolean
     readonly brushTextureId: TextureId
     readonly currentLayerTextureId: TextureId
     readonly outputTextureId: TextureId
@@ -167,6 +170,7 @@ class InternalContext implements Context, ContextState {
     internalCanvasSize: Vec2
     stroke: Stroke | null
     prevLayers: Layers.SplitLayers
+    isDirty: boolean
     readonly brushTextureId: TextureId
     readonly currentLayerTextureId: TextureId
     readonly outputTextureId: TextureId
@@ -193,6 +197,7 @@ class InternalContext implements Context, ContextState {
             below: [],
             current: null,
         }
+        this.isDirty = true
         {
             const size = new Vec2(128, 128)
             this.brushTextureId = createTexture(this, size)
@@ -213,7 +218,6 @@ class InternalContext implements Context, ContextState {
         addFramebuffer(this, this.combinedLayers.above)
         addFramebuffer(this, this.combinedLayers.below)
         addFramebuffer(this, this.combinedLayers.current)
-        console.info("context", this)
     }
 
     addBrushPoints(brushPoints: ReadonlyArray<BrushShader.BrushPoint>) {
@@ -248,8 +252,8 @@ function mergeAreas(prevArea: Vec4, nextArea: Vec4): Vec4 {
     return new Vec4(
         Math.min(prevArea.x, nextArea.x),
         Math.min(prevArea.y, nextArea.y),
-        Math.min(prevArea.z, nextArea.z),
-        Math.min(prevArea.w, nextArea.w)
+        Math.max(prevArea.z, nextArea.z),
+        Math.max(prevArea.w, nextArea.w)
     )
 }
 
@@ -258,13 +262,17 @@ function addBrushPoints(
     brushPoints: ReadonlyArray<BrushShader.BrushPoint>
 ): void {
     context.drawpointBatch.addPoints(brushPoints)
-    if (context.stroke == null) {
+    if (!context.drawpointBatch.canFlush) {
+        return
+    } else if (context.stroke == null) {
+        context.isDirty = true
         context.stroke = {
             textureId: createTexture(context, context.internalCanvasSize),
             affectedArea: context.drawpointBatch.getAffectedArea(),
         }
         addFramebuffer(context, context.stroke.textureId)
     } else {
+        context.isDirty = true
         const affectedArea = mergeAreas(
             context.stroke.affectedArea,
             context.drawpointBatch.getAffectedArea()
@@ -303,9 +311,16 @@ function render(
     context: ContextState,
     { blendMode, nextLayers, resolution, brush }: RenderArgs
 ): void {
+    if (!context.isDirty) {
+        return
+    }
+    context.isDirty = false
+
     const { gl, combinedLayers, textureRenderer, outputRenderer } = context
     if (context.drawpointBatch.canFlush) {
-        if (nextLayers.current !== null) {
+        if (nextLayers.current === null) {
+            console.warn("Drawpoint batch has data to flush, but no layer is currently selected")
+        } else {
             const currentLayerTex = getTextureIdForLayer(context, nextLayers.current.id)!
 
             const { brushTextureId } = context
@@ -322,8 +337,6 @@ function render(
                 resolution,
                 brushTextureIdx: ensureTextureIsBound(context, brushTextureId),
             })
-        } else {
-            console.warn("Drawpoint batch has data to flush, but no layer is currently selected")
         }
     }
     combineLayers(context, nextLayers)
@@ -584,7 +597,9 @@ function combineLayers(context: ContextState, nextLayers: Layers.SplitLayers): v
         // CURRENT
         const layerId = nextLayers.current
         const fb = setupFb(context, combinedLayers.current)
-        if (layerId !== null) {
+        if (layerId === null) {
+            console.info("current layer is not selected")
+        } else {
             const layerTextureId = getTextureIdForLayer(context, layerId.id)!
             textureRenderer.render(gl, {
                 framebuffer: fb,
@@ -596,22 +611,20 @@ function combineLayers(context: ContextState, nextLayers: Layers.SplitLayers): v
                 x1: internalCanvasSize.x,
                 y1: internalCanvasSize.y,
             })
-            const stroke = context.stroke
-            if (stroke !== null) {
-                const strokeTextureId = stroke.textureId
+            if (context.stroke !== null) {
+                const { affectedArea } = context.stroke
+
                 textureRenderer.render(gl, {
                     framebuffer: fb,
                     opacity: 1,
                     resolution: internalCanvasSize,
-                    textureIdx: ensureTextureIsBound(context, strokeTextureId),
-                    x0: 0,
-                    y0: 0,
-                    x1: internalCanvasSize.x,
-                    y1: internalCanvasSize.y,
+                    textureIdx: ensureTextureIsBound(context, context.stroke.textureId),
+                    x0: affectedArea.x,
+                    y0: affectedArea.y,
+                    x1: affectedArea.z,
+                    y1: affectedArea.w,
                 })
             }
-        } else {
-            console.info("current layer is not selected")
         }
     }
 }

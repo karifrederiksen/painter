@@ -7,9 +7,10 @@ import * as Layers from "../layers/view"
 import * as Input from "../input"
 import * as Canvas from "../canvas"
 import * as Setup from "./setup"
-import { SetOnce, FrameStream, CancelFrameStream, Lazy, Store } from "../util"
+import { SetOnce, FrameStream, CancelFrameStream, Lazy, Store, PerfTracker } from "../util"
 import * as Buttons from "../views/buttons"
 import * as Debugging from "../debugging"
+import * as Signals from "../signals"
 
 // HMR hooks
 declare global {
@@ -63,6 +64,8 @@ class Painter extends React.Component<{}, Canvas.State> {
     private readonly cancelFrameStream: SetOnce<CancelFrameStream>
     private readonly canvas: SetOnce<Canvas.Canvas>
     private readonly store: Store<Canvas.State, Canvas.EphemeralState, Canvas.CanvasMsg>
+    private readonly debuggingGl: SetOnce<WebGLRenderingContext>
+    private readonly perfTrackerData: Signals.PushableSignal<ReadonlyArray<PerfTracker.Sample>>
     private readonly sender: Canvas.MsgSender
     private htmlCanvas: HTMLCanvasElement | null
 
@@ -72,6 +75,8 @@ class Painter extends React.Component<{}, Canvas.State> {
         this.removeInputListeners = new SetOnce()
         this.cancelFrameStream = new SetOnce()
         this.canvas = new SetOnce()
+        this.debuggingGl = new SetOnce()
+        this.perfTrackerData = Signals.create([])
         this.store = Store.create<
             Canvas.State,
             Canvas.EphemeralState,
@@ -121,7 +126,11 @@ class Painter extends React.Component<{}, Canvas.State> {
                         </BottomLeft>
                         {process.env.NODE_ENV === "development" && (
                             <BottomRight>
-                                <Debugging.DebugWindow state={state} />
+                                <Debugging.DebugWindow
+                                    state={state}
+                                    gl={this.debuggingGl}
+                                    perfSamplesSignal={this.perfTrackerData.signal}
+                                />
                             </BottomRight>
                         )}
                     </AppContainer>
@@ -138,7 +147,10 @@ class Painter extends React.Component<{}, Canvas.State> {
         {
             const canvas = Canvas.Canvas.create(htmlCanvas, this.state, {
                 onStats: stats => {
-                    console.log(stats)
+                    this.perfTrackerData.push(stats)
+                },
+                onWebglContextCreated: gl => {
+                    this.debuggingGl.set(gl)
                 },
             })
             if (canvas === null) throw "Failed to initialize Canvas"

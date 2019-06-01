@@ -11,6 +11,7 @@ export interface Hooks {
     // readonly onCanvasSnapshot: (snapshot: Snapshot) => void
     // readonly onLayerSnapshot: (snapshot: Snapshot, layerId: number) => void
     readonly onStats: (stats: ReadonlyArray<PerfTracker.Sample>) => void
+    readonly onWebglContextCreated: (gl: WebGLRenderingContext) => void
 }
 
 export interface State {
@@ -225,12 +226,16 @@ export class Canvas {
     static create(canvas: HTMLCanvasElement, initialState: State, hooks: Hooks): Canvas | null {
         const context = Context.create(canvas)
         if (Result.isOk(context)) {
-            return new Canvas(canvas, initialState, hooks, context[1])
+            if (process.env.NODE_ENV === "development") {
+                hooks.onWebglContextCreated(context[1][1])
+            }
+            return new Canvas(canvas, initialState, hooks, context[1][0])
         }
         console.error("Error in Context setup:", context[1])
         return null
     }
 
+    private readonly perfTracker: PerfTracker
     private splitLayers: Layers.SplitLayers
 
     private constructor(
@@ -239,6 +244,10 @@ export class Canvas {
         private readonly hooks: Hooks,
         private readonly context: Context.Context
     ) {
+        this.perfTracker = new PerfTracker({
+            maxSamples: 50,
+            onSamples: this.hooks.onStats,
+        })
         this.splitLayers = initialState.layers.split()
     }
 
@@ -251,15 +260,18 @@ export class Canvas {
             case EffectType.NoOpEffect:
                 return
             case EffectType.FrameEffect: {
+                this.perfTracker.start()
                 this.context.addBrushPoints(eff.brushPoints)
                 const resolution = new Vec2(this.canvasElement.width, this.canvasElement.height)
                 const state = eff.state
+
                 this.context.render({
                     blendMode: Tools.getBlendMode(state.tool),
                     nextLayers: this.splitLayers,
                     resolution,
                     brush: { softness: Tools.getSoftness(state.tool) },
                 })
+                this.perfTracker.end()
                 return
             }
             case EffectType.BrushPointsEffect: {
