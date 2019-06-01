@@ -39,4 +39,5 @@ export async function setup(getState: () => Canvas.State, sender: Canvas.MsgSend
     forceRender()
     await delay(30)
     sender.onRelease(mkPt(600, 100, 1.0))
+    sender.tool.brush.setDiameter(15)
 }

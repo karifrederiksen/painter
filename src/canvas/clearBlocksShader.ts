@@ -1,5 +1,6 @@
 import { Blend, createProgram, getUniformLocation } from "../webgl"
 import { Vec2 } from "../util"
+import { RgbLinear } from "color"
 
 const floatsPerVertex = 2
 const batchStride = floatsPerVertex * 4
@@ -11,38 +12,30 @@ attribute vec2 a_position;
 
 uniform vec2 u_resolution;
 
-varying vec2 v_tex_coords;
-
 void main() {
     vec2 pos = a_position / u_resolution;
     pos.y = 1.0 - pos.y;
     pos = pos * 2.0;
     pos = pos - 1.0;
     gl_Position = vec4(pos, 0.0, 1.0);
-    
-    v_tex_coords = a_position / u_resolution;
 }
 `
 
 const FRAG_SRC = `
 precision highp float;
 
-varying vec2 v_tex_coords;
-
-uniform sampler2D u_texture;
-uniform float u_opacity;
+uniform vec4 u_rgba;
 
 void main() {
-    vec4 pixel = texture2D(u_texture, v_tex_coords);
-    gl_FragColor = pixel * u_opacity;
+    gl_FragColor = u_rgba;
 }
 `
 
 export interface Args {
-    readonly opacity: number
     readonly resolution: Vec2
     readonly framebuffer: WebGLFramebuffer
-    readonly textureIdx: number
+    readonly color: RgbLinear
+    readonly alpha: number
     readonly blocks: ReadonlyArray<{
         readonly x0: number
         readonly y0: number
@@ -58,16 +51,13 @@ export class Shader {
 
         gl.bindAttribLocation(program, 0, "a_position")
 
-        const textureUniform = getUniformLocation(gl, program, "u_texture")
-        if (textureUniform === null) return null
-
         const resolutionUniform = getUniformLocation(gl, program, "u_resolution")
         if (resolutionUniform === null) return null
 
-        const opacityUniform = getUniformLocation(gl, program, "u_opacity")
-        if (opacityUniform === null) return null
+        const rgbaUniform = getUniformLocation(gl, program, "u_rgba")
+        if (rgbaUniform === null) return null
 
-        return new Shader(gl, program, textureUniform, resolutionUniform, opacityUniform)
+        return new Shader(gl, program, resolutionUniform, rgbaUniform)
     }
 
     private readonly buffer: WebGLBuffer
@@ -77,11 +67,10 @@ export class Shader {
     private constructor(
         gl: WebGLRenderingContext,
         private readonly program: WebGLProgram,
-        private readonly textureUniform: WebGLUniformLocation,
         private readonly resolutionUniform: WebGLUniformLocation,
-        private readonly opacityUniform: WebGLUniformLocation
+        private readonly rgbaUniform: WebGLUniformLocation
     ) {
-        this.buffer = gl.createBuffer()!
+        this.buffer = gl.createBuffer() as WebGLBuffer
         this.array = new Float32Array(floatsPerVertex * 6 * this.capacity)
     }
 
@@ -123,9 +112,9 @@ export class Shader {
         gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, array, WebGLRenderingContext.DYNAMIC_DRAW)
 
         // update uniforms
-        gl.uniform1i(this.textureUniform, args.textureIdx)
         gl.uniform2f(this.resolutionUniform, args.resolution.x, args.resolution.y)
-        gl.uniform1f(this.opacityUniform, args.opacity)
+        const { alpha, color } = args
+        gl.uniform4f(this.rgbaUniform, color.r * alpha, color.g * alpha, color.b * alpha, alpha)
 
         // enable attributes
         gl.vertexAttribPointer(0, 2, WebGLRenderingContext.FLOAT, false, batchStride, 0)
