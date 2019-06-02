@@ -131,7 +131,6 @@ export class Shader {
         gl.vertexAttribPointer(0, 2, WebGLRenderingContext.FLOAT, false, batchStride, 0)
 
         gl.enableVertexAttribArray(0)
-        gl.enableVertexAttribArray(1)
 
         gl.drawArrays(WebGLRenderingContext.TRIANGLES, 0, 6 * args.blocks.length)
     }
