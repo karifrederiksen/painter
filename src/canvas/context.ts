@@ -35,20 +35,32 @@ export interface Context {
     dispose(): void
 }
 
+declare global {
+    interface WebGLContextAttributes {
+        readonly desynchronized: boolean
+    }
+}
+
 export function create(
     canvas: HTMLCanvasElement
 ): Result<[Context, WebGLRenderingContext], string> {
     const wglArgs: WebGLContextAttributes = {
         antialias: false,
         depth: false,
-        alpha: true,
+        alpha: false,
         premultipliedAlpha: false,
         stencil: false,
+        preserveDrawingBuffer: true,
+        desynchronized: true,
     }
     const gl = canvas.getContext("webgl", wglArgs)
     if (gl === null) {
         console.error("Failed to initialize WebGL renderer for canvas: ", canvas)
         return Result.err("Failed to initialize WebGL")
+    }
+    const attrs = gl.getContextAttributes()
+    if (!(attrs && attrs.desynchronized)) {
+        console.warn("Low latency canvas not supported. Boo!")
     }
 
     const floatLinearFiltering = gl.getExtension("OES_texture_float_linear")
@@ -213,10 +225,14 @@ class InternalContext implements Context {
         this.outputRenderer.render(this.gl, {
             resolution: this.internalCanvasSize,
             textureIdx: ensureTextureIsBound(this, this.outputTextureId),
-            x0: 0,
-            y0: 0,
-            x1: this.internalCanvasSize.x,
-            y1: this.internalCanvasSize.y,
+            blocks: [
+                {
+                    x0: 0,
+                    y0: 0,
+                    x1: this.internalCanvasSize.x,
+                    y1: this.internalCanvasSize.y,
+                },
+            ],
         })
     }
 
@@ -284,7 +300,7 @@ function endStroke(context: InternalContext): void {
     gl.bindFramebuffer(gl.FRAMEBUFFER, strokeFb)
     gl.clearColor(0, 0, 0, 0)
     gl.clear(gl.COLOR_BUFFER_BIT)
-    context.renderBlocks = BlockRender.BlockTracker.EMPTY
+    context.renderBlocks = context.renderBlocks.endStroke()
 }
 
 function render(
@@ -458,10 +474,15 @@ function render(
     context.outputRenderer.render(gl, {
         resolution,
         textureIdx: ensureTextureIsBound(context, outId),
-        x0: 0,
-        y0: 0,
-        x1: resolution.x,
-        y1: resolution.y,
+        blocks: context.renderBlocks.frameBlocks,
+        // [
+        //     {
+        //         x0: 0,
+        //         y0: 0,
+        //         x1: resolution.x,
+        //         y1: resolution.y,
+        //     },
+        // ],
     })
 
     gl.flush()

@@ -22,6 +22,7 @@ export class Block {
     }
 }
 
+// @perf: The BlockTracker could be internally mutable. I can't think of a good reason it _should_ be immutable
 export class BlockTracker {
     static EMPTY: BlockTracker = new BlockTracker([], [])
 
@@ -92,6 +93,10 @@ export class BlockTracker {
         }
 
         return new BlockTracker(frameBlocks, strokeBlocks)
+    }
+
+    endStroke(): BlockTracker {
+        return new BlockTracker(this.strokeBlocks, [])
     }
 
     afterFrame(): BlockTracker {

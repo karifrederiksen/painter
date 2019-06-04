@@ -1,13 +1,12 @@
 import { Blend, createProgram, getUniformLocation, DEFINE_from_linear } from "../webgl"
 import { Vec2 } from "../util"
 
-const floatsPerVertex = 4
+const floatsPerVertex = 2
 const batchStride = floatsPerVertex * 4
 
 const VERT_SRC = `
 precision highp float;
 
-attribute vec2 a_tex_coords;
 attribute vec2 a_position;
 
 uniform vec2 u_resolution;
@@ -15,10 +14,13 @@ uniform vec2 u_resolution;
 varying vec2 v_tex_coords;
 
 void main() {
-    vec2 pos = (a_position / u_resolution) * vec2(2.0) - vec2(1.0);
+    vec2 pos = a_position / u_resolution;
+    pos.y = 1.0 - pos.y;
+    v_tex_coords = pos;
+    pos = pos * 2.0;
+    pos = pos - 1.0;
     gl_Position = vec4(pos, 0.0, 1.0);
     
-    v_tex_coords = a_tex_coords;
 }
 `
 
@@ -34,17 +36,18 @@ uniform sampler2D u_texture;
 void main() {
     vec4 pixel = texture2D(u_texture, v_tex_coords);
     gl_FragColor = vec4(from_linear(pixel.rgb), pixel.a);
-    //gl_FragColor = vec4(0.0, 0.0, 0.0, pixel.a);
 }
 `
 
 export interface Args {
     readonly resolution: Vec2
     readonly textureIdx: number
-    readonly x0: number
-    readonly y0: number
-    readonly x1: number
-    readonly y1: number
+    readonly blocks: ReadonlyArray<{
+        readonly x0: number
+        readonly y0: number
+        readonly x1: number
+        readonly y1: number
+    }>
 }
 
 export class Shader {
@@ -52,8 +55,7 @@ export class Shader {
         const program = createProgram(gl, VERT_SRC, FRAG_SRC)
         if (program === null) return null
 
-        gl.bindAttribLocation(program, 0, "a_tex_coords")
-        gl.bindAttribLocation(program, 1, "a_position")
+        gl.bindAttribLocation(program, 0, "a_position")
 
         const textureUniform = getUniformLocation(gl, program, "u_texture")
         if (textureUniform === null) return null
@@ -65,7 +67,8 @@ export class Shader {
     }
 
     private readonly buffer: WebGLBuffer
-    private readonly array: Float32Array
+    private array: Float32Array
+    private capacity = 1024
 
     private constructor(
         gl: WebGLRenderingContext,
@@ -74,22 +77,7 @@ export class Shader {
         private readonly resolutionUniform: WebGLUniformLocation
     ) {
         this.buffer = gl.createBuffer()!
-        this.array = new Float32Array(floatsPerVertex * 6)
-        const array = this.array
-
-        array[0] = 0
-        array[1] = 0
-        array[4] = 0
-        array[5] = 1
-        array[8] = 1
-        array[9] = 0
-
-        array[12] = 0
-        array[13] = 1
-        array[16] = 1
-        array[17] = 0
-        array[20] = 1
-        array[21] = 1
+        this.array = new Float32Array(floatsPerVertex * 6 * this.capacity)
     }
 
     render(gl: WebGLRenderingContext, args: Args): void {
@@ -98,22 +86,29 @@ export class Shader {
 
         gl.useProgram(this.program)
         gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+        if (this.capacity < args.blocks.length) {
+            this.capacity = args.blocks.length
+            this.array = new Float32Array(floatsPerVertex * 6 * this.capacity)
+        }
+
         const array = this.array
-        const { x0, y0, x1, y1 } = args
+        let offset = 0
+        for (let i = 0; i < args.blocks.length; i++) {
+            const { x0, y0, x1, y1 } = args.blocks[i]
+            array[offset++] = x0
+            array[offset++] = y0
+            array[offset++] = x0
+            array[offset++] = y1
+            array[offset++] = x1
+            array[offset++] = y0
 
-        array[2] = x0
-        array[3] = y0
-        array[6] = x0
-        array[7] = y1
-        array[10] = x1
-        array[11] = y0
-
-        array[14] = x0
-        array[15] = y1
-        array[18] = x1
-        array[19] = y0
-        array[22] = x1
-        array[23] = y1
+            array[offset++] = x0
+            array[offset++] = y1
+            array[offset++] = x1
+            array[offset++] = y0
+            array[offset++] = x1
+            array[offset++] = y1
+        }
 
         // buffer data
         gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.buffer)
@@ -125,12 +120,10 @@ export class Shader {
 
         // enable attributes
         gl.vertexAttribPointer(0, 2, WebGLRenderingContext.FLOAT, false, batchStride, 0)
-        gl.vertexAttribPointer(1, 2, WebGLRenderingContext.FLOAT, false, batchStride, 8)
 
         gl.enableVertexAttribArray(0)
-        gl.enableVertexAttribArray(1)
 
-        gl.drawArrays(WebGLRenderingContext.TRIANGLES, 0, 6)
+        gl.drawArrays(WebGLRenderingContext.TRIANGLES, 0, 6 * args.blocks.length)
     }
 
     dispose(gl: WebGLRenderingContext): void {
