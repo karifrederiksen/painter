@@ -190,7 +190,7 @@ class InternalContext implements Context {
         this.layerTextureMap = new Map()
         this.internalCanvasSize = args.internalCanvasSize
         this.stroke = null
-        this.renderBlocks = BlockRender.BlockTracker.EMPTY
+        this.renderBlocks = new BlockRender.BlockTracker()
         this.prevLayers = {
             above: [],
             below: [],
@@ -268,7 +268,7 @@ function addBrushPoints(
     brushPoints: ReadonlyArray<BrushShader.BrushPoint>
 ): void {
     context.drawpointBatch.addPoints(brushPoints)
-    context.renderBlocks = context.renderBlocks.withPoints(brushPoints)
+    context.renderBlocks.addPoints(brushPoints)
     if (!context.drawpointBatch.canFlush) return
 
     if (context.stroke == null) {
@@ -290,7 +290,7 @@ function endStroke(context: InternalContext): void {
         framebuffer: context.framebufferMap.get(context.combinedLayers.current)!,
         resolution: internalCanvasSize,
         textureIdx: ensureTextureIsBound(context, stroke),
-        blocks: context.renderBlocks.strokeBlocks,
+        blocks: context.renderBlocks.getStrokeBlocks(),
     })
 
     const strokeFb = context.framebufferMap.get(stroke)
@@ -300,14 +300,15 @@ function endStroke(context: InternalContext): void {
     gl.bindFramebuffer(gl.FRAMEBUFFER, strokeFb)
     gl.clearColor(0, 0, 0, 0)
     gl.clear(gl.COLOR_BUFFER_BIT)
-    context.renderBlocks = context.renderBlocks.endStroke()
+    context.renderBlocks.strokeEnded()
 }
 
 function render(
     context: InternalContext,
     { blendMode, nextLayers, resolution, brush }: RenderArgs
 ): void {
-    if (context.renderBlocks.frameBlocks.length === 0) {
+    const frameBlocks = context.renderBlocks.getFrameBlocks()
+    if (frameBlocks.length === 0) {
         return
     }
 
@@ -439,7 +440,7 @@ function render(
         color: new RgbLinear(process.env.NODE_ENV === "development" ? 0.9 : 0.6, 0.6, 0.6),
         alpha: 1,
         framebuffer: outFramebuffer,
-        blocks: context.renderBlocks.frameBlocks,
+        blocks: frameBlocks,
     })
 
     // BELOW
@@ -448,7 +449,7 @@ function render(
         resolution,
         framebuffer: outFramebuffer,
         textureIdx: ensureTextureIsBound(context, context.combinedLayers.below),
-        blocks: context.renderBlocks.frameBlocks,
+        blocks: frameBlocks,
     })
     if (nextLayers.current !== null) {
         // CURRENT
@@ -457,7 +458,7 @@ function render(
             resolution,
             framebuffer: outFramebuffer,
             textureIdx: ensureTextureIsBound(context, context.combinedLayers.current),
-            blocks: context.renderBlocks.frameBlocks,
+            blocks: frameBlocks,
         })
     }
     // ABOVE
@@ -466,7 +467,7 @@ function render(
         resolution,
         framebuffer: outFramebuffer,
         textureIdx: ensureTextureIsBound(context, context.combinedLayers.above),
-        blocks: context.renderBlocks.frameBlocks,
+        blocks: frameBlocks,
     })
 
     // outputTexture -> canvas
@@ -474,21 +475,13 @@ function render(
     context.outputRenderer.render(gl, {
         resolution,
         textureIdx: ensureTextureIsBound(context, outId),
-        blocks: context.renderBlocks.frameBlocks,
-        // [
-        //     {
-        //         x0: 0,
-        //         y0: 0,
-        //         x1: resolution.x,
-        //         y1: resolution.y,
-        //     },
-        // ],
+        blocks: frameBlocks,
     })
 
     gl.flush()
     //gl.finish()
     context.prevLayers = nextLayers
-    context.renderBlocks = context.renderBlocks.afterFrame()
+    context.renderBlocks.afterFrame()
 }
 
 function addFramebuffer(context: InternalContext, id: TextureId): WebGLFramebuffer {

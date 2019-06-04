@@ -22,22 +22,42 @@ export class Block {
     }
 }
 
-// @perf: The BlockTracker could be internally mutable. I can't think of a good reason it _should_ be immutable
 export class BlockTracker {
-    static EMPTY: BlockTracker = new BlockTracker([], [])
+    private _frameBlocks: Block[]
+    private _strokeBlocks: Block[]
 
-    private nominal: void
-    private constructor(
-        readonly frameBlocks: ReadonlyArray<Block>,
-        readonly strokeBlocks: ReadonlyArray<Block>
-    ) {}
+    constructor() {
+        this._frameBlocks = []
+        this._strokeBlocks = []
+    }
 
-    withPoints(brushPoints: ReadonlyArray<BrushPoint>): BlockTracker {
+    /**
+     * Returns a readonly reference to the internally mutable and unstable frameblock array.
+     *
+     * Do not store the reference.
+     */
+    getFrameBlocks(): ReadonlyArray<Block> {
+        return this._frameBlocks
+    }
+
+    /**
+     * Returns a readonly reference to the internally mutable and unstable strokeblock array.
+     *
+     * Do not store the reference.
+     */
+    getStrokeBlocks(): ReadonlyArray<Block> {
+        return this._strokeBlocks
+    }
+
+    /**
+     * Track the blocks that the given brushPoints might touch.
+     */
+    addPoints(brushPoints: ReadonlyArray<BrushPoint>): void {
         if (brushPoints.length === 0) {
-            return this
+            return
         }
 
-        const frameBlocks = this.frameBlocks.slice()
+        const frameBlocks = this._frameBlocks
         for (let i = 0; i < brushPoints.length; i++) {
             // 1. find minimum intersection point
             // 2. find maximum intersection point
@@ -75,7 +95,7 @@ export class BlockTracker {
             }
         }
 
-        const strokeBlocks = this.strokeBlocks.slice()
+        const strokeBlocks = this._strokeBlocks
 
         // union, no duplicates
         for (let i = 0; i < frameBlocks.length; i++) {
@@ -91,15 +111,20 @@ export class BlockTracker {
                 strokeBlocks.push(block)
             }
         }
-
-        return new BlockTracker(frameBlocks, strokeBlocks)
     }
 
-    endStroke(): BlockTracker {
-        return new BlockTracker(this.strokeBlocks, [])
+    /**
+     * Call this after the stroke has ended, but before rendering the frame.
+     */
+    strokeEnded(): void {
+        this._frameBlocks.splice(0, this._frameBlocks.length, ...this._strokeBlocks)
+        this._strokeBlocks.length = 0
     }
 
-    afterFrame(): BlockTracker {
-        return new BlockTracker([], this.strokeBlocks)
+    /**
+     * Call this after the frame has been rendered.
+     */
+    afterFrame(): void {
+        this._frameBlocks.length = 0
     }
 }
