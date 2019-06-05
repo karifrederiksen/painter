@@ -74,8 +74,8 @@ export class BlockTracker {
             const xBlockMin = (xMin / PX_PER_BLOCK_X) | 0
             const yBlockMin = (yMin / PX_PER_BLOCK_Y) | 0
 
-            const xBlockMax = Math.ceil(xMax / PX_PER_BLOCK_X) | 0
-            const yBlockMax = Math.ceil(yMax / PX_PER_BLOCK_Y) | 0
+            const xBlockMax = (xMax / PX_PER_BLOCK_X) | 0
+            const yBlockMax = (yMax / PX_PER_BLOCK_Y) | 0
 
             for (let y = yBlockMin; y <= yBlockMax; y++) {
                 for (let x = xBlockMin; x <= xBlockMax; x++) {
