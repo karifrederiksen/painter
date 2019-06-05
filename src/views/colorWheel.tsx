@@ -188,8 +188,8 @@ export function ColorWheel(props: ColorWheelProps): JSX.Element {
         // render
         glState.gl.clearColor(0, 0, 0, 0)
         glState.gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT)
-        glState.ringRenderer!.render(props.colorType, props.color)
-        glState.satValRenderer!.render(props.colorType, props.color)
+        glState.ringRenderer.render(props.colorType, props.color)
+        glState.satValRenderer.render(props.colorType, props.color)
     }, [glState, props.color, props.colorType])
 
     React.useEffect(() => {
@@ -332,7 +332,7 @@ const RING_FRAG_SRC_HSV = makeRingFragSrc(`
 ${DEFINE_hsvToRgb}
 
 vec3 toRgb(vec3 color, vec3 xyz) {
-    return hsvToRgb(xyz);
+    return hsvToRgb(xyz * vec3(1.0, color.y, color.z));
 }
 `)
 

@@ -171,7 +171,9 @@ class Painter extends React.Component<{}, Canvas.State> {
         this.cancelFrameStream.set(FrameStream.make(this.sender.onFrame))
 
         if (process.env.NODE_ENV !== "production") {
-            Setup.setup(() => this.state, this.sender)
+            Setup.setup(() => this.state, this.sender).then(() => {
+                this.forceUpdate()
+            })
         }
     }
 

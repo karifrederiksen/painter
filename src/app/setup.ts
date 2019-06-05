@@ -1,7 +1,7 @@
 import * as Canvas from "../canvas"
 import * as Input from "../input"
 import * as Color from "color"
-import { delay } from "../util"
+import { delay, ColorMode } from "../util"
 
 export async function setup(getState: () => Canvas.State, sender: Canvas.MsgSender): Promise<void> {
     const forceRender = () => sender.onFrame(performance.now())
@@ -40,4 +40,6 @@ export async function setup(getState: () => Canvas.State, sender: Canvas.MsgSend
     await delay(30)
     sender.onRelease(mkPt(600, 100, 1.0))
     sender.tool.brush.setDiameter(15)
+    sender.tool.brush.setColorMode(ColorMode.Hsv)
+    forceRender()
 }
