@@ -37,6 +37,10 @@ export interface Args {
     readonly size: Vec2
 }
 
+interface UniformLocations {
+    readonly u_softness: WebGLUniformLocation
+}
+
 export class Generator {
     static create(gl: WebGLRenderingContext): Generator | null {
         const program = createProgram(gl, VERT_SRC, FRAG_SRC)
@@ -45,10 +49,10 @@ export class Generator {
         gl.useProgram(program)
         gl.bindAttribLocation(program, 0, "a_position")
 
-        const softnessUniform = getUniformLocation(gl, program, "u_softness")
-        if (softnessUniform === null) return null
+        const locations = getUniformLocation(gl, program, { u_softness: true })
+        if (locations === null) return null
 
-        return new Generator(gl, program, softnessUniform)
+        return new Generator(gl, program, locations)
     }
 
     private readonly buffer: WebGLBuffer
@@ -57,7 +61,7 @@ export class Generator {
     private constructor(
         gl: WebGLRenderingContext,
         readonly program: WebGLProgram,
-        private readonly softnessUniform: WebGLUniformLocation
+        private readonly locations: UniformLocations
     ) {
         this.buffer = gl.createBuffer()!
         const array = new Float32Array(12)
@@ -90,7 +94,7 @@ export class Generator {
         gl.clearColor(0, 0, 0, 0)
         gl.clear(gl.COLOR_BUFFER_BIT)
 
-        gl.uniform1f(this.softnessUniform, Math.max(args.softness, 0.000001))
+        gl.uniform1f(this.locations.u_softness, Math.max(args.softness, 0.000001))
 
         gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.buffer)
         gl.bufferData(

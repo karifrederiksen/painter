@@ -84,15 +84,37 @@ function padStart(text: string, length: number, fillChar: string): string {
     return pad.join("")
 }
 
-export function getUniformLocation(
+export type UniformNames<a> = { readonly [key in keyof a]: true }
+
+export type Uniforms<a> = { readonly [key in keyof a]: WebGLUniformLocation }
+
+export function getUniformLocation<a>(
     gl: WebGLRenderingContext,
     program: WebGLProgram,
-    name: string
-): WebGLUniformLocation | null {
-    const textureLoc = gl.getUniformLocation(program, name)
-    if (textureLoc !== null) return textureLoc
+    uniforms: UniformNames<a>
+): Uniforms<a> | null {
+    const result: any = {}
+    const notFound: string[] = []
+    for (const propName in uniforms) {
+        if (!uniforms.hasOwnProperty(propName)) continue
+        const textureLoc = gl.getUniformLocation(program, propName)
+        if (textureLoc === null) {
+            notFound.push(propName)
+        }
+        result[propName] = textureLoc
+    }
 
-    console.error(`Failed to find location for uniform "${name}"`)
+    if (notFound.length === 0) {
+        return result as Uniforms<a>
+    }
+
+    let msg = "Failed to find location for uniforms"
+
+    for (let i = 0; i < notFound.length; i++) {
+        msg += "\n - " + notFound[i]
+    }
+
+    console.error(msg)
     return null
 }
 

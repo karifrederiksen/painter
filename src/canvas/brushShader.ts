@@ -74,6 +74,11 @@ function initAffectedArea(): AffectedArea {
     }
 }
 
+interface UniformLocations {
+    readonly u_texture: WebGLUniformLocation
+    readonly u_resolution: WebGLUniformLocation
+}
+
 export class Shader {
     static create(gl: WebGLRenderingContext): Shader | null {
         const program = createProgram(gl, VERT_SRC, FRAG_SRC)
@@ -83,13 +88,10 @@ export class Shader {
         gl.bindAttribLocation(program, 1, "a_tex_coords")
         gl.bindAttribLocation(program, 2, "a_position")
 
-        const textureUniform = getUniformLocation(gl, program, "u_texture")
-        if (textureUniform === null) return null
+        const locations = getUniformLocation(gl, program, { u_texture: true, u_resolution: true })
+        if (locations === null) return null
 
-        const resolutionUniform = getUniformLocation(gl, program, "u_resolution")
-        if (resolutionUniform === null) return null
-
-        return new Shader(gl, program, textureUniform, resolutionUniform)
+        return new Shader(gl, program, locations)
     }
 
     private readonly buffer: WebGLBuffer
@@ -100,8 +102,7 @@ export class Shader {
     private constructor(
         gl: WebGLRenderingContext,
         readonly program: WebGLProgram,
-        private readonly textureUniform: WebGLUniformLocation,
-        private readonly resolutionUniform: WebGLUniformLocation
+        private readonly locations: UniformLocations
     ) {
         const arrayLength = floatsPerVertex * 6 * INITIAL_VARRAY_SIZE
 
@@ -153,8 +154,8 @@ export class Shader {
         )
 
         // update uniforms
-        gl.uniform1i(this.textureUniform, uniforms.brushTextureIdx)
-        gl.uniform2f(this.resolutionUniform, uniforms.resolution.x, uniforms.resolution.y)
+        gl.uniform1i(this.locations.u_texture, uniforms.brushTextureIdx)
+        gl.uniform2f(this.locations.u_resolution, uniforms.resolution.x, uniforms.resolution.y)
 
         // enable attributes
         gl.vertexAttribPointer(0, 4, WebGLRenderingContext.FLOAT, false, batchStride, 0)

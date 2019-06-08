@@ -51,23 +51,27 @@ export interface Args {
     }>
 }
 
+interface UniformLocations {
+    readonly u_texture: WebGLUniformLocation
+    readonly u_resolution: WebGLUniformLocation
+    readonly u_opacity: WebGLUniformLocation
+}
+
 export class Shader {
     static create(gl: WebGLRenderingContext): Shader | null {
         const program = createProgram(gl, VERT_SRC, FRAG_SRC)
         if (program === null) return null
 
         gl.bindAttribLocation(program, 0, "a_position")
+        const locations = getUniformLocation(gl, program, {
+            u_texture: true,
+            u_resolution: true,
+            u_opacity: true,
+        })
 
-        const textureUniform = getUniformLocation(gl, program, "u_texture")
-        if (textureUniform === null) return null
+        if (locations === null) return null
 
-        const resolutionUniform = getUniformLocation(gl, program, "u_resolution")
-        if (resolutionUniform === null) return null
-
-        const opacityUniform = getUniformLocation(gl, program, "u_opacity")
-        if (opacityUniform === null) return null
-
-        return new Shader(gl, program, textureUniform, resolutionUniform, opacityUniform)
+        return new Shader(gl, program, locations)
     }
 
     private readonly buffer: WebGLBuffer
@@ -77,9 +81,7 @@ export class Shader {
     private constructor(
         gl: WebGLRenderingContext,
         private readonly program: WebGLProgram,
-        private readonly textureUniform: WebGLUniformLocation,
-        private readonly resolutionUniform: WebGLUniformLocation,
-        private readonly opacityUniform: WebGLUniformLocation
+        private readonly locations: UniformLocations
     ) {
         this.buffer = gl.createBuffer()!
         this.array = new Float32Array(floatsPerVertex * 6 * this.capacity)
@@ -123,9 +125,9 @@ export class Shader {
         gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, array, WebGLRenderingContext.DYNAMIC_DRAW)
 
         // update uniforms
-        gl.uniform1i(this.textureUniform, args.textureIdx)
-        gl.uniform2f(this.resolutionUniform, args.resolution.x, args.resolution.y)
-        gl.uniform1f(this.opacityUniform, args.opacity)
+        gl.uniform1i(this.locations.u_texture, args.textureIdx)
+        gl.uniform2f(this.locations.u_resolution, args.resolution.x, args.resolution.y)
+        gl.uniform1f(this.locations.u_opacity, args.opacity)
 
         // enable attributes
         gl.vertexAttribPointer(0, 2, WebGLRenderingContext.FLOAT, false, batchStride, 0)

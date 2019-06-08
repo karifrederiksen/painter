@@ -44,6 +44,11 @@ export interface Args {
     }>
 }
 
+interface UniformLocations {
+    readonly u_resolution: WebGLUniformLocation
+    readonly u_rgba: WebGLUniformLocation
+}
+
 export class Shader {
     static create(gl: WebGLRenderingContext): Shader | null {
         const program = createProgram(gl, VERT_SRC, FRAG_SRC)
@@ -51,13 +56,13 @@ export class Shader {
 
         gl.bindAttribLocation(program, 0, "a_position")
 
-        const resolutionUniform = getUniformLocation(gl, program, "u_resolution")
-        if (resolutionUniform === null) return null
+        const locations = getUniformLocation(gl, program, {
+            u_resolution: true,
+            u_rgba: true,
+        })
+        if (locations === null) return null
 
-        const rgbaUniform = getUniformLocation(gl, program, "u_rgba")
-        if (rgbaUniform === null) return null
-
-        return new Shader(gl, program, resolutionUniform, rgbaUniform)
+        return new Shader(gl, program, locations)
     }
 
     private readonly buffer: WebGLBuffer
@@ -67,8 +72,7 @@ export class Shader {
     private constructor(
         gl: WebGLRenderingContext,
         private readonly program: WebGLProgram,
-        private readonly resolutionUniform: WebGLUniformLocation,
-        private readonly rgbaUniform: WebGLUniformLocation
+        private readonly locations: UniformLocations
     ) {
         this.buffer = gl.createBuffer() as WebGLBuffer
         this.array = new Float32Array(floatsPerVertex * 6 * this.capacity)
@@ -112,9 +116,15 @@ export class Shader {
         gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, array, WebGLRenderingContext.DYNAMIC_DRAW)
 
         // update uniforms
-        gl.uniform2f(this.resolutionUniform, args.resolution.x, args.resolution.y)
+        gl.uniform2f(this.locations.u_resolution, args.resolution.x, args.resolution.y)
         const { alpha, color } = args
-        gl.uniform4f(this.rgbaUniform, color.r * alpha, color.g * alpha, color.b * alpha, alpha)
+        gl.uniform4f(
+            this.locations.u_rgba,
+            color.r * alpha,
+            color.g * alpha,
+            color.b * alpha,
+            alpha
+        )
 
         // enable attributes
         gl.vertexAttribPointer(0, 2, WebGLRenderingContext.FLOAT, false, batchStride, 0)
