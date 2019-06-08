@@ -8,7 +8,9 @@ export function createProgram(
     const vShader = compileShader(gl, vSrc, WebGLRenderingContext.VERTEX_SHADER)
     const fShader = compileShader(gl, fSrc, WebGLRenderingContext.FRAGMENT_SHADER)
 
-    if (vShader === null || fShader === null) return null
+    if (vShader === null || fShader === null) {
+        return null
+    }
 
     const program = gl.createProgram()
 
@@ -30,14 +32,17 @@ export function createProgram(
 
 function compileShader(gl: WebGLRenderingContext, src: string, shaderType: number) {
     const shader = gl.createShader(shaderType)
-    gl.shaderSource(shader!, src)
-    gl.compileShader(shader!)
+    if (shader === null) {
+        console.error("Failed to create shader.")
+        return null
+    }
+    gl.shaderSource(shader, src)
+    gl.compileShader(shader)
 
-    if (gl.getShaderParameter(shader!, WebGLRenderingContext.COMPILE_STATUS)) return shader
+    if (gl.getShaderParameter(shader, WebGLRenderingContext.COMPILE_STATUS)) return shader
 
-    console.group("Shader compilation")
-    console.error("failed to compile shader")
-    console.log("shader info log: ", gl.getShaderInfoLog(shader!))
+    console.group("Failed to compile shader")
+    console.error("shader info log: ", gl.getShaderInfoLog(shader))
     const prettySrc = withNumberedLines(src)
     console.log(prettySrc)
     console.groupEnd()
@@ -50,13 +55,12 @@ function linkProgram(gl: WebGLRenderingContext, program: WebGLProgram): WebGLPro
     if (program !== null || gl.getProgramParameter(program, WebGLRenderingContext.LINK_STATUS))
         return program
 
-    console.group("Program linking")
-    console.error("failed to link program")
+    console.group("Failed to link program")
+    console.error("error: ", gl.getError())
     console.log(
         "validate status: ",
         gl.getProgramParameter(program, WebGLRenderingContext.VALIDATE_STATUS)
     )
-    console.log("error: ", gl.getError())
     console.log("program info log: ", gl.getProgramInfoLog(program))
     console.groupEnd()
 
@@ -116,6 +120,89 @@ export function getUniformLocation<a>(
 
     console.error(msg)
     return null
+}
+
+// Not using anything but float current, but this will allow us to easily add other types later
+export enum AttribType {
+    Float,
+}
+
+export interface Attrib {
+    readonly name: string
+    readonly size: number
+    readonly type: AttribType
+}
+
+class AttribInternal {
+    readonly name: string
+    readonly size: number
+    readonly glType: number
+    readonly bytes: number
+
+    constructor(attrib: Attrib) {
+        this.name = attrib.name
+        this.size = attrib.size
+        switch (attrib.type) {
+            case AttribType.Float:
+                this.glType = WebGLRenderingContext.FLOAT
+                this.bytes = attrib.size * 4
+                break
+            default:
+                const never: never = attrib.type
+                throw { "Unexpected type on attribute": attrib }
+        }
+    }
+}
+
+export class AttributesInfo {
+    readonly size: number
+    readonly stride: number
+    readonly attributes: ReadonlyArray<AttribInternal>
+
+    constructor(attributes: ReadonlyArray<Attrib>) {
+        {
+            let attributes_ = new Array<AttribInternal>(attributes.length)
+            for (let i = 0; i < attributes.length; i++) {
+                const attrib = attributes[i]
+                attributes_[i] = new AttribInternal(attrib)
+            }
+            this.attributes = attributes_
+        }
+        {
+            let totalSize = 0
+            for (let i = 0; i < this.attributes.length; i++) {
+                totalSize += this.attributes[i].size
+            }
+            this.size = totalSize
+            this.stride = totalSize * 4
+        }
+    }
+
+    bindAttribLocations(gl: WebGLRenderingContext, program: WebGLProgram): void {
+        const { attributes } = this
+        for (let i = 0; i < attributes.length; i++) {
+            gl.bindAttribLocation(program, i, attributes[i].name)
+        }
+    }
+
+    vertexAttrib(gl: WebGLRenderingContext): void {
+        const { attributes } = this
+
+        let sizeOffset = 0
+        for (let i = 0; i < attributes.length; i++) {
+            const attrib = attributes[i]
+            gl.vertexAttribPointer(i, attrib.size, attrib.glType, false, this.stride, sizeOffset)
+            sizeOffset += attrib.bytes
+        }
+
+        for (let i = 0; i < attributes.length; i++) {
+            gl.enableVertexAttribArray(i)
+        }
+    }
+
+    getDrawCount(offset: number): number {
+        return offset / this.size
+    }
 }
 
 export namespace Blend {

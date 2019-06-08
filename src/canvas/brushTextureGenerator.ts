@@ -1,4 +1,4 @@
-import { Blend, getUniformLocation, createProgram, DEFINE_to_linear } from "../webgl"
+import * as WebGL from "../webgl"
 import { Vec2 } from "../util"
 
 const VERT_SRC = `
@@ -31,6 +31,10 @@ void main() {
 }
 `
 
+const AttributesInfo = new WebGL.AttributesInfo([
+    { name: "a_position", size: 2, type: WebGL.AttribType.Float },
+])
+
 export interface Args {
     readonly softness: number
     readonly framebuffer: WebGLFramebuffer
@@ -43,14 +47,17 @@ interface UniformLocations {
 
 export class Generator {
     static create(gl: WebGLRenderingContext): Generator | null {
-        const program = createProgram(gl, VERT_SRC, FRAG_SRC)
-        if (program === null) return null
+        const program = WebGL.createProgram(gl, VERT_SRC, FRAG_SRC)
+        if (program === null) {
+            return null
+        }
 
-        gl.useProgram(program)
-        gl.bindAttribLocation(program, 0, "a_position")
+        const locations = WebGL.getUniformLocation(gl, program, { u_softness: true })
+        if (locations === null) {
+            return null
+        }
 
-        const locations = getUniformLocation(gl, program, { u_softness: true })
-        if (locations === null) return null
+        AttributesInfo.bindAttribLocations(gl, program)
 
         return new Generator(gl, program, locations)
     }
@@ -86,7 +93,7 @@ export class Generator {
     }
 
     generateBrushTexture(gl: WebGLRenderingContext, args: Args): void {
-        const { sfact, dfact } = Blend.factorsNormal
+        const { sfact, dfact } = WebGL.Blend.factorsNormal
         gl.blendFunc(sfact, dfact)
         gl.useProgram(this.program)
         gl.viewport(0, 0, args.size.x, args.size.y)
@@ -103,8 +110,8 @@ export class Generator {
             WebGLRenderingContext.STATIC_DRAW
         )
 
-        gl.vertexAttribPointer(0, 2, WebGLRenderingContext.FLOAT, false, 8, 0)
-        gl.enableVertexAttribArray(0)
+        AttributesInfo.vertexAttrib(gl)
+
         gl.drawArrays(WebGLRenderingContext.TRIANGLES, 0, 6)
     }
 

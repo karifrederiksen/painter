@@ -1,8 +1,5 @@
-import { Blend, createProgram, getUniformLocation } from "../webgl"
+import * as WebGL from "../webgl"
 import { Vec2 } from "../util"
-
-const floatsPerVertex = 2
-const batchStride = floatsPerVertex * 4
 
 const VERT_SRC = `
 precision highp float;
@@ -38,6 +35,10 @@ void main() {
 }
 `
 
+const AttributesInfo = new WebGL.AttributesInfo([
+    { name: "a_position", size: 2, type: WebGL.AttribType.Float },
+])
+
 export interface Args {
     readonly opacity: number
     readonly resolution: Vec2
@@ -59,17 +60,22 @@ interface UniformLocations {
 
 export class Shader {
     static create(gl: WebGLRenderingContext): Shader | null {
-        const program = createProgram(gl, VERT_SRC, FRAG_SRC)
-        if (program === null) return null
+        const program = WebGL.createProgram(gl, VERT_SRC, FRAG_SRC)
+        if (program === null) {
+            return null
+        }
 
-        gl.bindAttribLocation(program, 0, "a_position")
-        const locations = getUniformLocation(gl, program, {
+        const locations = WebGL.getUniformLocation(gl, program, {
             u_texture: true,
             u_resolution: true,
             u_opacity: true,
         })
 
-        if (locations === null) return null
+        if (locations === null) {
+            return null
+        }
+
+        AttributesInfo.bindAttribLocations(gl, program)
 
         return new Shader(gl, program, locations)
     }
@@ -84,20 +90,20 @@ export class Shader {
         private readonly locations: UniformLocations
     ) {
         this.buffer = gl.createBuffer()!
-        this.array = new Float32Array(floatsPerVertex * 6 * this.capacity)
+        this.array = new Float32Array(AttributesInfo.size * 6 * this.capacity)
     }
 
     render(gl: WebGLRenderingContext, args: Args): void {
         if (args.framebuffer == null) {
             throw "Framebuffer should be defined"
         }
-        const { sfact, dfact } = Blend.factorsNormal
+        const { sfact, dfact } = WebGL.Blend.factorsNormal
         gl.blendFunc(sfact, dfact)
         gl.useProgram(this.program)
         gl.bindFramebuffer(gl.FRAMEBUFFER, args.framebuffer)
         if (this.capacity < args.blocks.length) {
             this.capacity = args.blocks.length
-            this.array = new Float32Array(floatsPerVertex * 6 * this.capacity)
+            this.array = new Float32Array(AttributesInfo.size * 6 * this.capacity)
         }
 
         const array = this.array
@@ -130,9 +136,7 @@ export class Shader {
         gl.uniform1f(this.locations.u_opacity, args.opacity)
 
         // enable attributes
-        gl.vertexAttribPointer(0, 2, WebGLRenderingContext.FLOAT, false, batchStride, 0)
-
-        gl.enableVertexAttribArray(0)
+        AttributesInfo.vertexAttrib(gl)
 
         gl.drawArrays(WebGLRenderingContext.TRIANGLES, 0, 6 * args.blocks.length)
     }

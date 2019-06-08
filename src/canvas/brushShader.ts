@@ -1,11 +1,8 @@
 import * as Color from "color"
-import { Blend, createProgram, getUniformLocation } from "../webgl"
+import * as WebGL from "../webgl"
 import { Vec2, Vec4 } from "../util"
 
 const INITIAL_VARRAY_SIZE = 5000
-
-const floatsPerVertex = 8
-const batchStride = floatsPerVertex * 4
 
 const VERT_SRC = `
 precision highp float;
@@ -55,7 +52,7 @@ export interface BrushPoint {
 export interface Uniforms {
     readonly resolution: Readonly<Vec2>
     readonly brushTextureIdx: number
-    readonly blendMode: Blend.Mode
+    readonly blendMode: WebGL.Blend.Mode
 }
 
 interface AffectedArea {
@@ -79,17 +76,28 @@ interface UniformLocations {
     readonly u_resolution: WebGLUniformLocation
 }
 
+const AttributesInfo = new WebGL.AttributesInfo([
+    { name: "a_color", size: 4, type: WebGL.AttribType.Float },
+    { name: "a_tex_coords", size: 2, type: WebGL.AttribType.Float },
+    { name: "a_position", size: 2, type: WebGL.AttribType.Float },
+])
+
 export class Shader {
     static create(gl: WebGLRenderingContext): Shader | null {
-        const program = createProgram(gl, VERT_SRC, FRAG_SRC)
-        if (program === null) return null
+        const program = WebGL.createProgram(gl, VERT_SRC, FRAG_SRC)
+        if (program === null) {
+            return null
+        }
 
-        gl.bindAttribLocation(program, 0, "a_color")
-        gl.bindAttribLocation(program, 1, "a_tex_coords")
-        gl.bindAttribLocation(program, 2, "a_position")
+        const locations = WebGL.getUniformLocation(gl, program, {
+            u_texture: true,
+            u_resolution: true,
+        })
+        if (locations === null) {
+            return null
+        }
 
-        const locations = getUniformLocation(gl, program, { u_texture: true, u_resolution: true })
-        if (locations === null) return null
+        AttributesInfo.bindAttribLocations(gl, program)
 
         return new Shader(gl, program, locations)
     }
@@ -104,7 +112,7 @@ export class Shader {
         readonly program: WebGLProgram,
         private readonly locations: UniformLocations
     ) {
-        const arrayLength = floatsPerVertex * 6 * INITIAL_VARRAY_SIZE
+        const arrayLength = AttributesInfo.size * 6 * INITIAL_VARRAY_SIZE
 
         this.buffer = gl.createBuffer()!
         this.array = new Float32Array(arrayLength)
@@ -117,7 +125,7 @@ export class Shader {
     }
 
     addPoints(points: ReadonlyArray<BrushPoint>): void {
-        const nextOffset = 6 * floatsPerVertex * points.length + this.offset
+        const nextOffset = 6 * AttributesInfo.size * points.length + this.offset
         while (nextOffset > this.array.length) {
             this.array = doubleSize(this.array)
         }
@@ -142,7 +150,7 @@ export class Shader {
 
         const arrayView = this.array.subarray(0, this.offset)
 
-        const { sfact, dfact } = Blend.getFactors(uniforms.blendMode)
+        const { sfact, dfact } = WebGL.Blend.getFactors(uniforms.blendMode)
         gl.blendFunc(sfact, dfact)
 
         // buffer data
@@ -157,16 +165,9 @@ export class Shader {
         gl.uniform1i(this.locations.u_texture, uniforms.brushTextureIdx)
         gl.uniform2f(this.locations.u_resolution, uniforms.resolution.x, uniforms.resolution.y)
 
-        // enable attributes
-        gl.vertexAttribPointer(0, 4, WebGLRenderingContext.FLOAT, false, batchStride, 0)
-        gl.vertexAttribPointer(1, 2, WebGLRenderingContext.FLOAT, false, batchStride, 16)
-        gl.vertexAttribPointer(2, 2, WebGLRenderingContext.FLOAT, false, batchStride, 24)
+        AttributesInfo.vertexAttrib(gl)
 
-        gl.enableVertexAttribArray(0)
-        gl.enableVertexAttribArray(1)
-        gl.enableVertexAttribArray(2)
-
-        const drawCount = this.offset / floatsPerVertex
+        const drawCount = AttributesInfo.getDrawCount(this.offset)
         //console.log("brushShader draw count", drawCount)
 
         gl.drawArrays(WebGLRenderingContext.TRIANGLES, 0, drawCount)
