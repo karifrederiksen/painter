@@ -40,22 +40,26 @@ const AttributesInfo = new WebGL.AttributesInfo([
 ])
 
 export interface Args {
-    readonly opacity: number
-    readonly resolution: Vec2
+    readonly uniforms: WebGL.UniformArgs<UniformLocations>
     readonly framebuffer: WebGLFramebuffer
-    readonly textureIdx: number
-    readonly blocks: ReadonlyArray<{
+    readonly blocks: readonly {
         readonly x0: number
         readonly y0: number
         readonly x1: number
         readonly y1: number
-    }>
+    }[]
 }
 
 interface UniformLocations {
-    readonly u_texture: WebGLUniformLocation
-    readonly u_resolution: WebGLUniformLocation
-    readonly u_opacity: WebGLUniformLocation
+    readonly u_texture: WebGL.UniformType.I1
+    readonly u_resolution: WebGL.UniformType.F2
+    readonly u_opacity: WebGL.UniformType.F1
+}
+
+const Uniforms: UniformLocations = {
+    u_texture: WebGL.UniformType.I1,
+    u_resolution: WebGL.UniformType.F2,
+    u_opacity: WebGL.UniformType.F1,
 }
 
 export class Shader {
@@ -65,11 +69,7 @@ export class Shader {
             return null
         }
 
-        const locations = WebGL.getUniformLocation(gl, program, {
-            u_texture: true,
-            u_resolution: true,
-            u_opacity: true,
-        })
+        const locations = WebGL.getUniformLocation(gl, program, Uniforms)
 
         if (locations === null) {
             return null
@@ -87,7 +87,7 @@ export class Shader {
     private constructor(
         gl: WebGLRenderingContext,
         private readonly program: WebGLProgram,
-        private readonly locations: UniformLocations
+        private readonly locations: WebGL.UniformsInfo<UniformLocations>
     ) {
         this.buffer = gl.createBuffer()!
         this.array = new Float32Array(AttributesInfo.size * 6 * this.capacity)
@@ -130,12 +130,8 @@ export class Shader {
         gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.buffer)
         gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, array, WebGLRenderingContext.DYNAMIC_DRAW)
 
-        // update uniforms
-        gl.uniform1i(this.locations.u_texture, args.textureIdx)
-        gl.uniform2f(this.locations.u_resolution, args.resolution.x, args.resolution.y)
-        gl.uniform1f(this.locations.u_opacity, args.opacity)
+        WebGL.updateUniforms(gl, this.locations, args.uniforms)
 
-        // enable attributes
         AttributesInfo.vertexAttrib(gl)
 
         gl.drawArrays(WebGLRenderingContext.TRIANGLES, 0, 6 * args.blocks.length)

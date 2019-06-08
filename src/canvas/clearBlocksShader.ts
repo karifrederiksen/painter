@@ -33,21 +33,24 @@ const AttributesInfo = new WebGL.AttributesInfo([
 ])
 
 export interface Args {
-    readonly resolution: Vec2
+    readonly uniforms: WebGL.UniformArgs<UniformLocations>
     readonly framebuffer: WebGLFramebuffer
-    readonly color: RgbLinear
-    readonly alpha: number
-    readonly blocks: ReadonlyArray<{
+    readonly blocks: readonly {
         readonly x0: number
         readonly y0: number
         readonly x1: number
         readonly y1: number
-    }>
+    }[]
 }
 
 interface UniformLocations {
-    readonly u_resolution: WebGLUniformLocation
-    readonly u_rgba: WebGLUniformLocation
+    readonly u_resolution: WebGL.UniformType.F2
+    readonly u_rgba: WebGL.UniformType.F4
+}
+
+const Uniforms: UniformLocations = {
+    u_resolution: WebGL.UniformType.F2,
+    u_rgba: WebGL.UniformType.F4,
 }
 
 export class Shader {
@@ -57,10 +60,7 @@ export class Shader {
             return null
         }
 
-        const locations = WebGL.getUniformLocation(gl, program, {
-            u_resolution: true,
-            u_rgba: true,
-        })
+        const locations = WebGL.getUniformLocation(gl, program, Uniforms)
         if (locations === null) {
             return null
         }
@@ -77,7 +77,7 @@ export class Shader {
     private constructor(
         gl: WebGLRenderingContext,
         private readonly program: WebGLProgram,
-        private readonly locations: UniformLocations
+        private readonly locations: WebGL.UniformsInfo<UniformLocations>
     ) {
         this.buffer = gl.createBuffer() as WebGLBuffer
         this.array = new Float32Array(AttributesInfo.size * 6 * this.capacity)
@@ -120,16 +120,7 @@ export class Shader {
         gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.buffer)
         gl.bufferData(WebGLRenderingContext.ARRAY_BUFFER, array, WebGLRenderingContext.DYNAMIC_DRAW)
 
-        // update uniforms
-        gl.uniform2f(this.locations.u_resolution, args.resolution.x, args.resolution.y)
-        const { alpha, color } = args
-        gl.uniform4f(
-            this.locations.u_rgba,
-            color.r * alpha,
-            color.g * alpha,
-            color.b * alpha,
-            alpha
-        )
+        WebGL.updateUniforms(gl, this.locations, args.uniforms)
 
         AttributesInfo.vertexAttrib(gl)
 

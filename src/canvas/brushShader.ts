@@ -49,9 +49,8 @@ export interface BrushPoint {
     readonly rotation: number
 }
 
-export interface Uniforms {
-    readonly resolution: Readonly<Vec2>
-    readonly brushTextureIdx: number
+export interface Args {
+    readonly uniforms: WebGL.UniformArgs<UniformLocations>
     readonly blendMode: WebGL.Blend.Mode
 }
 
@@ -72,8 +71,13 @@ function initAffectedArea(): AffectedArea {
 }
 
 interface UniformLocations {
-    readonly u_texture: WebGLUniformLocation
-    readonly u_resolution: WebGLUniformLocation
+    readonly u_texture: WebGL.UniformType.I1
+    readonly u_resolution: WebGL.UniformType.F2
+}
+
+const Uniforms: UniformLocations = {
+    u_resolution: WebGL.UniformType.F2,
+    u_texture: WebGL.UniformType.I1,
 }
 
 const AttributesInfo = new WebGL.AttributesInfo([
@@ -89,10 +93,7 @@ export class Shader {
             return null
         }
 
-        const locations = WebGL.getUniformLocation(gl, program, {
-            u_texture: true,
-            u_resolution: true,
-        })
+        const locations = WebGL.getUniformLocation(gl, program, Uniforms)
         if (locations === null) {
             return null
         }
@@ -110,7 +111,7 @@ export class Shader {
     private constructor(
         gl: WebGLRenderingContext,
         readonly program: WebGLProgram,
-        private readonly locations: UniformLocations
+        private readonly locations: WebGL.UniformsInfo<UniformLocations>
     ) {
         const arrayLength = AttributesInfo.size * 6 * INITIAL_VARRAY_SIZE
 
@@ -124,7 +125,7 @@ export class Shader {
         return this.offset > 0
     }
 
-    addPoints(points: ReadonlyArray<BrushPoint>): void {
+    addPoints(points: readonly BrushPoint[]): void {
         const nextOffset = 6 * AttributesInfo.size * points.length + this.offset
         while (nextOffset > this.array.length) {
             this.array = doubleSize(this.array)
@@ -145,12 +146,12 @@ export class Shader {
         return new Vec4(affectedArea.x0, affectedArea.y0, affectedArea.x1, affectedArea.y1)
     }
 
-    flush(gl: WebGLRenderingContext, uniforms: Uniforms): void {
+    flush(gl: WebGLRenderingContext, args: Args): void {
         gl.useProgram(this.program)
 
         const arrayView = this.array.subarray(0, this.offset)
 
-        const { sfact, dfact } = WebGL.Blend.getFactors(uniforms.blendMode)
+        const { sfact, dfact } = WebGL.Blend.getFactors(args.blendMode)
         gl.blendFunc(sfact, dfact)
 
         // buffer data
@@ -161,14 +162,11 @@ export class Shader {
             WebGLRenderingContext.DYNAMIC_DRAW
         )
 
-        // update uniforms
-        gl.uniform1i(this.locations.u_texture, uniforms.brushTextureIdx)
-        gl.uniform2f(this.locations.u_resolution, uniforms.resolution.x, uniforms.resolution.y)
+        WebGL.updateUniforms(gl, this.locations, args.uniforms)
 
         AttributesInfo.vertexAttrib(gl)
 
         const drawCount = AttributesInfo.getDrawCount(this.offset)
-        //console.log("brushShader draw count", drawCount)
 
         gl.drawArrays(WebGLRenderingContext.TRIANGLES, 0, drawCount)
         this.offset = 0

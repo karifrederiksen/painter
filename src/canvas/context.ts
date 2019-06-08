@@ -6,7 +6,7 @@ import * as BrushShader from "./brushShader"
 import * as Layers from "../layers/model"
 import * as BlockRender from "./blockRender"
 import { Blend } from "../webgl"
-import { T2, Result, Vec2, Brand } from "../util"
+import { T2, Result, Vec2, Brand, Vec4 } from "../util"
 import { RgbLinear } from "color"
 
 export interface CreationArgs {
@@ -29,7 +29,7 @@ export interface RenderArgs {
 }
 
 export interface Context {
-    addBrushPoints(brushPoints: ReadonlyArray<BrushShader.BrushPoint>): void
+    addBrushPoints(brushPoints: readonly BrushShader.BrushPoint[]): void
     endStroke(): void
     render(args: RenderArgs): void
     dispose(): void
@@ -200,9 +200,11 @@ class InternalContext implements Context {
             const size = new Vec2(128, 128)
             this.brushTextureId = createTexture(this, size)
             this.brushTextureGenerator.generateBrushTexture(this.gl, {
-                softness: 0,
                 framebuffer: addFramebuffer(this, this.brushTextureId),
                 size: size,
+                uniforms: {
+                    u_softness: 0,
+                },
             })
         }
         this.currentLayerTextureId = createTexture(this, args.internalCanvasSize)
@@ -223,8 +225,10 @@ class InternalContext implements Context {
         this.gl.clearColor(0.6, 0.6, 0.6, 1)
         this.gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT)
         this.outputRenderer.render(this.gl, {
-            resolution: this.internalCanvasSize,
-            textureIdx: ensureTextureIsBound(this, this.outputTextureId),
+            uniforms: {
+                u_resolution: this.internalCanvasSize,
+                u_texture: ensureTextureIsBound(this, this.outputTextureId),
+            },
             blocks: [
                 {
                     x0: 0,
@@ -236,7 +240,7 @@ class InternalContext implements Context {
         })
     }
 
-    addBrushPoints(brushPoints: ReadonlyArray<BrushShader.BrushPoint>) {
+    addBrushPoints(brushPoints: readonly BrushShader.BrushPoint[]) {
         addBrushPoints(this, brushPoints)
     }
 
@@ -265,7 +269,7 @@ class InternalContext implements Context {
 
 function addBrushPoints(
     context: InternalContext,
-    brushPoints: ReadonlyArray<BrushShader.BrushPoint>
+    brushPoints: readonly BrushShader.BrushPoint[]
 ): void {
     context.drawpointBatch.addPoints(brushPoints)
     context.renderBlocks.addPoints(brushPoints)
@@ -286,10 +290,12 @@ function endStroke(context: InternalContext): void {
 
     gl.viewport(0, 0, context.internalCanvasSize.x, context.internalCanvasSize.y)
     context.textureRenderer.render(gl, {
-        opacity: 1,
         framebuffer: context.framebufferMap.get(context.combinedLayers.current)!,
-        resolution: internalCanvasSize,
-        textureIdx: ensureTextureIsBound(context, stroke),
+        uniforms: {
+            u_opacity: 1,
+            u_resolution: internalCanvasSize,
+            u_texture: ensureTextureIsBound(context, stroke),
+        },
         blocks: context.renderBlocks.getStrokeBlocks(),
     })
 
@@ -323,16 +329,20 @@ function render(
             const { brushTextureId } = context
 
             context.brushTextureGenerator.generateBrushTexture(gl, {
-                softness: brush.softness,
                 framebuffer: context.framebufferMap.get(brushTextureId)!,
                 size: new Vec2(128, 128),
+                uniforms: {
+                    u_softness: Math.max(brush.softness, 0.000001),
+                },
             })
             gl.viewport(0, 0, resolution.x, resolution.y)
             gl.bindFramebuffer(gl.FRAMEBUFFER, context.framebufferMap.get(currentLayerTex)!)
             context.drawpointBatch.flush(gl, {
                 blendMode,
-                resolution,
-                brushTextureIdx: ensureTextureIsBound(context, brushTextureId),
+                uniforms: {
+                    u_resolution: resolution,
+                    u_texture: ensureTextureIsBound(context, brushTextureId),
+                },
             })
         }
     }
@@ -355,9 +365,11 @@ function render(
 
                 context.textureRenderer.render(gl, {
                     framebuffer: fb,
-                    opacity: layer.opacity,
-                    resolution: internalCanvasSize,
-                    textureIdx: ensureTextureIsBound(context, textureId),
+                    uniforms: {
+                        u_opacity: layer.opacity,
+                        u_resolution: internalCanvasSize,
+                        u_texture: ensureTextureIsBound(context, textureId),
+                    },
                     blocks: [
                         {
                             x0: 0,
@@ -384,9 +396,11 @@ function render(
 
                 context.textureRenderer.render(gl, {
                     framebuffer: fb,
-                    opacity: layer.opacity,
-                    resolution: internalCanvasSize,
-                    textureIdx: ensureTextureIsBound(context, textureId),
+                    uniforms: {
+                        u_opacity: layer.opacity,
+                        u_resolution: internalCanvasSize,
+                        u_texture: ensureTextureIsBound(context, textureId),
+                    },
                     blocks: [
                         {
                             x0: 0,
@@ -409,9 +423,11 @@ function render(
             const layerTextureId = getTextureIdForLayer(context, layerId.id)
             context.textureRenderer.render(gl, {
                 framebuffer: fb,
-                opacity: 1,
-                resolution: internalCanvasSize,
-                textureIdx: ensureTextureIsBound(context, layerTextureId),
+                uniforms: {
+                    u_opacity: 1,
+                    u_resolution: internalCanvasSize,
+                    u_texture: ensureTextureIsBound(context, layerTextureId),
+                },
                 blocks: [
                     {
                         x0: 0,
@@ -434,47 +450,59 @@ function render(
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, outFramebuffer)
 
-    // need to clear the render blocks...
-    context.clearBlocksRenderer.render(gl, {
-        resolution,
-        color: new RgbLinear(process.env.NODE_ENV === "development" ? 0.9 : 0.6, 0.6, 0.6),
-        alpha: 1,
-        framebuffer: outFramebuffer,
-        blocks: frameBlocks,
-    })
+    {
+        // need to clear the render blocks...
+        const bgColor = new RgbLinear(process.env.NODE_ENV === "development" ? 0.9 : 0.6, 0.6, 0.6)
+        context.clearBlocksRenderer.render(gl, {
+            framebuffer: outFramebuffer,
+            uniforms: {
+                u_resolution: resolution,
+                u_rgba: Vec4.fromRgba(bgColor, 1),
+            },
+            blocks: frameBlocks,
+        })
+    }
 
     // BELOW
     context.textureRenderer.render(gl, {
-        opacity: 1,
-        resolution,
         framebuffer: outFramebuffer,
-        textureIdx: ensureTextureIsBound(context, context.combinedLayers.below),
+        uniforms: {
+            u_opacity: 1,
+            u_resolution: resolution,
+            u_texture: ensureTextureIsBound(context, context.combinedLayers.below),
+        },
         blocks: frameBlocks,
     })
     if (nextLayers.current !== null) {
         // CURRENT
         context.textureRenderer.render(gl, {
-            opacity: nextLayers.current.opacity,
-            resolution,
             framebuffer: outFramebuffer,
-            textureIdx: ensureTextureIsBound(context, context.combinedLayers.current),
+            uniforms: {
+                u_opacity: nextLayers.current.opacity,
+                u_resolution: resolution,
+                u_texture: ensureTextureIsBound(context, context.combinedLayers.current),
+            },
             blocks: frameBlocks,
         })
     }
     // ABOVE
     context.textureRenderer.render(gl, {
-        opacity: 1,
-        resolution,
         framebuffer: outFramebuffer,
-        textureIdx: ensureTextureIsBound(context, context.combinedLayers.above),
+        uniforms: {
+            u_opacity: 1,
+            u_resolution: resolution,
+            u_texture: ensureTextureIsBound(context, context.combinedLayers.above),
+        },
         blocks: frameBlocks,
     })
 
     // outputTexture -> canvas
     // I'm not sure if can use block rendering when rendering to canvas - unless there's something I'm missing, it seems that the canvas auto-clears itself before render
     context.outputRenderer.render(gl, {
-        resolution,
-        textureIdx: ensureTextureIsBound(context, outId),
+        uniforms: {
+            u_resolution: resolution,
+            u_texture: ensureTextureIsBound(context, outId),
+        },
         blocks: frameBlocks,
     })
 
@@ -597,8 +625,8 @@ function setupFb(context: InternalContext, id: TextureId): WebGLFramebuffer {
 }
 
 function layersRequireRerender(
-    prev: ReadonlyArray<Layers.CollectedLayer>,
-    next: ReadonlyArray<Layers.CollectedLayer>
+    prev: readonly Layers.CollectedLayer[],
+    next: readonly Layers.CollectedLayer[]
 ): boolean {
     if (prev.length !== next.length) return true
     for (let i = 0; i < next.length; i++) {

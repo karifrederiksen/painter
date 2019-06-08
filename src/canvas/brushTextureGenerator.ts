@@ -36,13 +36,17 @@ const AttributesInfo = new WebGL.AttributesInfo([
 ])
 
 export interface Args {
-    readonly softness: number
+    readonly uniforms: WebGL.UniformArgs<UniformLocations>
     readonly framebuffer: WebGLFramebuffer
     readonly size: Vec2
 }
 
 interface UniformLocations {
-    readonly u_softness: WebGLUniformLocation
+    readonly u_softness: WebGL.UniformType.F1
+}
+
+const Uniforms: UniformLocations = {
+    u_softness: WebGL.UniformType.F1,
 }
 
 export class Generator {
@@ -52,7 +56,7 @@ export class Generator {
             return null
         }
 
-        const locations = WebGL.getUniformLocation(gl, program, { u_softness: true })
+        const locations = WebGL.getUniformLocation(gl, program, Uniforms)
         if (locations === null) {
             return null
         }
@@ -68,7 +72,7 @@ export class Generator {
     private constructor(
         gl: WebGLRenderingContext,
         readonly program: WebGLProgram,
-        private readonly locations: UniformLocations
+        private readonly locations: WebGL.UniformsInfo<UniformLocations>
     ) {
         this.buffer = gl.createBuffer()!
         const array = new Float32Array(12)
@@ -101,7 +105,7 @@ export class Generator {
         gl.clearColor(0, 0, 0, 0)
         gl.clear(gl.COLOR_BUFFER_BIT)
 
-        gl.uniform1f(this.locations.u_softness, Math.max(args.softness, 0.000001))
+        WebGL.updateUniforms(gl, this.locations, args.uniforms)
 
         gl.bindBuffer(WebGLRenderingContext.ARRAY_BUFFER, this.buffer)
         gl.bufferData(

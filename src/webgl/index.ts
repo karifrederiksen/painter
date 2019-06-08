@@ -1,3 +1,5 @@
+import { Vec2, Vec3, Vec4 } from "../util"
+
 export * from "./glsl"
 
 export function createProgram(
@@ -88,28 +90,56 @@ function padStart(text: string, length: number, fillChar: string): string {
     return pad.join("")
 }
 
-export type UniformNames<a> = { readonly [key in keyof a]: true }
+export const enum UniformType {
+    I1,
+    F1,
+    F2,
+    F3,
+    F4,
+}
 
-export type Uniforms<a> = { readonly [key in keyof a]: WebGLUniformLocation }
+export type UniformNames<a> = { readonly [key in keyof a]: UniformType }
 
-export function getUniformLocation<a>(
+export type UniformsInfo<a extends UniformNames<a>> = { readonly [key in keyof a]: Uniform }
+
+export class Uniform {
+    private nominal: void
+    constructor(readonly location: WebGLUniformLocation, readonly type: UniformType) {}
+}
+
+export interface UniformArgMap {
+    readonly [UniformType.I1]: number
+    readonly [UniformType.F1]: number
+    readonly [UniformType.F2]: Vec2
+    readonly [UniformType.F3]: Vec3
+    readonly [UniformType.F4]: Vec4
+}
+
+export type UniformArgs<a extends UniformNames<a>> = {
+    readonly [key in keyof a]: UniformArgMap[a[key]]
+}
+
+export function getUniformLocation<a extends UniformNames<a>>(
     gl: WebGLRenderingContext,
     program: WebGLProgram,
     uniforms: UniformNames<a>
-): Uniforms<a> | null {
+): UniformsInfo<a> | null {
     const result: any = {}
     const notFound: string[] = []
     for (const propName in uniforms) {
-        if (!uniforms.hasOwnProperty(propName)) continue
+        if (!uniforms.hasOwnProperty(propName)) {
+            continue
+        }
         const textureLoc = gl.getUniformLocation(program, propName)
         if (textureLoc === null) {
             notFound.push(propName)
+        } else {
+            result[propName] = new Uniform(textureLoc, uniforms[propName])
         }
-        result[propName] = textureLoc
     }
 
     if (notFound.length === 0) {
-        return result as Uniforms<a>
+        return result as UniformsInfo<a>
     }
 
     let msg = "Failed to find location for uniforms"
@@ -120,6 +150,50 @@ export function getUniformLocation<a>(
 
     console.error(msg)
     return null
+}
+
+export function updateUniforms<a extends UniformNames<a>>(
+    gl: WebGLRenderingContext,
+    uniforms: UniformsInfo<a>,
+    args: UniformArgs<a>
+) {
+    for (const propName in uniforms) {
+        if (!args.hasOwnProperty(propName)) {
+            continue
+        }
+        const uniform = uniforms[propName]
+        switch (uniform.type) {
+            case UniformType.I1: {
+                const arg = args[propName] as number
+                gl.uniform1i(uniform.location, arg)
+                break
+            }
+            case UniformType.F1: {
+                const arg = args[propName] as number
+                gl.uniform1f(uniform.location, arg)
+                break
+            }
+            case UniformType.F2: {
+                const arg = args[propName] as Vec2
+                gl.uniform2f(uniform.location, arg.x, arg.y)
+                break
+            }
+            case UniformType.F3: {
+                const arg = args[propName] as Vec3
+                gl.uniform3f(uniform.location, arg.x, arg.y, arg.z)
+                break
+            }
+            case UniformType.F4: {
+                const arg = args[propName] as Vec4
+                gl.uniform4f(uniform.location, arg.x, arg.y, arg.z, arg.w)
+                break
+            }
+
+            default:
+                const never: never = uniform.type
+                throw { "unexpected type": uniform }
+        }
+    }
 }
 
 // Not using anything but float current, but this will allow us to easily add other types later
@@ -157,9 +231,9 @@ class AttribInternal {
 export class AttributesInfo {
     readonly size: number
     readonly stride: number
-    readonly attributes: ReadonlyArray<AttribInternal>
+    readonly attributes: readonly AttribInternal[]
 
-    constructor(attributes: ReadonlyArray<Attrib>) {
+    constructor(attributes: readonly Attrib[]) {
         {
             let attributes_ = new Array<AttribInternal>(attributes.length)
             for (let i = 0; i < attributes.length; i++) {
