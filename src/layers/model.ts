@@ -47,7 +47,7 @@ export class GroupLayer {
         readonly name: string,
         readonly opacity: number,
         readonly isHidden: boolean,
-        readonly children: ReadonlyArray<Layer>
+        readonly children: readonly Layer[]
     ) {}
 
     get isLeaf(): false {
@@ -68,7 +68,7 @@ export class GroupLayer {
         )
     }
 
-    withChildren(children: ReadonlyArray<Layer>): GroupLayer {
+    withChildren(children: readonly Layer[]): GroupLayer {
         return new GroupLayer(this.id, this.name, this.opacity, this.isHidden, children)
     }
 
@@ -197,9 +197,9 @@ export class GroupLayer {
 export type Layer = LeafLayer | GroupLayer
 
 export interface SplitLayers {
-    readonly above: ReadonlyArray<CollectedLayer>
+    readonly above: readonly CollectedLayer[]
     readonly current: CollectedLayer | null
-    readonly below: ReadonlyArray<CollectedLayer>
+    readonly below: readonly CollectedLayer[]
 }
 
 export type Msg = NewLayerMsg | RemoveMsg | SelectMsg | SetOpacityMsg | SetHiddenMsg

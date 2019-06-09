@@ -49,8 +49,19 @@ export interface BrushPoint {
     readonly rotation: number
 }
 
+const AttributesInfo = new WebGL.AttributesInfo([
+    { name: "a_color", size: 4, type: WebGL.AttribType.Float },
+    { name: "a_tex_coords", size: 2, type: WebGL.AttribType.Float },
+    { name: "a_position", size: 2, type: WebGL.AttribType.Float },
+])
+
+const Uniforms = {
+    u_resolution: WebGL.UniformType.F2,
+    u_texture: WebGL.UniformType.I1,
+} as const
+
 export interface Args {
-    readonly uniforms: WebGL.UniformArgs<UniformLocations>
+    readonly uniforms: WebGL.UniformArgs<typeof Uniforms>
     readonly blendMode: WebGL.Blend.Mode
 }
 
@@ -69,22 +80,6 @@ function initAffectedArea(): AffectedArea {
         y1: Number.MIN_VALUE,
     }
 }
-
-interface UniformLocations {
-    readonly u_texture: WebGL.UniformType.I1
-    readonly u_resolution: WebGL.UniformType.F2
-}
-
-const Uniforms: UniformLocations = {
-    u_resolution: WebGL.UniformType.F2,
-    u_texture: WebGL.UniformType.I1,
-}
-
-const AttributesInfo = new WebGL.AttributesInfo([
-    { name: "a_color", size: 4, type: WebGL.AttribType.Float },
-    { name: "a_tex_coords", size: 2, type: WebGL.AttribType.Float },
-    { name: "a_position", size: 2, type: WebGL.AttribType.Float },
-])
 
 export class Shader {
     static create(gl: WebGLRenderingContext): Shader | null {
@@ -111,7 +106,7 @@ export class Shader {
     private constructor(
         gl: WebGLRenderingContext,
         readonly program: WebGLProgram,
-        private readonly locations: WebGL.UniformsInfo<UniformLocations>
+        private readonly locations: WebGL.UniformsInfo<typeof Uniforms>
     ) {
         const arrayLength = AttributesInfo.size * 6 * INITIAL_VARRAY_SIZE
 

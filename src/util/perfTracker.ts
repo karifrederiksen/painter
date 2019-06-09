@@ -7,14 +7,14 @@ export namespace PerfTracker {
 
 export class PerfTracker {
     private readonly maxSamples: number
-    private readonly onSamples: (stats: ReadonlyArray<PerfTracker.Sample>) => void
+    private readonly onSamples: (stats: readonly PerfTracker.Sample[]) => void
     private samples: PerfTracker.Sample[]
     private nextIdx: number
     private startTimeMs: number | null
 
     constructor(args: {
         readonly maxSamples: number
-        readonly onSamples: (stats: ReadonlyArray<PerfTracker.Sample>) => void
+        readonly onSamples: (stats: readonly PerfTracker.Sample[]) => void
     }) {
         this.maxSamples = args.maxSamples
         this.onSamples = args.onSamples

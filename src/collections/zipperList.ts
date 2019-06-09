@@ -5,9 +5,15 @@ export class ZipperList<a> {
         return new ZipperList(Stack.empty(), value, Stack.empty())
     }
 
-    static fromArray<a>(arr: ReadonlyArray<a>): ZipperList<a> | null {
-        if (arr.length === 0) return null
+    static fromArray<a>(arr: readonly a[]): ZipperList<a> | null {
+        if (arr.length === 0) {
+            return null
+        }
 
+        return ZipperList.unsafeFromArray(arr)
+    }
+
+    static unsafeFromArray<a>(arr: readonly a[]): ZipperList<a> {
         let right: Stack.Stack<a> = Stack.empty()
         for (let i = arr.length - 1; i > 0; i--) {
             right = right.cons(arr[i])

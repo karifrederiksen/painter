@@ -65,7 +65,7 @@ class Painter extends React.Component<{}, Canvas.State> {
     private readonly canvas: SetOnce<Canvas.Canvas>
     private readonly store: Store<Canvas.State, Canvas.EphemeralState, Canvas.CanvasMsg>
     private readonly debuggingGl: SetOnce<WebGLRenderingContext>
-    private readonly perfTrackerData: Signals.PushableSignal<ReadonlyArray<PerfTracker.Sample>>
+    private readonly perfTrackerData: Signals.PushableSignal<readonly PerfTracker.Sample[]>
     private readonly sender: Canvas.MsgSender
     private htmlCanvas: HTMLCanvasElement | null
 

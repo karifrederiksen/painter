@@ -10,7 +10,7 @@ import { Vec2, Result, PerfTracker, T3 } from "../util"
 export interface Hooks {
     // readonly onCanvasSnapshot: (snapshot: Snapshot) => void
     // readonly onLayerSnapshot: (snapshot: Snapshot, layerId: number) => void
-    readonly onStats: (stats: ReadonlyArray<PerfTracker.Sample>) => void
+    readonly onStats: (stats: readonly PerfTracker.Sample[]) => void
     readonly onWebglContextCreated: (gl: WebGLRenderingContext) => void
 }
 
@@ -81,7 +81,7 @@ class OnRelease {
 class OnDrag {
     readonly type: CanvasMsgType.OnDrag = CanvasMsgType.OnDrag
     private nominal: void
-    constructor(readonly input: Input.PointerInput) {}
+    constructor(readonly inputs: readonly Input.PointerInput[]) {}
 }
 class RandomizeTheme {
     readonly type: CanvasMsgType.RandomizeTheme = CanvasMsgType.RandomizeTheme
@@ -117,24 +117,24 @@ class NoOpEffect {
 class FrameEffect {
     readonly type: EffectType.FrameEffect = EffectType.FrameEffect
     private nominal: void
-    constructor(readonly brushPoints: ReadonlyArray<BrushPoint>, readonly state: State) {}
+    constructor(readonly brushPoints: readonly BrushPoint[], readonly state: State) {}
 }
 class BrushPointsEffect {
     readonly type: EffectType.BrushPointsEffect = EffectType.BrushPointsEffect
     private nominal: void
-    constructor(readonly brushPoints: ReadonlyArray<BrushPoint>) {}
+    constructor(readonly brushPoints: readonly BrushPoint[]) {}
 }
 class ReleaseEffect {
     readonly type: EffectType.ReleaseEffect = EffectType.ReleaseEffect
     private nominal: void
-    constructor(readonly brushPoints: ReadonlyArray<BrushPoint>) {}
+    constructor(readonly brushPoints: readonly BrushPoint[]) {}
 }
 
 export interface MsgSender {
     readonly onFrame: (timeMs: number) => void
     readonly onClick: (input: Input.PointerInput) => void
     readonly onRelease: (input: Input.PointerInput) => void
-    readonly onDrag: (input: Input.PointerInput) => void
+    readonly onDrag: (input: readonly Input.PointerInput[]) => void
     readonly randomizeTheme: () => void
     readonly tool: Tools.MsgSender
     readonly layer: Layers.MsgSender
@@ -190,13 +190,18 @@ export function update(
             return [nextState, nextEphemeral, effect]
         }
         case CanvasMsgType.OnDrag: {
+            if (msg.inputs.length === 0) {
+                const errorMsg = "Expected inputs be be 1 or greater"
+                console.error(errorMsg, msg)
+                throw { [errorMsg]: msg }
+            }
             if (!state.hasPressedDown) {
                 return [state, ephemeral, NoOpEffect.value]
             }
             const [nextTool, nextToolEphemeral, brushPoints] = Tools.onDrag(
                 state.tool,
                 ephemeral.tool,
-                msg.input
+                msg.inputs
             )
             const nextState = { ...state, tool: nextTool }
             const nextEphemeral = { tool: nextToolEphemeral }

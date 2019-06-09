@@ -175,11 +175,11 @@ export namespace Decode {
         return val => tuple3_(decoder1, decoder2, decoder3, val)
     }
 
-    export function oneOf<a>(decoders: ReadonlyArray<DecoderBlock<a>>): DecoderBlock<a> {
+    export function oneOf<a>(decoders: readonly DecoderBlock<a>[]): DecoderBlock<a> {
         return val => oneOf_(decoders, val)
     }
 
-    function oneOf_<a>(decoders: ReadonlyArray<DecoderBlock<a>>, val: unknown): DecodeResult<a> {
+    function oneOf_<a>(decoders: readonly DecoderBlock<a>[], val: unknown): DecodeResult<a> {
         for (let i = 0; i < decoders.length; i++) {
             const res = decoders[i](val)
             if (res.isOk) return res

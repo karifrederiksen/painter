@@ -4,6 +4,12 @@ export interface DragState {
 }
 
 declare global {
+    interface PointerEvent {
+        // According to mozzila, this method is deprecated, but I can't find a source on that.
+        // https://developer.mozilla.org/en-US/docs/Web/API/PointerEvent
+        getCoalescedEvents(): PointerEvent[]
+    }
+
     interface Window {
         PointerEvent: typeof PointerEvent
     }
@@ -21,8 +27,8 @@ export interface PointerInput {
 
 export interface Listeners {
     click(input: PointerInput): void
-    move(input: PointerInput): void
-    drag(input: PointerInput): void
+    move(input: readonly PointerInput[]): void
+    drag(input: readonly PointerInput[]): void
     release(input: PointerInput): void
 }
 
@@ -54,6 +60,51 @@ function getPressure(ev: PointerEvent): number {
         : ev.pressure
 }
 
+const uncoalesce = (() => {
+    if (PointerEvent.prototype.getCoalescedEvents === undefined) {
+        return (ev: PointerEvent) => [ev]
+    }
+    return (ev: PointerEvent) => {
+        const coalescedEvents = ev.getCoalescedEvents()
+        return coalescedEvents
+    }
+})()
+
+function localizePointer(
+    bounds: ClientRect | DOMRect,
+    time: number,
+    event: PointerEvent,
+    // we get the pressure off of the original event because firefox's coalesced events have a bug which causes them to always be 0
+    originalEvent: PointerEvent
+): PointerInput {
+    const x = event.x - bounds.left
+    const y = event.y - bounds.top
+
+    return {
+        x,
+        y,
+        pressure: getPressure(originalEvent),
+        shift: event.shiftKey,
+        alt: event.altKey,
+        ctrl: event.ctrlKey,
+        time,
+    }
+}
+
+function uncoalesceAndLocalize(
+    bounds: ClientRect | DOMRect,
+    time: number,
+    originalEvent: PointerEvent
+): PointerInput[] {
+    const events = uncoalesce(originalEvent)
+    const result = new Array<PointerInput>(events.length)
+    for (let i = 0; i < events.length; i++) {
+        // we need to deal with pressure
+        result[i] = localizePointer(bounds, time, events[i], originalEvent)
+    }
+    return result
+}
+
 function listenForPointers(canvas: HTMLCanvasElement, listeners: Listeners): RemoveListeners {
     const pointerDown = (ev: PointerEvent) => {
         if (ev.button === 1 || ev.button === 2) {
@@ -61,24 +112,24 @@ function listenForPointers(canvas: HTMLCanvasElement, listeners: Listeners): Rem
         }
         const bounds = canvas.getBoundingClientRect()
         const time = performance.now()
-        listeners.click(localizePointer(bounds, time, ev))
+        listeners.click(localizePointer(bounds, time, ev, ev))
     }
 
     const pointerUp = (ev: PointerEvent) => {
         const bounds = canvas.getBoundingClientRect()
         const time = performance.now()
-        listeners.release(localizePointer(bounds, time, ev))
+        listeners.release(localizePointer(bounds, time, ev, ev))
     }
 
     const pointerMove = (ev: PointerEvent) => {
         const bounds = canvas.getBoundingClientRect()
         const time = performance.now()
-        //listeners.move(uncoalesceAndLocalize(bounds, ev))
-        listeners.move(localizePointer(bounds, time, ev))
+        listeners.move(uncoalesceAndLocalize(bounds, time, ev))
+        // listeners.move([localizePointer(bounds, time, ev)])
 
         if (ev.pressure > 0) {
-            //listeners.drag(uncoalesceAndLocalize(bounds, ev))
-            listeners.drag(localizePointer(bounds, time, ev))
+            listeners.drag(uncoalesceAndLocalize(bounds, time, ev))
+            // listeners.drag([localizePointer(bounds, time, ev)])
         }
     }
 
@@ -92,25 +143,6 @@ function listenForPointers(canvas: HTMLCanvasElement, listeners: Listeners): Rem
         canvas.removeEventListener("pointerdown", pointerDown)
         window.removeEventListener("pointerup", pointerUp)
         window.removeEventListener("pointermove", pointerMove)
-    }
-}
-
-function localizePointer(
-    bounds: ClientRect | DOMRect,
-    time: number,
-    ev: PointerEvent
-): PointerInput {
-    const x = ev.x - bounds.left
-    const y = ev.y - bounds.top
-
-    return {
-        x,
-        y,
-        pressure: getPressure(ev),
-        shift: ev.shiftKey,
-        alt: ev.altKey,
-        ctrl: ev.ctrlKey,
-        time,
     }
 }
 
@@ -136,10 +168,10 @@ function listenForMouse(canvas: HTMLCanvasElement, listeners: Listeners): Remove
     const mouseMove = (ev: MouseEvent) => {
         const bounds = canvas.getBoundingClientRect()
         const time = performance.now()
-        listeners.move(localizeMouse(bounds, time, ev, false))
+        listeners.move([localizeMouse(bounds, time, ev, false)])
 
         if (isDown) {
-            listeners.drag(localizeMouse(bounds, time, ev, false))
+            listeners.drag([localizeMouse(bounds, time, ev, false)])
         }
     }
 

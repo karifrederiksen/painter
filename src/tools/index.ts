@@ -190,7 +190,7 @@ export function onClick(
     tool: Tool,
     ephemeral_: EphemeralState,
     pointer: Input.PointerInput
-): T3<Tool, EphemeralState, ReadonlyArray<BrushShader.BrushPoint>> {
+): T3<Tool, EphemeralState, readonly BrushShader.BrushPoint[]> {
     const ephemeral = syncEphemeral(tool, ephemeral_)
 
     switch (ephemeral.type) {
@@ -235,8 +235,8 @@ export function onClick(
 export function onDrag(
     tool: Tool,
     ephemeral_: EphemeralState,
-    pointer: Input.PointerInput
-): T3<Tool, EphemeralState, ReadonlyArray<BrushShader.BrushPoint>> {
+    pointers: readonly Input.PointerInput[]
+): T3<Tool, EphemeralState, readonly BrushShader.BrushPoint[]> {
     const ephemeral = syncEphemeral(tool, ephemeral_)
 
     switch (ephemeral.type) {
@@ -245,7 +245,7 @@ export function onDrag(
                 tool.camera,
                 tool.brush,
                 ephemeral.state,
-                pointer
+                pointers
             )
             return [tool, new BrushState(value), brushPoints]
         }
@@ -254,13 +254,15 @@ export function onDrag(
                 tool.camera,
                 tool.eraser,
                 ephemeral.state,
-                pointer
+                pointers
             )
             return [tool, new EraserState(value), brushPoints]
         }
         case ToolType.Move: {
-            if (ephemeral.state === null) return [tool, ephemeral, []]
-
+            if (ephemeral.state === null) {
+                return [tool, ephemeral, []]
+            }
+            const pointer = pointers[pointers.length - 1]
             const cameraMsg = Camera.moveToolUpdate(tool.camera, ephemeral.state, pointer)
             const camera = Camera.update(tool.camera, cameraMsg)
             const dragState: Input.DragState = {
@@ -270,8 +272,10 @@ export function onDrag(
             return [{ ...tool, camera }, new MoveState(dragState), []]
         }
         case ToolType.Zoom: {
-            if (ephemeral.state === null) return [tool, ephemeral, []]
-
+            if (ephemeral.state === null) {
+                return [tool, ephemeral, []]
+            }
+            const pointer = pointers[pointers.length - 1]
             const cameraMsg = Camera.zoomToolUpdate(tool.camera, ephemeral.state, pointer)
             const camera = Camera.update(tool.camera, cameraMsg)
             const dragState: Input.DragState = {
@@ -281,8 +285,10 @@ export function onDrag(
             return [{ ...tool, camera }, new ZoomState(dragState), []]
         }
         case ToolType.Rotate: {
-            if (ephemeral.state === null) return [tool, ephemeral, []]
-
+            if (ephemeral.state === null) {
+                return [tool, ephemeral, []]
+            }
+            const pointer = pointers[pointers.length - 1]
             const cameraMsg = Camera.rotateToolUpdate(tool.camera, ephemeral.state, pointer)
             const camera = Camera.update(tool.camera, cameraMsg)
             const dragState: Input.DragState = {
@@ -300,7 +306,7 @@ export function onRelease(
     tool: Tool,
     ephemeral_: EphemeralState,
     pointer: Input.PointerInput
-): T3<Tool, EphemeralState, ReadonlyArray<BrushShader.BrushPoint>> {
+): T3<Tool, EphemeralState, readonly BrushShader.BrushPoint[]> {
     const ephemeral = syncEphemeral(tool, ephemeral_)
 
     switch (ephemeral.type) {
@@ -353,7 +359,7 @@ export function onFrame(
     tool: Tool,
     ephemeral_: EphemeralState,
     currentTime: number
-): T2<EphemeralState, ReadonlyArray<BrushShader.BrushPoint>> {
+): T2<EphemeralState, readonly BrushShader.BrushPoint[]> {
     const ephemeral = syncEphemeral(tool, ephemeral_)
 
     switch (ephemeral.type) {

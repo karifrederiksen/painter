@@ -32,8 +32,13 @@ const AttributesInfo = new WebGL.AttributesInfo([
     { name: "a_position", size: 2, type: WebGL.AttribType.Float },
 ])
 
+const Uniforms = {
+    u_resolution: WebGL.UniformType.F2,
+    u_rgba: WebGL.UniformType.F4,
+} as const
+
 export interface Args {
-    readonly uniforms: WebGL.UniformArgs<UniformLocations>
+    readonly uniforms: WebGL.UniformArgs<typeof Uniforms>
     readonly framebuffer: WebGLFramebuffer
     readonly blocks: readonly {
         readonly x0: number
@@ -41,16 +46,6 @@ export interface Args {
         readonly x1: number
         readonly y1: number
     }[]
-}
-
-interface UniformLocations {
-    readonly u_resolution: WebGL.UniformType.F2
-    readonly u_rgba: WebGL.UniformType.F4
-}
-
-const Uniforms: UniformLocations = {
-    u_resolution: WebGL.UniformType.F2,
-    u_rgba: WebGL.UniformType.F4,
 }
 
 export class Shader {
@@ -77,7 +72,7 @@ export class Shader {
     private constructor(
         gl: WebGLRenderingContext,
         private readonly program: WebGLProgram,
-        private readonly locations: WebGL.UniformsInfo<UniformLocations>
+        private readonly locations: WebGL.UniformsInfo<typeof Uniforms>
     ) {
         this.buffer = gl.createBuffer() as WebGLBuffer
         this.array = new Float32Array(AttributesInfo.size * 6 * this.capacity)

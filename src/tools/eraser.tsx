@@ -159,37 +159,48 @@ export function onDrag(
     camera: Camera.State,
     state: State,
     tempState: EphemeralState,
-    input: Input.PointerInput
-): T2<EphemeralState, ReadonlyArray<BrushShader.BrushPoint>> {
+    inputs: readonly Input.PointerInput[]
+): T2<EphemeralState, readonly BrushShader.BrushPoint[]> {
     if (tempState === null) {
-        const res = onClick(camera, state, input)
+        const res = onClick(camera, state, inputs[0])
         return [res[0], [res[1]]]
+    } else {
+        let interpState: Interp.State = tempState.interpState
+        let brushPoints: readonly BrushShader.BrushPoint[] = []
+        let delayState = tempState.delayState
+        for (let i = 0; i < inputs.length; i++) {
+            const input = inputs[i]
+            let brushDelayInput = pointerToBrushInput(camera, input)
+
+            const updateResult = BrushDelay.updateWithInput(
+                state.delay,
+                delayState,
+                input.time,
+                brushDelayInput
+            )
+
+            const interpReslt = Interp.interpolate(
+                state,
+                interpState,
+                createInputPoint(state, updateResult[1])
+            )
+            delayState = updateResult[0]
+            interpState = interpReslt[0]
+            brushPoints = brushPoints.concat(interpReslt[1])
+        }
+
+        return [{ delayState, interpState }, brushPoints]
     }
-
-    const brushInput = pointerToBrushInput(camera, input)
-    const [delayState, newBrushInput] = BrushDelay.updateWithInput(
-        state.delay,
-        tempState.delayState,
-        input.time,
-        brushInput
-    )
-
-    const [interpState, brushPoints] = Interp.interpolate(
-        state,
-        tempState.interpState,
-        createInputPoint(state, newBrushInput)
-    )
-
-    return [{ delayState, interpState }, brushPoints]
 }
 
 export function onFrame(
     state: State,
     tempState: EphemeralState,
     currentTime: number
-): T2<EphemeralState, ReadonlyArray<BrushShader.BrushPoint>> {
-    if (tempState === null) return [null, []]
-    if (state.delay.duration < 0) return [null, []]
+): T2<EphemeralState, readonly BrushShader.BrushPoint[]> {
+    if (tempState === null || state.delay.duration < 0) {
+        return [null, []]
+    }
 
     const [delayState, newBrushInput] = BrushDelay.update(
         state.delay,
@@ -211,8 +222,10 @@ export function onRelease(
     state: State,
     tempState: EphemeralState,
     input: Input.PointerInput
-): T2<EphemeralState, ReadonlyArray<BrushShader.BrushPoint>> {
-    if (tempState === null) return [null, []]
+): T2<EphemeralState, readonly BrushShader.BrushPoint[]> {
+    if (tempState === null) {
+        return [null, []]
+    }
 
     return [null, []]
 }

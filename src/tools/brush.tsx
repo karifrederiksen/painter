@@ -151,7 +151,7 @@ export function init(): State {
         diameterPx: 15,
         softness: 0.4,
         flowPct: 0.3,
-        colorMode: ZipperList.fromArray([ColorMode.Hsluv, ColorMode.Hsv])!,
+        colorMode: ZipperList.unsafeFromArray([ColorMode.Hsluv, ColorMode.Hsv]),
         color: new Color.Hsluv(73, 100, 16),
         colorSecondary: new Color.Hsluv(0, 0, 100),
         spacingPct: 0.05,
@@ -206,38 +206,50 @@ export function onClick(
 
 export function onDrag(
     camera: Camera.State,
-    brush: State,
-    state: EphemeralState,
-    input: Input.PointerInput
-): T2<EphemeralState, ReadonlyArray<BrushShader.BrushPoint>> {
-    if (state === null) {
-        const res = onClick(camera, brush, input)
+    state: State,
+    tempState: EphemeralState,
+    inputs: readonly Input.PointerInput[]
+): T2<EphemeralState, readonly BrushShader.BrushPoint[]> {
+    if (tempState === null) {
+        const res = onClick(camera, state, inputs[0])
         return [res[0], [res[1]]]
+    } else {
+        let interpState: Interp.State = tempState.interpState
+        let brushPoints: readonly BrushShader.BrushPoint[] = []
+        let delayState = tempState.delayState
+        for (let i = 0; i < inputs.length; i++) {
+            const input = inputs[i]
+            const brushDelayInput = pointerToBrushInput(camera, input)
+
+            const updateResult = BrushDelay.updateWithInput(
+                state.delay,
+                delayState,
+                input.time,
+                brushDelayInput
+            )
+
+            const interpReslt = Interp.interpolate(
+                state,
+                interpState,
+                createInputPoint(state, updateResult[1])
+            )
+            delayState = updateResult[0]
+            interpState = interpReslt[0]
+            brushPoints = brushPoints.concat(interpReslt[1])
+        }
+
+        return [{ delayState, interpState }, brushPoints]
     }
-
-    const brushInput = pointerToBrushInput(camera, input)
-    const [delayState, newBrushInput] = BrushDelay.updateWithInput(
-        brush.delay,
-        state.delayState,
-        input.time,
-        brushInput
-    )
-
-    const [interpState, brushPoints] = Interp.interpolate(
-        brush,
-        state.interpState,
-        createInputPoint(brush, newBrushInput)
-    )
-
-    return [{ delayState, interpState }, brushPoints]
 }
 
 export function onFrame(
     brush: State,
     state: EphemeralState,
     currentTime: number
-): T2<EphemeralState, ReadonlyArray<BrushShader.BrushPoint>> {
-    if (state === null) return [null, []]
+): T2<EphemeralState, readonly BrushShader.BrushPoint[]> {
+    if (state === null) {
+        return [null, []]
+    }
     // if (brush.delay.duration <= 0) return [null, []]
 
     const [delayState, newBrushInput] = BrushDelay.update(
@@ -260,8 +272,10 @@ export function onRelease(
     brush: State,
     state: EphemeralState,
     input: Input.PointerInput
-): T2<EphemeralState, ReadonlyArray<BrushShader.BrushPoint>> {
-    if (state === null) return [null, []]
+): T2<EphemeralState, readonly BrushShader.BrushPoint[]> {
+    if (state === null) {
+        return [null, []]
+    }
 
     return [null, []]
 }
@@ -349,7 +363,9 @@ export const Details = React.memo((props: DetailsProps) => {
 
     function onColorText(text: string) {
         const rgb = Color.Rgb.fromCss(text)
-        if (rgb === null) return
+        if (rgb === null) {
+            return
+        }
 
         sender.setColor(Color.rgbToHsluv(rgb))
     }

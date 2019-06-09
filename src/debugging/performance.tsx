@@ -3,7 +3,7 @@ import * as Signals from "../signals"
 import { PerfTracker } from "../util"
 
 export interface PerformanceProps {
-    readonly samplesSignal: Signals.Signal<ReadonlyArray<PerfTracker.Sample>>
+    readonly samplesSignal: Signals.Signal<readonly PerfTracker.Sample[]>
 }
 
 export function Performance(props: PerformanceProps) {
@@ -40,13 +40,13 @@ class SamplesOverTime {
     static empty = new SamplesOverTime([], [], [], [])
 
     private constructor(
-        readonly sample0: ReadonlyArray<PerfTracker.Sample>,
-        readonly sample1: ReadonlyArray<PerfTracker.Sample>,
-        readonly sample2: ReadonlyArray<PerfTracker.Sample>,
-        readonly sample3: ReadonlyArray<PerfTracker.Sample>
+        readonly sample0: readonly PerfTracker.Sample[],
+        readonly sample1: readonly PerfTracker.Sample[],
+        readonly sample2: readonly PerfTracker.Sample[],
+        readonly sample3: readonly PerfTracker.Sample[]
     ) {}
 
-    update(sample: ReadonlyArray<PerfTracker.Sample>) {
+    update(sample: readonly PerfTracker.Sample[]) {
         return new SamplesOverTime(sample, this.sample0, this.sample1, this.sample2)
     }
 

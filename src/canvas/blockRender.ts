@@ -36,7 +36,7 @@ export class BlockTracker {
      *
      * Do not store the reference.
      */
-    getFrameBlocks(): ReadonlyArray<Block> {
+    getFrameBlocks(): readonly Block[] {
         return this._frameBlocks
     }
 
@@ -45,14 +45,14 @@ export class BlockTracker {
      *
      * Do not store the reference.
      */
-    getStrokeBlocks(): ReadonlyArray<Block> {
+    getStrokeBlocks(): readonly Block[] {
         return this._strokeBlocks
     }
 
     /**
      * Track the blocks that the given brushPoints might touch.
      */
-    addPoints(brushPoints: ReadonlyArray<BrushPoint>): void {
+    addPoints(brushPoints: readonly BrushPoint[]): void {
         if (brushPoints.length === 0) {
             return
         }

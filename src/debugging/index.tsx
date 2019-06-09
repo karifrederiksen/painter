@@ -26,7 +26,7 @@ const Monospaced = styled.div`
 interface DebugWindowProps {
     readonly state: Canvas.State
     readonly gl: SetOnce<WebGLRenderingContext>
-    readonly perfSamplesSignal: Signals.Signal<ReadonlyArray<PerfTracker.Sample>>
+    readonly perfSamplesSignal: Signals.Signal<readonly PerfTracker.Sample[]>
 }
 
 // let's get the webgl context in here somehow!

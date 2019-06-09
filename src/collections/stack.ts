@@ -106,7 +106,7 @@ export namespace Stack {
         return new Empty()
     }
 
-    export function fromArray<a>(arr: ReadonlyArray<a>): Stack<a> {
+    export function fromArray<a>(arr: readonly a[]): Stack<a> {
         let stack: Stack<a> = empty()
         let i = arr.length
         while (i--) {
