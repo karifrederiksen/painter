@@ -1,20 +1,20 @@
 import * as Rng from "./rng"
 
-describe("rng", () => {
+describe("rng.xorshift", () => {
     const seeds: readonly Rng.Seed[] = [
-        Rng.seed(0),
-        Rng.seed(1),
-        Rng.seed(2),
-        Rng.seed(3),
-        Rng.seed(4),
-        Rng.seed(5),
-        Rng.seed(-1 >>> 0),
-        Rng.seed(-1),
+        Rng.XorshiftSeed.create(0),
+        Rng.XorshiftSeed.create(1),
+        Rng.XorshiftSeed.create(2),
+        Rng.XorshiftSeed.create(3),
+        Rng.XorshiftSeed.create(4),
+        Rng.XorshiftSeed.create(5),
+        Rng.XorshiftSeed.create(-1 >>> 0),
+        Rng.XorshiftSeed.create(-1),
     ]
 
     test("(nextInt) returns an integer in range 0 to ((2 ** 32) - 1)", () => {
         seeds.forEach(seed => {
-            const [val] = Rng.nextInt(seed)
+            const [val] = seed.nextInt()
             expect(val).toBeGreaterThanOrEqual(0)
             expect(val).toBeLessThanOrEqual(2 ** 32 - 1)
         })
@@ -22,7 +22,7 @@ describe("rng", () => {
 
     test("(next) returns a float in range 0 to 1", () => {
         seeds.forEach(seed => {
-            const [val] = Rng.next(seed)
+            const [val] = seed.nextFloat()
             expect(val).toBeGreaterThanOrEqual(0)
             expect(val).toBeLessThanOrEqual(1)
         })
@@ -30,7 +30,7 @@ describe("rng", () => {
 
     test("(next2) returns two floats in range 0 to 1", () => {
         seeds.forEach(seed => {
-            const [val1, val2] = Rng.next2(seed)
+            const [val1, val2] = seed.next2Floats()
             expect(val1).toBeGreaterThanOrEqual(0)
             expect(val1).toBeLessThanOrEqual(1)
             expect(val2).toBeGreaterThanOrEqual(0)
@@ -40,7 +40,7 @@ describe("rng", () => {
 
     test("(next3) returns three floats in range 0 to 1", () => {
         seeds.forEach(seed => {
-            const [val1, val2, val3] = Rng.next3(seed)
+            const [val1, val2, val3] = seed.next3Floats()
             expect(val1).toBeGreaterThanOrEqual(0)
             expect(val1).toBeLessThanOrEqual(1)
             expect(val2).toBeGreaterThanOrEqual(0)

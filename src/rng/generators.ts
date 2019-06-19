@@ -13,7 +13,7 @@ export namespace Generators {
     }
 
     export function bool(rng: Rng.Seed): GenResult<boolean> {
-        const [pct, nextSeed] = Rng.next(rng)
+        const [pct, nextSeed] = rng.nextFloat()
         return [pct < 0.5, nextSeed]
     }
 
@@ -24,7 +24,7 @@ export namespace Generators {
     }
 
     function int_(min: number, max: number, rng: Rng.Seed): GenResult<number> {
-        const [pct, nextSeed] = Rng.next(rng)
+        const [pct, nextSeed] = rng.nextFloat()
         const delta = max - min
         return [pct * delta + min, nextSeed]
     }
@@ -34,7 +34,7 @@ export namespace Generators {
     }
 
     function float_(min: number, max: number, rng: Rng.Seed): GenResult<number> {
-        const [pct, nextSeed] = Rng.next(rng)
+        const [pct, nextSeed] = rng.nextFloat()
         const delta = max - min
         return [pct * delta + min, nextSeed]
     }

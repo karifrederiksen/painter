@@ -27,7 +27,7 @@ export interface EphemeralState {
 }
 
 export function initState(): State {
-    const [theme, rng] = Theme.random(Rng.seed(145264772))
+    const [theme, rng] = Theme.random(Rng.XorshiftSeed.create(145264772))
 
     return {
         rng,

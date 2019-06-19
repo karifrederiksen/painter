@@ -45,7 +45,7 @@ const DebugWindow_ = React.memo(function DebugWindow(props: DebugWindowProps) {
                     <DefaultButton onClick={() => setOpen(false)}>Close</DefaultButton>
                     <ContentContainer>
                         RNG:
-                        <Monospaced>{Rng.display(state.rng)}</Monospaced>
+                        <Monospaced>{state.rng.display()}</Monospaced>
                         <Performance samplesSignal={props.perfSamplesSignal} />
                         <Scripting gl={props.gl} />
                     </ContentContainer>
