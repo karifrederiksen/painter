@@ -4,4 +4,4 @@ node_modules
 dist
 TODO
 yarn-error.log
-*.css.d.ts
+*.scss.d.ts

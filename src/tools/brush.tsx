@@ -1,6 +1,5 @@
 import * as React from "react"
-import styled from "../styled"
-
+import * as styles from "./brush.scss"
 import * as Interp from "./interpolation"
 import * as BrushDelay from "./brushDelay"
 import * as BrushShader from "../canvas/brushShader"
@@ -329,28 +328,6 @@ function createInputPoint(brush: State, input: BrushDelay.Input): Interp.InputPo
  *
  */
 
-const TextInput = styled.input`
-    background-color: ${p => p.theme.color.surface.toStyle()};
-    color: ${p => p.theme.color.onSurface.toStyle()};
-    padding: 0.25rem 0;
-    border-radius: 0.25rem;
-    font-family: ${p => p.theme.fonts.monospace};
-
-    &:focus {
-        background-color: ${p => p.theme.color.secondary.toStyle()};
-        color: ${p => p.theme.color.onSecondary.toStyle()};
-        padding: 0.25rem 0.5rem;
-    }
-`
-
-const DetailsContainer = styled(Surface)`
-    background-color: ${p => p.theme.color.surface.toStyle()};
-    color: ${p => p.theme.color.onSurface.toStyle()};
-    flex-direction: column;
-    width: 12rem;
-    padding: 0.5rem 0.75rem;
-`
-
 export interface DetailsProps {
     readonly messageSender: MsgSender
     readonly tool: State
@@ -371,70 +348,73 @@ export const Details = React.memo((props: DetailsProps) => {
     }
 
     return (
-        <DetailsContainer>
-            <div style={{ margin: "0.5rem 0" }}>
-                <Menu
-                    choices={brush.colorMode}
-                    show={colorModeToString}
-                    onSelect={sender.setColorMode}
-                />
-            </div>
-            <ColorWheel
-                color={brush.color}
-                colorType={brush.colorMode.focus}
-                onChange={sender.setColor}
-            />
-            <div style={{ margin: "0.5rem 0", width: "100%" }}>
-                <ColorDisplay
+        <Surface>
+            <div className={styles.detailsContainer}>
+                <div style={{ margin: "0.5rem 0" }}>
+                    <Menu
+                        choices={brush.colorMode}
+                        show={colorModeToString}
+                        onSelect={sender.setColorMode}
+                    />
+                </div>
+                <ColorWheel
                     color={brush.color}
-                    colorSecondary={brush.colorSecondary}
-                    onClick={() => sender.swapColorFrom(brush.color)}
+                    colorType={brush.colorMode.focus}
+                    onChange={sender.setColor}
                 />
+                <div style={{ margin: "0.5rem 0", width: "100%" }}>
+                    <ColorDisplay
+                        color={brush.color}
+                        colorSecondary={brush.colorSecondary}
+                        onClick={() => sender.swapColorFrom(brush.color)}
+                    />
+                </div>
+                <div style={{ margin: "0.5rem 0" }}>
+                    <input
+                        type="text"
+                        className={styles.textInput}
+                        value={brush.color.toStyle()}
+                        style={{ width: "100%" }}
+                        onPaste={ev => onColorText((ev.target as any).value)}
+                        onChange={text => onColorText(text.target.value)}
+                    />
+                </div>
+                <Labeled label="Size" value={brush.diameterPx.toFixed(1) + "px"}>
+                    <Slider
+                        percentage={brush.diameterPx / 500}
+                        onChange={pct => sender.setDiameter(pct * 500)}
+                    />
+                </Labeled>
+                <Labeled label="Softness" value={brush.softness.toFixed(2)}>
+                    <Slider percentage={brush.softness} onChange={sender.setSoftness} />
+                </Labeled>
+                <Labeled label="Flow" value={brush.flowPct.toFixed(2)}>
+                    <Slider percentage={brush.flowPct} onChange={sender.setOpacity} />
+                </Labeled>
+                <Labeled label="Spacing" value={brush.spacingPct.toFixed(2) + "%"}>
+                    <Slider percentage={brush.spacingPct} onChange={sender.setSpacing} />
+                </Labeled>
+                <ColorSliders sender={sender} color={color} colorType={brush.colorMode.focus} />
+                <InlineLabeled label="Pressure-Opacity">
+                    <Switch
+                        checked={brush.pressureAffectsOpacity}
+                        onCheck={sender.setPressureAffectsOpacity}
+                    />
+                </InlineLabeled>
+                <InlineLabeled label="Pressure-Size">
+                    <Switch
+                        checked={brush.pressureAffectsSize}
+                        onCheck={sender.setPressureAffectsSize}
+                    />
+                </InlineLabeled>
+                <Labeled label="Delay" value={brush.delay.duration.toFixed(0) + "ms"}>
+                    <Slider
+                        percentage={brush.delay.duration / 500}
+                        onChange={pct => sender.setDelay(pct * 500)}
+                    />
+                </Labeled>
             </div>
-            <div style={{ margin: "0.5rem 0" }}>
-                <TextInput
-                    type="text"
-                    value={brush.color.toStyle()}
-                    style={{ width: "100%" }}
-                    onPaste={ev => onColorText((ev.target as any).value)}
-                    onChange={text => onColorText(text.target.value)}
-                />
-            </div>
-            <Labeled label="Size" value={brush.diameterPx.toFixed(1) + "px"}>
-                <Slider
-                    percentage={brush.diameterPx / 500}
-                    onChange={pct => sender.setDiameter(pct * 500)}
-                />
-            </Labeled>
-            <Labeled label="Softness" value={brush.softness.toFixed(2)}>
-                <Slider percentage={brush.softness} onChange={sender.setSoftness} />
-            </Labeled>
-            <Labeled label="Flow" value={brush.flowPct.toFixed(2)}>
-                <Slider percentage={brush.flowPct} onChange={sender.setOpacity} />
-            </Labeled>
-            <Labeled label="Spacing" value={brush.spacingPct.toFixed(2) + "%"}>
-                <Slider percentage={brush.spacingPct} onChange={sender.setSpacing} />
-            </Labeled>
-            <ColorSliders sender={sender} color={color} colorType={brush.colorMode.focus} />
-            <InlineLabeled label="Pressure-Opacity">
-                <Switch
-                    checked={brush.pressureAffectsOpacity}
-                    onCheck={sender.setPressureAffectsOpacity}
-                />
-            </InlineLabeled>
-            <InlineLabeled label="Pressure-Size">
-                <Switch
-                    checked={brush.pressureAffectsSize}
-                    onCheck={sender.setPressureAffectsSize}
-                />
-            </InlineLabeled>
-            <Labeled label="Delay" value={brush.delay.duration.toFixed(0) + "ms"}>
-                <Slider
-                    percentage={brush.delay.duration / 500}
-                    onChange={pct => sender.setDelay(pct * 500)}
-                />
-            </Labeled>
-        </DetailsContainer>
+        </Surface>
     )
 })
 

@@ -21,8 +21,58 @@ export interface Theme {
         readonly menu: string
     }
     readonly fonts: {
-        readonly normal: string
         readonly monospace: string
+        readonly normal: string
+    }
+}
+
+const styleMap = {
+    "--color-primary": (theme: Theme) => theme.color.primary.toStyle(),
+    "--color-primaryLight": (theme: Theme) => theme.color.primaryLight.toStyle(),
+    "--color-primaryDark": (theme: Theme) => theme.color.primaryDark.toStyle(),
+    "--color-secondary": (theme: Theme) => theme.color.secondary.toStyle(),
+    "--color-secondaryLight": (theme: Theme) => theme.color.secondaryLight.toStyle(),
+    "--color-secondaryDark": (theme: Theme) => theme.color.secondaryDark.toStyle(),
+    "--color-onPrimary": (theme: Theme) => theme.color.onPrimary.toStyle(),
+    "--color-onSecondary": (theme: Theme) => theme.color.onSecondary.toStyle(),
+    "--color-onSurface": (theme: Theme) => theme.color.onSurface.toStyle(),
+    "--color-surface": (theme: Theme) => theme.color.surface.toStyle(),
+    "--color-background": (theme: Theme) => theme.color.background.toStyle(),
+
+    "--shadows-button": (theme: Theme) => theme.shadows.button,
+    "--shadows-menu": (theme: Theme) => theme.shadows.menu,
+    "--shadows-surface": (theme: Theme) => theme.shadows.surface,
+
+    "--fonts-monospace": (theme: Theme) => theme.fonts.monospace,
+    "--fonts-normal": (theme: Theme) => theme.fonts.normal,
+} as const
+
+export function updateDiff(prevTheme: Theme, nextTheme: Theme): void {
+    for (const propName in styleMap) {
+        if (!styleMap.hasOwnProperty(propName)) {
+            continue
+        }
+
+        const toStyle = styleMap[propName as keyof typeof styleMap]
+        const prevValue = toStyle(prevTheme)
+        const nextValue = toStyle(nextTheme)
+
+        if (prevValue === nextValue) {
+            continue
+        }
+
+        document.body.style.setProperty(propName, nextValue)
+    }
+}
+
+export function updateAll(theme: Theme): void {
+    for (const propName in styleMap) {
+        if (!styleMap.hasOwnProperty(propName)) {
+            continue
+        }
+
+        const toStyle = styleMap[propName as keyof typeof styleMap]
+        document.body.style.setProperty(propName, toStyle(theme))
     }
 }
 

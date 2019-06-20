@@ -1,0 +1,13 @@
+@import "../theme/theme.scss";
+
+.monospaced {
+    font-family: $fonts-monospace;
+}
+
+.codeInput {
+    font-family: "Courier New", Courier, monospace;
+    background-color: $color-primary;
+    color: $color-onPrimary;
+    border-radius: 0.25rem;
+    padding: 0.25rem;
+}

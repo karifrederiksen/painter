@@ -1,0 +1,21 @@
+@import "../theme/theme.scss";
+
+@mixin surfaceLook {
+    background-color: $color-surface;
+    color: $color-onSurface;
+    box-shadow: $shadows-surface;
+}
+
+.surfaceLook {
+    @include surfaceLook;
+}
+
+.surface {
+    @include surfaceLook;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    user-select: none;
+}

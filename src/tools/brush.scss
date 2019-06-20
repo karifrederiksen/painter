@@ -1,0 +1,23 @@
+@import "../theme/theme.scss";
+.textInput {
+    background-color: $color-surface;
+    color: $color-onSurface;
+    padding: 0.25rem 0;
+    border-radius: 0.25rem;
+    font-family: $fonts-monospace;
+
+    &:focus {
+        background-color: $color-secondary;
+        color: $color-onSecondary;
+        padding: 0.25rem 0.5rem;
+    }
+}
+
+.detailsContainer {
+    background-color: $color-surface;
+    color: $color-onSurface;
+    flex-direction: column;
+    width: 12rem;
+    padding: 0.5rem 0.75rem;
+    height: 100%;
+}

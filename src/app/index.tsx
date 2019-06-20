@@ -1,7 +1,7 @@
 import * as React from "react"
 import * as ReactDOM from "react-dom"
-import styled from "../styled"
-import { ThemeProvider, createGlobalStyle } from "../styled"
+import { ThemeProvider } from "../styled"
+import * as styles from "./index.scss"
 import * as Toolbar from "../tools/toolbar"
 import * as Layers from "../layers/view"
 import * as Input from "../input"
@@ -20,44 +20,6 @@ declare global {
         }
     }
 }
-
-const Wrapper = styled.div`
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    width: 100%;
-    box-sizing: border-box !important;
-
-    ** {
-        margin: 0;
-        padding: 0;
-        border: 0;
-        outline: none;
-        box-sizing: inherit;
-    }
-`
-
-const BottomLeft = styled.div`
-    position: absolute;
-    left: 0.5rem;
-    bottom: 0.5rem;
-`
-
-const BottomRight = styled.div`
-    position: absolute;
-    right: 0.5rem;
-    bottom: 0.5rem;
-`
-
-const AppContainer = styled.div`
-    font-family: ${p => p.theme.fonts.normal};
-`
-
-const GlobalStyle = createGlobalStyle`
-    body {
-        background-color: ${p => p.theme.color.background.toStyle()};
-    }
-`
 
 class Painter extends React.Component<{}, Canvas.State> {
     private readonly removeInputListeners: SetOnce<Input.RemoveListeners>
@@ -99,42 +61,40 @@ class Painter extends React.Component<{}, Canvas.State> {
 
         return (
             <React.StrictMode>
-                <ThemeProvider theme={state.theme}>
-                    <AppContainer>
-                        <GlobalStyle />
-                        <Wrapper>
-                            <Toolbar.View
-                                tool={state.tool}
-                                transientState={{ isDetailsExpanded: true }}
-                                msgSender={sender.tool}
+                <div className={styles.appContainer}>
+                    <ThemeProvider theme={state.theme} />
+                    <div className={styles.wrapper}>
+                        <Toolbar.View
+                            tool={state.tool}
+                            transientState={{ isDetailsExpanded: true }}
+                            msgSender={sender.tool}
+                        />
+                        <canvas
+                            width="800"
+                            height="800"
+                            key="muh-canvas"
+                            ref={x => (this.htmlCanvas = x)}
+                            style={{ cursor: "crosshair" }}
+                        />
+                        <div style={{ width: "14rem" }}>
+                            <Layers.LayersView layers={state.layers} sender={sender.layer} />
+                        </div>
+                    </div>
+                    <div className={styles.bottomLeft}>
+                        <Buttons.PrimaryButton onClick={sender.randomizeTheme}>
+                            Next theme
+                        </Buttons.PrimaryButton>
+                    </div>
+                    {process.env.NODE_ENV === "development" && (
+                        <div className={styles.bottomRight}>
+                            <Debugging.DebugWindow
+                                state={state}
+                                gl={this.debuggingGl}
+                                perfSamplesSignal={this.perfTrackerData.signal}
                             />
-                            <canvas
-                                width="800"
-                                height="800"
-                                key="muh-canvas"
-                                ref={x => (this.htmlCanvas = x)}
-                                style={{ cursor: "crosshair" }}
-                            />
-                            <div style={{ width: "14rem" }}>
-                                <Layers.LayersView layers={state.layers} sender={sender.layer} />
-                            </div>
-                        </Wrapper>
-                        <BottomLeft>
-                            <Buttons.PrimaryButton onClick={sender.randomizeTheme}>
-                                Next theme
-                            </Buttons.PrimaryButton>
-                        </BottomLeft>
-                        {process.env.NODE_ENV === "development" && (
-                            <BottomRight>
-                                <Debugging.DebugWindow
-                                    state={state}
-                                    gl={this.debuggingGl}
-                                    perfSamplesSignal={this.perfTrackerData.signal}
-                                />
-                            </BottomRight>
-                        )}
-                    </AppContainer>
-                </ThemeProvider>
+                        </div>
+                    )}
+                </div>
             </React.StrictMode>
         )
     }

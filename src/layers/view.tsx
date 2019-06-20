@@ -1,5 +1,5 @@
 import * as React from "react"
-import styled from "../styled"
+import styles from "./view.scss"
 import { State, MsgSender, Id, Layer } from "./model"
 import { Row } from "../views/row"
 import { Slider } from "../views/slider"
@@ -14,58 +14,43 @@ export interface LayersViewProps {
     readonly sender: MsgSender
 }
 
-const LayersWrapper = styled.div`
-    height: 100%;
-`
-
-const LayersListWrapper = styled.div`
-    padding: 0.5rem 0.25rem;
-
-    & > :not(:first-child) {
-        margin-top: 0.25rem;
-    }
-`
-
-const LayersControlsWrapper = styled(Surface)`
-    justify-content: space-between;
-    flex-direction: column;
-    padding-top: 0.5rem;
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
-`
-
 export function LayersView({ layers, sender }: LayersViewProps): JSX.Element {
     const topLayers = layers.layers.children
     const current = layers.current()
 
     return (
-        <LayersWrapper>
-            <LayersControlsWrapper>
-                <Row spacing="0.25rem">
-                    <DefaultButton onClick={() => sender.newLayer(current.id)} title="New layer">
-                        New
-                    </DefaultButton>
-                    <DefaultButton
-                        onClick={() => sender.removeLayer(current.id)}
-                        title="Remove layer"
-                    >
-                        Delete
-                    </DefaultButton>
-                </Row>
-                <InlineLabeled label="Hidden">
-                    <Switch
-                        onCheck={isHidden => sender.setHidden(current.id, isHidden)}
-                        checked={current.isHidden}
-                    />
-                </InlineLabeled>
-                <Labeled label="Opacity" value={current.opacity.toFixed(2)}>
-                    <Slider
-                        onChange={pct => sender.setOpacity(current.id, pct)}
-                        percentage={current.opacity}
-                    />
-                </Labeled>
-            </LayersControlsWrapper>
-            <LayersListWrapper>
+        <div className={styles.layersWrapper}>
+            <Surface>
+                <div className={styles.layersControlsWrapper}>
+                    <Row spacing="0.25rem">
+                        <DefaultButton
+                            onClick={() => sender.newLayer(current.id)}
+                            title="New layer"
+                        >
+                            New
+                        </DefaultButton>
+                        <DefaultButton
+                            onClick={() => sender.removeLayer(current.id)}
+                            title="Remove layer"
+                        >
+                            Delete
+                        </DefaultButton>
+                    </Row>
+                    <InlineLabeled label="Hidden">
+                        <Switch
+                            onCheck={isHidden => sender.setHidden(current.id, isHidden)}
+                            checked={current.isHidden}
+                        />
+                    </InlineLabeled>
+                    <Labeled label="Opacity" value={current.opacity.toFixed(2)}>
+                        <Slider
+                            onChange={pct => sender.setOpacity(current.id, pct)}
+                            percentage={current.opacity}
+                        />
+                    </Labeled>
+                </div>
+            </Surface>
+            <div className={styles.layersListWrapper}>
                 {topLayers.map(x => (
                     <LayerView
                         layer={x}
@@ -74,8 +59,8 @@ export function LayersView({ layers, sender }: LayersViewProps): JSX.Element {
                         key={x.id}
                     />
                 ))}
-            </LayersListWrapper>
-        </LayersWrapper>
+            </div>
+        </div>
     )
 }
 
@@ -85,58 +70,29 @@ export interface LayerViewProps {
     readonly onClick: (id: Id) => void
 }
 
-const UnselectedLayerWrapper = styled(Surface)`
-    cursor: pointer;
-    border: 1px solid transparent;
-
-    &:hover {
-        border: 1px solid ${p => p.theme.color.secondaryDark.toStyle()};
-    }
-`
-
-const SelectedLayerWrapper = styled(Surface)`
-    border: 1px solid ${p => p.theme.color.secondary.toStyle()};
-`
-
-const LayerLeft = styled.div`
-    height: 3rem;
-    width: 3rem;
-    margin-right: 0.5rem;
-    background-color: #789;
-`
-const LayerRight = styled.div`
-    display: flex;
-    flex-direction: column;
-    margin-right: 0.5rem;
-`
-
-const LayerName = styled.div`
-    font-size: 1rem;
-`
-
-const LayerOpacity = styled.div`
-    font-size: 0.75rem;
-`
-
 export function LayerView({ layer, selectedId, onClick }: LayerViewProps): JSX.Element {
     const isSelected = selectedId === layer.id
-    const Container = isSelected ? SelectedLayerWrapper : UnselectedLayerWrapper
+    const container = isSelected ? styles.selectedLayerWrapper : styles.unselectedLayerWrapper
     return (
-        <Container onClick={() => onClick(layer.id)}>
-            <LayerLeft />
-            <LayerRight>
-                <LayerName>{layer.name !== "" ? layer.name : "Layer " + layer.id}</LayerName>
-                <LayerOpacity>
-                    {layer.isHidden ? (
-                        <span>Hidden</span>
-                    ) : (
-                        <span>
-                            <span>Opacity: </span>
-                            <span>{layer.opacity.toFixed(2)} </span>
-                        </span>
-                    )}
-                </LayerOpacity>
-            </LayerRight>
-        </Container>
+        <div className={container} onClick={() => onClick(layer.id)}>
+            <Surface>
+                <div className={styles.layerLeft} />
+                <div className={styles.layerRight}>
+                    <div className={styles.layerName}>
+                        {layer.name !== "" ? layer.name : "Layer " + layer.id}
+                    </div>
+                    <div className={styles.layerOpacity}>
+                        {layer.isHidden ? (
+                            <span>Hidden</span>
+                        ) : (
+                            <span>
+                                <span>Opacity: </span>
+                                <span>{layer.opacity.toFixed(2)} </span>
+                            </span>
+                        )}
+                    </div>
+                </div>
+            </Surface>
+        </div>
     )
 }

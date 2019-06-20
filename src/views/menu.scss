@@ -1,0 +1,66 @@
+@import "../theme/theme.scss";
+
+.container {
+    background-color: $color-surface;
+    color: $color-onSurface;
+    min-width: 6rem;
+}
+
+@mixin selectedDisplayCommon {
+    cursor: pointer;
+    text-align: center;
+    min-width: 100%;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+}
+
+.selectedDisplay {
+    @include selectedDisplayCommon;
+    &:hover {
+        background-color: $color-secondary;
+        color: $color-onSecondary;
+    }
+}
+
+.selectedDisplayExpanded {
+    @include selectedDisplayCommon;
+    background-color: $color-secondary;
+    color: $color-onSecondary;
+}
+
+.selectableOptions {
+    position: absolute;
+    flex-direction: column;
+    min-width: 6rem;
+    margin-top: 1px;
+    background-color: $color-surface;
+    color: $color-onSurface;
+    box-shadow: $shadows-menu;
+
+    > :first-child {
+        border-top-left-radius: 0.25rem;
+        border-top-right-radius: 0.25rem;
+    }
+    > :last-child {
+        border-bottom-left-radius: 0.25rem;
+        border-bottom-right-radius: 0.25rem;
+    }
+}
+
+@mixin optionCommon {
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+}
+
+.optionDefault {
+    @include optionCommon;
+    &:hover {
+        background-color: $color-secondaryLight;
+    }
+}
+
+.optionSelected {
+    @include optionCommon;
+    background-color: $color-secondary;
+    color: $color-onSecondary;
+}

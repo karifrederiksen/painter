@@ -1,0 +1,23 @@
+.container {
+    color: inherit;
+    margin: 0.5rem 0;
+    width: 100%;
+}
+
+.label {
+    color: inherit;
+    margin-bottom: 0.25rem;
+    font-size: 0.875rem;
+}
+
+.content {
+    width: 100%;
+}
+
+.textContainer {
+    display: flex;
+    justify-content: space-between;
+    color: inherit;
+    pointer-events: none;
+    user-select: none;
+}

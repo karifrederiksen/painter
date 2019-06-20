@@ -1,27 +1,12 @@
 import * as React from "react"
-import styled from "../styled"
+import * as styles from "./index.scss"
 import { SetOnce, PerfTracker } from "../util"
 import { Surface } from "../views/surface"
 import { DefaultButton } from "../views/buttons"
 import * as Canvas from "../canvas"
-import * as Rng from "../rng"
 import * as Signals from "../signals"
 import { Scripting } from "./scripting"
 import { Performance } from "./performance"
-
-const Container = styled.div`
-    z-index: 100;
-    display: flex;
-    padding: 0.5rem 1rem;
-`
-
-const ContentContainer = styled.div`
-    padding-left: 1rem;
-`
-
-const Monospaced = styled.div`
-    font-family: "Courier New", Courier, monospace;
-`
 
 interface DebugWindowProps {
     readonly state: Canvas.State
@@ -41,15 +26,15 @@ const DebugWindow_ = React.memo(function DebugWindow(props: DebugWindowProps) {
             {!isOpen ? (
                 <DefaultButton onClick={() => setOpen(true)}>Debug</DefaultButton>
             ) : (
-                <Container>
+                <div className={styles.container}>
                     <DefaultButton onClick={() => setOpen(false)}>Close</DefaultButton>
-                    <ContentContainer>
+                    <div className={styles.contentContainer}>
                         RNG:
-                        <Monospaced>{state.rng.display()}</Monospaced>
+                        <div className={styles.monospaced}>{state.rng.display()}</div>
                         <Performance samplesSignal={props.perfSamplesSignal} />
                         <Scripting gl={props.gl} />
-                    </ContentContainer>
-                </Container>
+                    </div>
+                </div>
             )}
         </Surface>
     )

@@ -1,0 +1,15 @@
+@import "../theme/theme.scss";
+
+.container {
+    z-index: 100;
+    display: flex;
+    padding: 0.5rem 1rem;
+}
+
+.contentContainer {
+    padding-left: 1rem;
+}
+
+.monospaced {
+    font-family: $fonts-monospace;
+}

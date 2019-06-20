@@ -1,6 +1,6 @@
 import * as React from "react"
-import styled from "../styled"
 
+import * as styles from "./eraser.scss"
 import * as Interp from "./interpolation"
 import * as BrushDelay from "./brushDelay"
 import * as BrushShader from "../canvas/brushShader"
@@ -261,13 +261,6 @@ function createInputPoint(state: State, input: BrushDelay.Input): Interp.InputPo
  *
  */
 
-const DetailsContainer = styled(Surface)`
-    background-color: ${p => p.theme.color.surface.toStyle()};
-    color: ${p => p.theme.color.onSurface.toStyle()};
-    flex-direction: column;
-    width: 12rem;
-    padding: 0.5rem 0.75rem;
-`
 export function Details(props: {
     readonly messageSender: MsgSender
     readonly tool: State
@@ -276,40 +269,42 @@ export function Details(props: {
     const brush = props.tool
 
     return (
-        <DetailsContainer>
-            <Labeled label="Size" value={brush.diameterPx.toFixed(1) + "px"}>
-                <Slider
-                    percentage={brush.diameterPx / 500}
-                    onChange={pct => sender.setDiameter(pct * 500)}
-                />
-            </Labeled>
-            <Labeled label="Softness" value={brush.softness.toFixed(2)}>
-                <Slider percentage={brush.softness} onChange={sender.setSoftness} />
-            </Labeled>
-            <Labeled label="Flow" value={brush.flowPct.toFixed(2)}>
-                <Slider percentage={brush.flowPct} onChange={sender.setOpacity} />
-            </Labeled>
-            <Labeled label="Spacing" value={brush.spacingPct.toFixed(2) + "%"}>
-                <Slider percentage={brush.spacingPct} onChange={sender.setSpacing} />
-            </Labeled>
-            <InlineLabeled label="Pressure-Opacity">
-                <Switch
-                    checked={brush.pressureAffectsOpacity}
-                    onCheck={sender.setPressureAffectsOpacity}
-                />
-            </InlineLabeled>
-            <InlineLabeled label="Pressure-Size">
-                <Switch
-                    checked={brush.pressureAffectsSize}
-                    onCheck={sender.setPressureAffectsSize}
-                />
-            </InlineLabeled>
-            <Labeled label="Delay" value={brush.delay.duration.toFixed(0) + "ms"}>
-                <Slider
-                    percentage={brush.delay.duration / 500}
-                    onChange={pct => sender.setDelay(pct * 500)}
-                />
-            </Labeled>
-        </DetailsContainer>
+        <Surface>
+            <div className={styles.detailsContainer}>
+                <Labeled label="Size" value={brush.diameterPx.toFixed(1) + "px"}>
+                    <Slider
+                        percentage={brush.diameterPx / 500}
+                        onChange={pct => sender.setDiameter(pct * 500)}
+                    />
+                </Labeled>
+                <Labeled label="Softness" value={brush.softness.toFixed(2)}>
+                    <Slider percentage={brush.softness} onChange={sender.setSoftness} />
+                </Labeled>
+                <Labeled label="Flow" value={brush.flowPct.toFixed(2)}>
+                    <Slider percentage={brush.flowPct} onChange={sender.setOpacity} />
+                </Labeled>
+                <Labeled label="Spacing" value={brush.spacingPct.toFixed(2) + "%"}>
+                    <Slider percentage={brush.spacingPct} onChange={sender.setSpacing} />
+                </Labeled>
+                <InlineLabeled label="Pressure-Opacity">
+                    <Switch
+                        checked={brush.pressureAffectsOpacity}
+                        onCheck={sender.setPressureAffectsOpacity}
+                    />
+                </InlineLabeled>
+                <InlineLabeled label="Pressure-Size">
+                    <Switch
+                        checked={brush.pressureAffectsSize}
+                        onCheck={sender.setPressureAffectsSize}
+                    />
+                </InlineLabeled>
+                <Labeled label="Delay" value={brush.delay.duration.toFixed(0) + "ms"}>
+                    <Slider
+                        percentage={brush.delay.duration / 500}
+                        onChange={pct => sender.setDelay(pct * 500)}
+                    />
+                </Labeled>
+            </div>
+        </Surface>
     )
 }

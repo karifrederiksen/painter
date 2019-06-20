@@ -1,0 +1,17 @@
+.toolBarContainer {
+    display: flex;
+}
+
+.leftBar {
+    display: flex;
+    flex-direction: column;
+    padding-top: 1rem;
+    margin-right: 0.5rem;
+
+    > :not(:last-child) {
+        margin-bottom: 0.125rem;
+    }
+    > :not(:last-child) {
+        margin-bottom: 0.125rem;
+    }
+}

@@ -1,11 +1,11 @@
 import * as React from "react"
 
-import styled from "../styled"
 import * as Tools from "."
 import * as Brush from "./brush"
 import * as Eraser from "./eraser"
 import { SinkableButton } from "../views/buttons"
-import { SurfaceLook } from "../views/surface"
+import { surfaceLook } from "../views/surface"
+import * as styles from "./toolbar.scss"
 
 export interface ToolbarProps {
     readonly msgSender: Tools.MsgSender
@@ -13,52 +13,32 @@ export interface ToolbarProps {
     readonly transientState: TransientState
 }
 
-const LeftBar = styled(SurfaceLook)`
-    display: flex;
-    flex-direction: column;
-    padding-top: 1rem;
-    margin-right: 0.5rem;
-
-    > :not(:last-child) {
-        margin-bottom: 0.125rem;
-    }
-    > :not(:last-child) {
-        margin-bottom: 0.125rem;
-    }
-`
-
-const ToolBarContainer = styled.div`
-    display: flex;
-`
 export function View(props: ToolbarProps): JSX.Element {
     const currentToolType = props.tool.current
     const setTool = props.msgSender.setTool
 
     return (
-        <ToolBarContainer>
-            <LeftBar>
+        <div className={styles.toolBarContainer}>
+            <div className={surfaceLook + " " + styles.leftBar}>
                 <SinkableButton
-                    dataKey="brush"
                     onClick={() => setTool(Tools.ToolType.Brush)}
                     isDown={currentToolType === Tools.ToolType.Brush}
                 >
                     🖌
                 </SinkableButton>
                 <SinkableButton
-                    dataKey="erase"
                     onClick={() => setTool(Tools.ToolType.Eraser)}
                     isDown={currentToolType === Tools.ToolType.Eraser}
                 >
                     🔥
                 </SinkableButton>
                 <SinkableButton
-                    dataKey="zoom"
                     onClick={() => setTool(Tools.ToolType.Zoom)}
                     isDown={currentToolType === Tools.ToolType.Zoom}
                 >
                     🔍
                 </SinkableButton>
-            </LeftBar>
+            </div>
             {props.transientState.isDetailsExpanded ? (
                 (() => {
                     switch (currentToolType) {
@@ -83,7 +63,7 @@ export function View(props: ToolbarProps): JSX.Element {
             ) : (
                 <></>
             )}
-        </ToolBarContainer>
+        </div>
     )
 }
 

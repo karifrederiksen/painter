@@ -1,18 +1,6 @@
 import * as React from "react"
-import styled from "../styled"
+import * as styles from "./scripting.scss"
 import { SetOnce } from "../util"
-
-const Monospaced = styled.span`
-    font-family: "Courier New", Courier, monospace;
-`
-
-const CodeInput = styled.textarea`
-    font-family: "Courier New", Courier, monospace;
-    background-color: ${p => p.theme.color.primary.toStyle()};
-    color: ${p => p.theme.color.onPrimary.toStyle()};
-    border-radius: 0.25rem;
-    padding: 0.25rem;
-`
 
 export interface ScriptingProps {
     readonly gl: SetOnce<WebGLRenderingContext>
@@ -38,11 +26,12 @@ export function Scripting(props: ScriptingProps) {
                 Variables
                 <ul>
                     <li>
-                        <Monospaced>gl</Monospaced>: WebGLRenderingContext
+                        <span className={styles.monospaced}>gl</span>: WebGLRenderingContext
                     </li>
                 </ul>
             </div>
-            <CodeInput
+            <textarea
+                className={styles.codeInput}
                 value={code}
                 onChange={ev => setCode(ev.target.value)}
                 onKeyDown={onKeyboard}

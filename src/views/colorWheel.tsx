@@ -1,20 +1,14 @@
 import * as React from "react"
-import styled from "../styled"
 import * as Color from "color"
 import { DEFINE_TAU, createProgram, DEFINE_hsluv_etc, DEFINE_hsvToRgb } from "../webgl"
 import { ColorMode } from "../util"
+import * as styles from "./colorWheel.scss"
 
 export interface ColorWheelProps {
     readonly color: Color.Hsluv
     readonly colorType: ColorMode
     readonly onChange: (color: Color.Hsluv) => void
 }
-
-const Container = styled.div`
-    display: flex;
-    justify-content: center;
-    width: 100%;
-`
 
 const enum PointerState {
     Default,
@@ -33,29 +27,6 @@ interface GlState {
     readonly ringRenderer: RingRenderer
     readonly satValRenderer: SatValRenderer
 }
-
-const CicleThumb = styled.div`
-    z-index: 100;
-    position: absolute;
-    width: 1rem;
-    height: 0.5rem;
-    margin-left: calc(-0.5rem - 0.05rem);
-    margin-top: calc(-0.25rem - 0.05rem);
-    border-width: 0.1rem;
-    border-style: solid;
-`
-
-const AreaThumb = styled.div`
-    z-index: 100;
-    position: absolute;
-    width: 0.75rem;
-    height: 0.75rem;
-    margin-left: calc(-0.375rem - 0.05rem);
-    margin-top: calc(-0.375rem - 0.05rem);
-    border-width: 0.1rem;
-    border-style: solid;
-    border-radius: 0.375rem;
-`
 
 export function ColorWheel(props: ColorWheelProps): JSX.Element {
     const container = React.useRef<HTMLDivElement | null>(null)
@@ -248,28 +219,28 @@ export function ColorWheel(props: ColorWheelProps): JSX.Element {
     }
 
     return (
-        <Container>
-            <div onMouseDown={onDown} ref={container}>
-                <canvas width="160" height="160" ref={canvas} />
-                <CicleThumb
-                    style={{
-                        left: circleThumbX,
-                        top: circleThumbY,
-                        backgroundColor: props.color.toStyle(),
-                        borderColor: props.color.l > 50 ? "black" : "white",
-                        transform: "rotate(" + angle + "deg)",
-                    }}
-                />
-                <AreaThumb
-                    style={{
-                        left: areaThumbX,
-                        top: areaThumbY,
-                        backgroundColor: props.color.toStyle(),
-                        borderColor: props.color.l > 50 ? "black" : "white",
-                    }}
-                />
-            </div>
-        </Container>
+        <div className={styles.container} onMouseDown={onDown} ref={container}>
+            <canvas width="160" height="160" ref={canvas} />
+            <div
+                className={styles.cicleThumb}
+                style={{
+                    left: circleThumbX,
+                    top: circleThumbY,
+                    backgroundColor: props.color.toStyle(),
+                    borderColor: props.color.l > 50 ? "black" : "white",
+                    transform: "rotate(" + angle + "deg)",
+                }}
+            />
+            <div
+                className={styles.areaThumb}
+                style={{
+                    left: areaThumbX,
+                    top: areaThumbY,
+                    backgroundColor: props.color.toStyle(),
+                    borderColor: props.color.l > 50 ? "black" : "white",
+                }}
+            />
+        </div>
     )
 }
 

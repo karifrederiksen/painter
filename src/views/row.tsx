@@ -1,39 +1,29 @@
 import * as React from "react"
-import styled from "../styled"
+import * as styles from "./row.scss"
 
 export interface RowProps {
     readonly spacing?: string
     readonly children: readonly React.ReactChild[]
 }
 
-const Row_ = styled.div`
-    display: flex;
-    flex-direction: row;
-    width: inherit;
-    height: inherit;
-`
-
-const Col_ = styled.div`
-    display: flex;
-    flex-direction: column;
-    width: inherit;
-    height: inherit;
-`
-
 export function Row({ spacing, children }: RowProps): JSX.Element {
     spacing = spacing || "0"
     const spacedChildren = new Array<React.ReactChild>(children.length)
 
     if (children.length > 0) {
-        spacedChildren[0] = <Col_ key="0">{children[0]}</Col_>
+        spacedChildren[0] = (
+            <div className={styles.column} key="0">
+                {children[0]}
+            </div>
+        )
         for (let i = 1; i < children.length; i++) {
             spacedChildren[i] = (
-                <Col_ key={i.toString()} style={{ marginLeft: spacing }}>
+                <div className={styles.column} key={i.toString()} style={{ marginLeft: spacing }}>
                     {children[i]}
-                </Col_>
+                </div>
             )
         }
     }
 
-    return <Row_>{spacedChildren}</Row_>
+    return <div className={styles.row}>{spacedChildren}</div>
 }

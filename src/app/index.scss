@@ -1,0 +1,33 @@
+@import "../theme/theme.scss";
+
+.wrapper {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+    box-sizing: border-box !important;
+
+    ** {
+        margin: 0;
+        padding: 0;
+        border: 0;
+        outline: none;
+        box-sizing: inherit;
+    }
+}
+
+.bottomLeft {
+    position: absolute;
+    left: 0.5rem;
+    bottom: 0.5rem;
+}
+
+.bottomRight {
+    position: absolute;
+    right: 0.5rem;
+    bottom: 0.5rem;
+}
+
+.appContainer {
+    font-family: $fonts-normal;
+}

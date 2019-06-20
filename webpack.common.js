@@ -3,14 +3,12 @@ const CleanPlugin = require("clean-webpack-plugin")
 const HtmlPlugin = require("html-webpack-plugin")
 const ForkTsCheckerPlugin = require("fork-ts-checker-webpack-plugin")
 const TerserPlugin = require("terser-webpack-plugin")
+const MiniCssExtractPlugin = require("mini-css-extract-plugin")
 const { resolve } = require("path")
 
 const babelConfig = {
     presets: [["@babel/preset-env", { modules: false }], "@babel/preset-react"],
-    plugins: [
-        "@babel/plugin-transform-runtime",
-        ["babel-plugin-styled-components", { displayName: true, pure: true }],
-    ],
+    plugins: ["@babel/plugin-transform-runtime"],
 }
 
 function create(env) {
@@ -66,16 +64,20 @@ function create(env) {
                     ].filter(Boolean),
                 },
                 {
-                    test: /\.css$/,
+                    test: /\.s?css$/,
                     use: [
-                        { loader: "style-loader" },
-                        { loader: "css-loader", options: { modules: true, importLoaders: 1 } },
+                        { loader: MiniCssExtractPlugin.loader, options: { hmr: isDev } },
                         {
-                            loader: "postcss-loader",
+                            loader: "css-loader",
                             options: {
-                                plugins: [require("autoprefixer"), require("cssnano")()],
+                                modules: true,
+                                namedExport: true,
+                                camelCase: true,
+                                localIdentName: "[path][name]__[local]--[hash:base64:5]",
+                                context: resolve(__dirname, "src"),
                             },
                         },
+                        { loader: "sass-loader", options: {} },
                     ],
                 },
             ],
@@ -83,6 +85,9 @@ function create(env) {
         plugins: [
             new ForkTsCheckerPlugin({
                 reportFiles: ["src/**/*.{ts,tsx}"],
+            }),
+            new MiniCssExtractPlugin({
+                filename: isDev ? "[name].css" : "[name]-[hash].css",
             }),
             new HtmlPlugin({ template: resolve(__dirname, "src", "index.html") }),
             new CleanPlugin(["dist"]),
