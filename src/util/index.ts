@@ -75,6 +75,10 @@ export function delay(ms: number): Promise<void> {
     })
 }
 
+export interface PushOnlyArray<a> extends ReadonlyArray<a> {
+    push(item: a): unknown
+}
+
 export function arrUpdate<a>(array: readonly a[], index: number, value: a): readonly a[] {
     const newArr = array.slice()
     newArr.splice(index, 1, value)

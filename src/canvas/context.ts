@@ -6,8 +6,10 @@ import * as BrushShader from "./brushShader"
 import * as Layers from "../layers/model"
 import * as BlockRender from "./blockRender"
 import { Blend } from "../webgl"
-import { T2, Result, Vec2, Brand, Vec4 } from "../util"
+import { T2, Result, Vec2, Vec4 } from "../util"
 import { RgbLinear } from "color"
+import { Texture, TextureId, createTextureWithFramebuffer, ensureTextureIsBound } from "./texture"
+import * as Render from "./render"
 
 export interface CreationArgs {
     readonly gl: WebGLRenderingContext
@@ -16,7 +18,7 @@ export interface CreationArgs {
     readonly clearBlocksRenderer: ClearBlocksShader.Shader
     readonly outputRenderer: OutputShader.Shader
     readonly drawpointBatch: BrushShader.Shader
-    readonly internalCanvasSize: Vec2
+    readonly resolution: Vec2
 }
 
 export interface RenderArgs {
@@ -127,31 +129,10 @@ export function create(
         outputRenderer,
         textureRenderer,
         clearBlocksRenderer,
-        internalCanvasSize: new Vec2(canvas.width, canvas.height),
+        resolution: new Vec2(canvas.width, canvas.height),
     })
     return Result.ok<[Context, WebGLRenderingContext], string>([context, gl])
 }
-
-type TextureId = Brand<"Texture Id", number>
-
-const createTexture = (() => {
-    let nextId = 1
-
-    function createTexture(context: InternalContext, size: Vec2): TextureId {
-        const texture = context.gl.createTexture() as WebGLTexture
-        /* eslint-disable-next-line @typescript-eslint/no-explicit-any  */
-        const id = (nextId++ as any) as TextureId
-
-        console.info("created texture with id", id)
-
-        context.textureMap.set(id, texture)
-        setTextureSize(context, id, size)
-
-        return id
-    }
-
-    return createTexture
-})()
 
 class InternalContext implements Context {
     readonly gl: WebGLRenderingContext
@@ -160,21 +141,19 @@ class InternalContext implements Context {
     readonly clearBlocksRenderer: ClearBlocksShader.Shader
     readonly outputRenderer: OutputShader.Shader
     readonly drawpointBatch: BrushShader.Shader
-    readonly textureMap: Map<TextureId, WebGLTexture>
-    readonly framebufferMap: Map<TextureId, WebGLFramebuffer>
+    readonly allTextures: Texture[]
     readonly textureBindings: T2<TextureId | null, number>[]
-    readonly layerTextureMap: Map<Layers.Id, TextureId>
+    readonly layerTextureMap: Map<Layers.Id, Texture>
     internalCanvasSize: Vec2
-    stroke: TextureId | null
+    stroke: Texture | null
     renderBlocks: BlockRender.BlockTracker
     prevLayers: Layers.SplitLayers
-    readonly brushTextureId: TextureId
-    readonly currentLayerTextureId: TextureId
-    readonly outputTextureId: TextureId
+    readonly brushTexture: Texture
+    readonly outputTexture: Texture
     readonly combinedLayers: {
-        readonly above: TextureId
-        readonly below: TextureId
-        readonly current: TextureId
+        readonly above: Texture
+        readonly below: Texture
+        readonly current: Texture
     }
 
     constructor(args: CreationArgs) {
@@ -184,11 +163,10 @@ class InternalContext implements Context {
         this.clearBlocksRenderer = args.clearBlocksRenderer
         this.outputRenderer = args.outputRenderer
         this.drawpointBatch = args.drawpointBatch
-        this.textureMap = new Map()
-        this.framebufferMap = new Map()
+        this.allTextures = []
         this.textureBindings = new Array(32).fill([null, 0])
         this.layerTextureMap = new Map()
-        this.internalCanvasSize = args.internalCanvasSize
+        this.internalCanvasSize = args.resolution
         this.stroke = null
         this.renderBlocks = new BlockRender.BlockTracker()
         this.prevLayers = {
@@ -198,50 +176,72 @@ class InternalContext implements Context {
         }
         {
             const size = new Vec2(128, 128)
-            this.brushTextureId = createTexture(this, size)
+            this.brushTexture = createTextureWithFramebuffer(
+                this.gl,
+                this.allTextures,
+                this.textureBindings,
+                size
+            )
             this.brushTextureGenerator.generateBrushTexture(this.gl, {
-                framebuffer: addFramebuffer(this, this.brushTextureId),
+                framebuffer: this.brushTexture.framebuffer,
                 size: size,
                 uniforms: {
                     u_softness: 0,
                 },
             })
         }
-        this.currentLayerTextureId = createTexture(this, args.internalCanvasSize)
-        this.outputTextureId = createTexture(this, args.internalCanvasSize)
-        const outFramebuffer = addFramebuffer(this, this.outputTextureId)
+        this.outputTexture = createTextureWithFramebuffer(
+            this.gl,
+            this.allTextures,
+            this.textureBindings,
+            args.resolution
+        )
+        const outFramebuffer = this.outputTexture.framebuffer
         this.combinedLayers = {
-            above: createTexture(this, args.internalCanvasSize),
-            below: createTexture(this, args.internalCanvasSize),
-            current: createTexture(this, args.internalCanvasSize),
+            above: createTextureWithFramebuffer(
+                this.gl,
+                this.allTextures,
+                this.textureBindings,
+                args.resolution
+            ),
+            below: createTextureWithFramebuffer(
+                this.gl,
+                this.allTextures,
+                this.textureBindings,
+                args.resolution
+            ),
+            current: createTextureWithFramebuffer(
+                this.gl,
+                this.allTextures,
+                this.textureBindings,
+                args.resolution
+            ),
         }
-        addFramebuffer(this, this.combinedLayers.above)
-        addFramebuffer(this, this.combinedLayers.below)
-        addFramebuffer(this, this.combinedLayers.current)
 
         // initialize background
         this.gl.bindFramebuffer(WebGLRenderingContext.FRAMEBUFFER, outFramebuffer)
-        this.gl.viewport(0, 0, this.internalCanvasSize.x, this.internalCanvasSize.y)
+        this.gl.viewport(0, 0, args.resolution.x, args.resolution.y)
         this.gl.clearColor(0.6, 0.6, 0.6, 1)
         this.gl.clear(WebGLRenderingContext.COLOR_BUFFER_BIT)
         this.outputRenderer.render(this.gl, {
             uniforms: {
-                u_resolution: this.internalCanvasSize,
-                u_texture: ensureTextureIsBound(this, this.outputTextureId),
+                u_resolution: args.resolution,
+                u_texture: ensureTextureIsBound(this.gl, this.textureBindings, this.outputTexture),
             },
             blocks: [
                 {
                     x0: 0,
                     y0: 0,
-                    x1: this.internalCanvasSize.x,
-                    y1: this.internalCanvasSize.y,
+                    x1: args.resolution.x,
+                    y1: args.resolution.y,
                 },
             ],
         })
     }
 
     addBrushPoints(brushPoints: readonly BrushShader.BrushPoint[]) {
-        addBrushPoints(this, brushPoints)
+        this.drawpointBatch.addPoints(brushPoints)
+        this.renderBlocks.addPoints(brushPoints)
     }
 
     endStroke() {
@@ -258,28 +258,12 @@ class InternalContext implements Context {
         this.textureRenderer.dispose(gl)
         this.outputRenderer.dispose(gl)
         this.drawpointBatch.dispose(gl)
-        for (const x of this.framebufferMap) {
-            gl.deleteFramebuffer(x[1])
+        for (const x of this.allTextures) {
+            gl.deleteTexture(x.texture)
+            if (x instanceof Texture) {
+                gl.deleteFramebuffer(x.framebuffer)
+            }
         }
-        for (const x of this.textureMap) {
-            gl.deleteTexture(x[1])
-        }
-    }
-}
-
-function addBrushPoints(
-    context: InternalContext,
-    brushPoints: readonly BrushShader.BrushPoint[]
-): void {
-    context.drawpointBatch.addPoints(brushPoints)
-    context.renderBlocks.addPoints(brushPoints)
-    if (!context.drawpointBatch.canFlush) return
-
-    if (context.stroke == null) {
-        context.stroke = createTexture(context, context.internalCanvasSize)
-        addFramebuffer(context, context.stroke)
-    } else {
-        context.stroke = context.stroke
     }
 }
 
@@ -290,20 +274,16 @@ function endStroke(context: InternalContext): void {
 
     gl.viewport(0, 0, context.internalCanvasSize.x, context.internalCanvasSize.y)
     context.textureRenderer.render(gl, {
-        framebuffer: context.framebufferMap.get(context.combinedLayers.current)!,
+        framebuffer: context.combinedLayers.current.framebuffer,
         uniforms: {
             u_opacity: 1,
             u_resolution: internalCanvasSize,
-            u_texture: ensureTextureIsBound(context, stroke),
+            u_texture: ensureTextureIsBound(context.gl, context.textureBindings, stroke),
         },
         blocks: context.renderBlocks.getStrokeBlocks(),
     })
 
-    const strokeFb = context.framebufferMap.get(stroke)
-    if (strokeFb == null) {
-        throw "Stroke framebuffer not found"
-    }
-    gl.bindFramebuffer(gl.FRAMEBUFFER, strokeFb)
+    gl.bindFramebuffer(gl.FRAMEBUFFER, stroke.framebuffer)
     gl.clearColor(0, 0, 0, 0)
     gl.clear(gl.COLOR_BUFFER_BIT)
     context.renderBlocks.strokeEnded()
@@ -318,131 +298,65 @@ function render(
         return
     }
 
-    const { gl, internalCanvasSize } = context
+    const { gl } = context
 
     if (context.drawpointBatch.canFlush) {
         if (nextLayers.current === null) {
             console.warn("Drawpoint batch has data to flush, but no layer is currently selected")
         } else {
-            const currentLayerTex = getTextureIdForLayer(context, nextLayers.current.id)
+            let currentLayerTex = context.layerTextureMap.get(nextLayers.current.id)
 
-            const { brushTextureId } = context
+            if (currentLayerTex == null) {
+                currentLayerTex = createTextureWithFramebuffer(
+                    context.gl,
+                    context.allTextures,
+                    context.textureBindings,
+                    context.internalCanvasSize
+                )
+                context.layerTextureMap.set(nextLayers.current.id, currentLayerTex)
+            }
+
+            const { brushTexture } = context
 
             context.brushTextureGenerator.generateBrushTexture(gl, {
-                framebuffer: context.framebufferMap.get(brushTextureId)!,
+                framebuffer: brushTexture.framebuffer,
                 size: new Vec2(128, 128),
                 uniforms: {
                     u_softness: Math.max(brush.softness, 0.000001),
                 },
             })
             gl.viewport(0, 0, resolution.x, resolution.y)
-            gl.bindFramebuffer(gl.FRAMEBUFFER, context.framebufferMap.get(currentLayerTex)!)
+            gl.bindFramebuffer(gl.FRAMEBUFFER, currentLayerTex.framebuffer)
             context.drawpointBatch.flush(gl, {
                 blendMode,
                 uniforms: {
                     u_resolution: resolution,
-                    u_texture: ensureTextureIsBound(context, brushTextureId),
+                    u_texture: ensureTextureIsBound(
+                        context.gl,
+                        context.textureBindings,
+                        brushTexture
+                    ),
                 },
             })
         }
     }
 
-    {
-        // ABOVE
-        const prev = context.prevLayers.above
-        const next = nextLayers.above
-        if (layersRequireRerender(prev, next)) {
-            const fb = setupFb(context, context.combinedLayers.above)
-            for (let i = 0; i < next.length; i++) {
-                const layer = next[i]
-                if (layer.opacity === 0) continue
-
-                const textureId = getTextureIdForLayer(context, layer.id)
-
-                if (textureId == null) {
-                    throw "texture id should not be null or undefined"
-                }
-
-                context.textureRenderer.render(gl, {
-                    framebuffer: fb,
-                    uniforms: {
-                        u_opacity: layer.opacity,
-                        u_resolution: internalCanvasSize,
-                        u_texture: ensureTextureIsBound(context, textureId),
-                    },
-                    blocks: [
-                        {
-                            x0: 0,
-                            y0: 0,
-                            x1: internalCanvasSize.x,
-                            y1: internalCanvasSize.y,
-                        },
-                    ],
-                })
-            }
-        }
-    }
-    {
-        // BELOW
-        const prev = context.prevLayers.below
-        const next = nextLayers.below
-        if (layersRequireRerender(prev, next)) {
-            const fb = setupFb(context, context.combinedLayers.below)
-            for (let i = next.length - 1; i >= 0; i--) {
-                const layer = next[i]
-                if (layer.opacity === 0) continue
-
-                const textureId = getTextureIdForLayer(context, layer.id)
-
-                context.textureRenderer.render(gl, {
-                    framebuffer: fb,
-                    uniforms: {
-                        u_opacity: layer.opacity,
-                        u_resolution: internalCanvasSize,
-                        u_texture: ensureTextureIsBound(context, textureId),
-                    },
-                    blocks: [
-                        {
-                            x0: 0,
-                            y0: 0,
-                            x1: internalCanvasSize.x,
-                            y1: internalCanvasSize.y,
-                        },
-                    ],
-                })
-            }
-        }
-    }
-    {
-        // CURRENT
-        const layerId = nextLayers.current
-        const fb = setupFb(context, context.combinedLayers.current)
-        if (layerId === null) {
-            console.info("current layer is not selected")
-        } else {
-            const layerTextureId = getTextureIdForLayer(context, layerId.id)
-            context.textureRenderer.render(gl, {
-                framebuffer: fb,
-                uniforms: {
-                    u_opacity: 1,
-                    u_resolution: internalCanvasSize,
-                    u_texture: ensureTextureIsBound(context, layerTextureId),
-                },
-                blocks: [
-                    {
-                        x0: 0,
-                        y0: 0,
-                        x1: internalCanvasSize.x,
-                        y1: internalCanvasSize.y,
-                    },
-                ],
-            })
-        }
-    }
+    const layersToCombine = Render.getLayersToCombine(context.prevLayers, nextLayers)
+    Render.combineLayers({
+        gl,
+        resolution,
+        allTextures: context.allTextures,
+        layerTextureMap: context.layerTextureMap,
+        textureBindings: context.textureBindings,
+        textureShader: context.textureRenderer,
+        layersToRender: layersToCombine,
+        textureAbove: context.combinedLayers.above,
+        textureBelow: context.combinedLayers.below,
+        textureCurrent: context.combinedLayers.current,
+    })
 
     // render to outputTexture
-    const outId = context.outputTextureId
-    const outFramebuffer = context.framebufferMap.get(outId)
+    const outFramebuffer = context.outputTexture.framebuffer
 
     if (outFramebuffer == null) {
         throw "Out framebuffer should exist"
@@ -469,7 +383,11 @@ function render(
         uniforms: {
             u_opacity: 1,
             u_resolution: resolution,
-            u_texture: ensureTextureIsBound(context, context.combinedLayers.below),
+            u_texture: ensureTextureIsBound(
+                context.gl,
+                context.textureBindings,
+                context.combinedLayers.below
+            ),
         },
         blocks: frameBlocks,
     })
@@ -480,7 +398,11 @@ function render(
             uniforms: {
                 u_opacity: nextLayers.current.opacity,
                 u_resolution: resolution,
-                u_texture: ensureTextureIsBound(context, context.combinedLayers.current),
+                u_texture: ensureTextureIsBound(
+                    context.gl,
+                    context.textureBindings,
+                    context.combinedLayers.current
+                ),
             },
             blocks: frameBlocks,
         })
@@ -491,7 +413,11 @@ function render(
         uniforms: {
             u_opacity: 1,
             u_resolution: resolution,
-            u_texture: ensureTextureIsBound(context, context.combinedLayers.above),
+            u_texture: ensureTextureIsBound(
+                context.gl,
+                context.textureBindings,
+                context.combinedLayers.above
+            ),
         },
         blocks: frameBlocks,
     })
@@ -501,7 +427,11 @@ function render(
     context.outputRenderer.render(gl, {
         uniforms: {
             u_resolution: resolution,
-            u_texture: ensureTextureIsBound(context, outId),
+            u_texture: ensureTextureIsBound(
+                context.gl,
+                context.textureBindings,
+                context.outputTexture
+            ),
         },
         blocks: frameBlocks,
     })
@@ -510,147 +440,4 @@ function render(
     //gl.finish()
     context.prevLayers = nextLayers
     context.renderBlocks.afterFrame()
-}
-
-function addFramebuffer(context: InternalContext, id: TextureId): WebGLFramebuffer {
-    if (id === null) {
-        throw "Id should not be null"
-    }
-    if (id === undefined) {
-        throw "Id should not be undefined"
-    }
-    const { gl } = context
-    const texture = context.textureMap.get(id) as WebGLTexture
-    const framebuf = gl.createFramebuffer() as WebGLFramebuffer
-
-    if (context.framebufferMap.has(id)) {
-        throw "Invariant violation: Attempted to add framebuffer to texture that already has a framebuffer associated. Texture id: "
-    }
-
-    context.framebufferMap.set(id, framebuf)
-
-    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuf)
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0)
-
-    const frameBufferStatus = gl.checkFramebufferStatus(gl.FRAMEBUFFER)
-    switch (frameBufferStatus) {
-        case gl.FRAMEBUFFER_COMPLETE:
-            break
-        case gl.FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
-            console.warn("FRAMEBUFFER_INCOMPLETE_ATTACHMENT for texture:", id)
-            break
-        case gl.FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
-            console.warn("FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT for texture:", id)
-            break
-        case gl.FRAMEBUFFER_INCOMPLETE_DIMENSIONS:
-            console.warn("FRAMEBUFFER_INCOMPLETE_DIMENSIONS for texture:", id)
-            break
-        case gl.FRAMEBUFFER_UNSUPPORTED:
-            console.warn("FRAMEBUFFER_UNSUPPORTED for texture:", id)
-            break
-        default:
-            throw "Unexpected status: " + frameBufferStatus
-    }
-    return framebuf
-}
-
-function setTextureSize(context: InternalContext, id: TextureId, size: Vec2): void {
-    if (id === null) {
-        throw "Id should not be null"
-    }
-    if (id === undefined) {
-        throw "Id should not be undefined"
-    }
-    const { gl } = context
-    ensureTextureIsBound(context, id)
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, size.x, size.y, 0, gl.RGBA, gl.FLOAT, null)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-}
-
-function ensureTextureIsBound(context: InternalContext, id: TextureId): number {
-    const { gl, textureBindings } = context
-    for (let i = 0; i < textureBindings.length; i++) {
-        if (textureBindings[i][0] === id) {
-            gl.activeTexture(gl.TEXTURE0 + i)
-            return i
-        }
-    }
-
-    // Texture isn't bound yet. We need to find an open binding
-    const texture = context.textureMap.get(id)
-    if (texture == null) {
-        throw "The given texture id should still be in use."
-    }
-
-    for (let i = 0; i < textureBindings.length; i++) {
-        if (textureBindings[i][0] === null) {
-            gl.activeTexture(gl.TEXTURE0 + i)
-            gl.bindTexture(gl.TEXTURE_2D, texture)
-            textureBindings[i] = [id, performance.now()]
-            return i
-        }
-    }
-
-    // There is no open binding. We need to replace something that's already bound.
-    {
-        let minTime = Number.MAX_VALUE
-        let minTimeIdx = 0
-        for (let i = 0; i < textureBindings.length; i++) {
-            const time = textureBindings[i][1]
-            if (time < minTime) {
-                minTime = time
-                minTimeIdx = i
-            }
-        }
-        gl.activeTexture(gl.TEXTURE0 + minTimeIdx)
-        gl.bindTexture(gl.TEXTURE_2D, texture)
-        textureBindings[minTimeIdx] = [id, performance.now()]
-        return minTimeIdx
-    }
-}
-
-function setupFb(context: InternalContext, id: TextureId): WebGLFramebuffer {
-    const { gl, framebufferMap } = context
-    const fb = framebufferMap.get(id)
-    if (fb == null) {
-        throw { "framebuffer should exist": id, framebufferMap }
-    }
-    gl.bindFramebuffer(gl.FRAMEBUFFER, fb)
-    gl.clearColor(0, 0, 0, 0)
-    gl.clear(gl.COLOR_BUFFER_BIT)
-    return fb
-}
-
-function layersRequireRerender(
-    prev: readonly Layers.CollectedLayer[],
-    next: readonly Layers.CollectedLayer[]
-): boolean {
-    if (prev.length !== next.length) return true
-    for (let i = 0; i < next.length; i++) {
-        if (prev[i].id !== next[i].id) {
-            return true
-        }
-    }
-    return false
-}
-
-function getTextureIdForLayer(context: InternalContext, layerId: Layers.Id): TextureId {
-    if (layerId === null) {
-        throw "Id should not be null"
-    }
-    if (layerId === undefined) {
-        throw "Id should not be undefined"
-    }
-    const layerTextureId = context.layerTextureMap.get(layerId)
-    if (layerTextureId !== undefined) {
-        return layerTextureId
-    }
-
-    const textureId = createTexture(context, context.internalCanvasSize)
-    addFramebuffer(context, textureId)
-    context.layerTextureMap.set(layerId, textureId)
-    return textureId
 }
