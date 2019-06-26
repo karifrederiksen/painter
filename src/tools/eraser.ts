@@ -1,5 +1,5 @@
-import * as React from "react"
-
+import { Op, _ } from "ivi"
+import { div } from "ivi-html"
 import * as styles from "./eraser.scss"
 import * as Interp from "./interpolation"
 import * as BrushDelay from "./brushDelay"
@@ -261,50 +261,66 @@ function createInputPoint(state: State, input: BrushDelay.Input): Interp.InputPo
  *
  */
 
-export function Details(props: {
-    readonly messageSender: MsgSender
-    readonly tool: State
-}): JSX.Element {
+export function Details(props: { readonly messageSender: MsgSender; readonly tool: State }): Op {
     const sender = props.messageSender
     const brush = props.tool
 
-    return (
-        <Surface>
-            <div className={styles.detailsContainer}>
-                <Labeled label="Size" value={brush.diameterPx.toFixed(1) + "px"}>
-                    <Slider
-                        percentage={brush.diameterPx / 500}
-                        onChange={pct => sender.setDiameter(pct * 500)}
-                    />
-                </Labeled>
-                <Labeled label="Softness" value={brush.softness.toFixed(2)}>
-                    <Slider percentage={brush.softness} onChange={sender.setSoftness} />
-                </Labeled>
-                <Labeled label="Flow" value={brush.flowPct.toFixed(2)}>
-                    <Slider percentage={brush.flowPct} onChange={sender.setOpacity} />
-                </Labeled>
-                <Labeled label="Spacing" value={brush.spacingPct.toFixed(2) + "%"}>
-                    <Slider percentage={brush.spacingPct} onChange={sender.setSpacing} />
-                </Labeled>
-                <InlineLabeled label="Pressure-Opacity">
-                    <Switch
-                        checked={brush.pressureAffectsOpacity}
-                        onCheck={sender.setPressureAffectsOpacity}
-                    />
-                </InlineLabeled>
-                <InlineLabeled label="Pressure-Size">
-                    <Switch
-                        checked={brush.pressureAffectsSize}
-                        onCheck={sender.setPressureAffectsSize}
-                    />
-                </InlineLabeled>
-                <Labeled label="Delay" value={brush.delay.duration.toFixed(0) + "ms"}>
-                    <Slider
-                        percentage={brush.delay.duration / 500}
-                        onChange={pct => sender.setDelay(pct * 500)}
-                    />
-                </Labeled>
-            </div>
-        </Surface>
+    return Surface(
+        div(styles.detailsContainer, _, [
+            Labeled({
+                label: "Size",
+                value: brush.diameterPx.toFixed(1) + "px",
+                children: Slider({
+                    percentage: brush.diameterPx / 500,
+                    onChange: pct => sender.setDiameter(pct * 500),
+                }),
+            }),
+            Labeled({
+                label: "Softness",
+                value: brush.softness.toFixed(2),
+                children: Slider({
+                    percentage: brush.softness,
+                    onChange: sender.setSoftness,
+                }),
+            }),
+            Labeled({
+                label: "Flow",
+                value: brush.flowPct.toFixed(2),
+                children: Slider({
+                    percentage: brush.flowPct,
+                    onChange: sender.setOpacity,
+                }),
+            }),
+            Labeled({
+                label: "Spacing",
+                value: brush.spacingPct.toFixed(2) + "%",
+                children: Slider({
+                    percentage: brush.spacingPct,
+                    onChange: sender.setSpacing,
+                }),
+            }),
+            InlineLabeled({
+                label: "Pressure-Opacity",
+                children: Switch({
+                    checked: brush.pressureAffectsOpacity,
+                    onCheck: sender.setPressureAffectsOpacity,
+                }),
+            }),
+            InlineLabeled({
+                label: "Pressure-Size",
+                children: Switch({
+                    checked: brush.pressureAffectsSize,
+                    onCheck: sender.setPressureAffectsSize,
+                }),
+            }),
+            Labeled({
+                label: "Delay",
+                value: brush.delay.duration.toFixed(0) + "ms",
+                children: Slider({
+                    percentage: brush.delay.duration / 500,
+                    onChange: pct => sender.setDelay(pct * 500),
+                }),
+            }),
+        ])
     )
 }

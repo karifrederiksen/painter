@@ -1,3 +1,8 @@
+/*
+ * css variables don't get typechecked, and it's very hard to refactor them, so we prefer
+ * to use these scss variables that refer to the css variables, since the scss has to be compiled,
+ * and the compilation will fail when scss-variables are undefined.
+ */
 $color-background: var(--color-background);
 $color-primary: var(--color-primary);
 $color-primaryLight: var(--color-primaryLight);

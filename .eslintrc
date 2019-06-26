@@ -6,20 +6,8 @@
         },
         "ecmaVersion": 2018
     },
-    "plugins": ["@typescript-eslint", "prettier", "react"],
-    "extends": [
-        "plugin:@typescript-eslint/recommended",
-        "prettier",
-        "prettier/@typescript-eslint",
-        "plugin:react/recommended"
-    ],
-    "settings": {
-        "react": {
-            "createClass": "createReactClass",
-            "pragma": "React",
-            "version": "detect"
-        }
-    },
+    "plugins": ["@typescript-eslint", "prettier"],
+    "extends": ["plugin:@typescript-eslint/recommended", "prettier", "prettier/@typescript-eslint"],
     "rules": {
         "prettier/prettier": "error",
         "eqeqeq": ["error", "smart"],

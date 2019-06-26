@@ -1,4 +1,5 @@
-import * as React from "react"
+import { Op, Events, onChange, onPaste, component, _ } from "ivi"
+import { div, input, VALUE } from "ivi-html"
 import * as styles from "./brush.scss"
 import * as Interp from "./interpolation"
 import * as BrushDelay from "./brushDelay"
@@ -333,89 +334,122 @@ export interface DetailsProps {
     readonly tool: State
 }
 
-export const Details = React.memo((props: DetailsProps) => {
-    const sender = props.messageSender
-    const brush = props.tool
-    const color = brush.color
+export const Details = component<DetailsProps>(c => {
+    return props => {
+        const sender = props.messageSender
+        const brush = props.tool
 
-    function onColorText(text: string) {
-        const rgb = Color.Rgb.fromCss(text)
-        if (rgb === null) {
-            return
+        function onColorText(text: string) {
+            const rgb = Color.Rgb.fromCss(text)
+            if (rgb === null) {
+                return
+            }
+
+            sender.setColor(Color.rgbToHsluv(rgb))
         }
 
-        sender.setColor(Color.rgbToHsluv(rgb))
+        return Surface(
+            div(styles.detailsContainer, _, [
+                div(
+                    _,
+                    { style: { margin: "0.5rem 0" } },
+                    Menu({
+                        choices: brush.colorMode,
+                        show: colorModeToString,
+                        onSelect: sender.setColorMode,
+                    })
+                ),
+                ColorWheel({
+                    color: brush.color,
+                    colorType: brush.colorMode.focus,
+                    onChange: sender.setColor,
+                }),
+                div(
+                    _,
+                    { style: { margin: "0.5rem 0", width: "100%" } },
+                    ColorDisplay({
+                        color: brush.color,
+                        colorSecondary: brush.colorSecondary,
+                        onClick: () => sender.swapColorFrom(brush.color),
+                    })
+                ),
+                div(
+                    _,
+                    { style: { margin: "0.5rem 0" } },
+                    Events(
+                        onPaste(ev => onColorText((ev.target as any).value)),
+                        Events(
+                            onChange(ev => onColorText((ev.target as any).value)),
+                            input(styles.textInput, {
+                                type: "text",
+                                style: { width: "100%" },
+                                value: VALUE(brush.color.toStyle()),
+                            })
+                        )
+                    )
+                ),
+                Labeled({
+                    label: "Size",
+                    value: brush.diameterPx.toFixed(1) + "px",
+                    children: Slider({
+                        percentage: brush.diameterPx / 500,
+                        onChange: pct => sender.setDiameter(pct * 500),
+                    }),
+                }),
+                Labeled({
+                    label: "Softness",
+                    value: brush.softness.toFixed(2),
+                    children: Slider({
+                        percentage: brush.softness,
+                        onChange: sender.setSoftness,
+                    }),
+                }),
+                Labeled({
+                    label: "Flow",
+                    value: brush.flowPct.toFixed(2),
+                    children: Slider({
+                        percentage: brush.flowPct,
+                        onChange: sender.setOpacity,
+                    }),
+                }),
+                Labeled({
+                    label: "Spacing",
+                    value: brush.spacingPct.toFixed(2) + "%",
+                    children: Slider({
+                        percentage: brush.spacingPct,
+                        onChange: sender.setSpacing,
+                    }),
+                }),
+                ColorSliders({
+                    color: brush.color,
+                    colorType: brush.colorMode.focus,
+                    sender: sender,
+                }),
+                InlineLabeled({
+                    label: "Pressure-Opacity",
+                    children: Switch({
+                        checked: brush.pressureAffectsOpacity,
+                        onCheck: sender.setPressureAffectsOpacity,
+                    }),
+                }),
+                InlineLabeled({
+                    label: "Pressure-Size",
+                    children: Switch({
+                        checked: brush.pressureAffectsSize,
+                        onCheck: sender.setPressureAffectsSize,
+                    }),
+                }),
+                Labeled({
+                    label: "Delay",
+                    value: brush.delay.duration.toFixed(0) + "ms",
+                    children: Slider({
+                        percentage: brush.delay.duration / 500,
+                        onChange: pct => sender.setDelay(pct * 500),
+                    }),
+                }),
+            ])
+        )
     }
-
-    return (
-        <Surface>
-            <div className={styles.detailsContainer}>
-                <div style={{ margin: "0.5rem 0" }}>
-                    <Menu
-                        choices={brush.colorMode}
-                        show={colorModeToString}
-                        onSelect={sender.setColorMode}
-                    />
-                </div>
-                <ColorWheel
-                    color={brush.color}
-                    colorType={brush.colorMode.focus}
-                    onChange={sender.setColor}
-                />
-                <div style={{ margin: "0.5rem 0", width: "100%" }}>
-                    <ColorDisplay
-                        color={brush.color}
-                        colorSecondary={brush.colorSecondary}
-                        onClick={() => sender.swapColorFrom(brush.color)}
-                    />
-                </div>
-                <div style={{ margin: "0.5rem 0" }}>
-                    <input
-                        type="text"
-                        className={styles.textInput}
-                        value={brush.color.toStyle()}
-                        style={{ width: "100%" }}
-                        onPaste={ev => onColorText((ev.target as any).value)}
-                        onChange={text => onColorText(text.target.value)}
-                    />
-                </div>
-                <Labeled label="Size" value={brush.diameterPx.toFixed(1) + "px"}>
-                    <Slider
-                        percentage={brush.diameterPx / 500}
-                        onChange={pct => sender.setDiameter(pct * 500)}
-                    />
-                </Labeled>
-                <Labeled label="Softness" value={brush.softness.toFixed(2)}>
-                    <Slider percentage={brush.softness} onChange={sender.setSoftness} />
-                </Labeled>
-                <Labeled label="Flow" value={brush.flowPct.toFixed(2)}>
-                    <Slider percentage={brush.flowPct} onChange={sender.setOpacity} />
-                </Labeled>
-                <Labeled label="Spacing" value={brush.spacingPct.toFixed(2) + "%"}>
-                    <Slider percentage={brush.spacingPct} onChange={sender.setSpacing} />
-                </Labeled>
-                <ColorSliders sender={sender} color={color} colorType={brush.colorMode.focus} />
-                <InlineLabeled label="Pressure-Opacity">
-                    <Switch
-                        checked={brush.pressureAffectsOpacity}
-                        onCheck={sender.setPressureAffectsOpacity}
-                    />
-                </InlineLabeled>
-                <InlineLabeled label="Pressure-Size">
-                    <Switch
-                        checked={brush.pressureAffectsSize}
-                        onCheck={sender.setPressureAffectsSize}
-                    />
-                </InlineLabeled>
-                <Labeled label="Delay" value={brush.delay.duration.toFixed(0) + "ms"}>
-                    <Slider
-                        percentage={brush.delay.duration / 500}
-                        onChange={pct => sender.setDelay(pct * 500)}
-                    />
-                </Labeled>
-            </div>
-        </Surface>
-    )
 })
 
 function ColorSliders({
@@ -426,7 +460,7 @@ function ColorSliders({
     sender: MsgSender
     colorType: ColorMode
     color: Color.Hsluv
-}>): JSX.Element {
+}>): Op {
     switch (colorType) {
         case ColorMode.Hsluv:
             return HsluvSliders(sender, color)
@@ -435,58 +469,60 @@ function ColorSliders({
     }
 }
 
-function HsluvSliders(sender: MsgSender, color: Color.Hsluv): JSX.Element {
-    return (
-        <>
-            <Labeled label="Hue" value={color.h.toFixed(2)}>
-                <Slider
-                    percentage={color.h / 360}
-                    onChange={pct => sender.setColor(color.with({ h: pct * 360 }))}
-                />
-            </Labeled>
-            <Labeled label="Saturation" value={color.s.toFixed(2)}>
-                <Slider
-                    percentage={color.s / 100}
-                    onChange={pct => sender.setColor(color.with({ s: pct * 100 }))}
-                />
-            </Labeled>
-            <Labeled label="Luminosity" value={color.l.toFixed(2)}>
-                <Slider
-                    percentage={color.l / 100}
-                    onChange={pct => sender.setColor(color.with({ l: pct * 100 }))}
-                />
-            </Labeled>
-        </>
-    )
+function HsluvSliders(sender: MsgSender, color: Color.Hsluv): Op {
+    return [
+        Labeled({
+            label: "Hue",
+            value: color.h.toFixed(2),
+            children: Slider({
+                percentage: color.h / 360,
+                onChange: pct => sender.setColor(color.with({ h: pct * 360 })),
+            }),
+        }),
+        Labeled({
+            label: "Saturation",
+            value: color.s.toFixed(2),
+            children: Slider({
+                percentage: color.s / 100,
+                onChange: pct => sender.setColor(color.with({ s: pct * 100 })),
+            }),
+        }),
+        Labeled({
+            label: "Luminosity",
+            value: color.l.toFixed(2),
+            children: Slider({
+                percentage: color.l / 100,
+                onChange: pct => sender.setColor(color.with({ l: pct * 100 })),
+            }),
+        }),
+    ]
 }
 
-function HsvSliders(sender: MsgSender, color: Color.Hsv): JSX.Element {
-    return (
-        <>
-            <Labeled label="Hue" value={color.h.toFixed(2)}>
-                <Slider
-                    percentage={color.h}
-                    onChange={pct =>
-                        sender.setColor(Color.rgbToHsluv(color.with({ h: pct }).toRgb()))
-                    }
-                />
-            </Labeled>
-            <Labeled label="Saturation" value={color.s.toFixed(2)}>
-                <Slider
-                    percentage={color.s}
-                    onChange={pct =>
-                        sender.setColor(Color.rgbToHsluv(color.with({ s: pct }).toRgb()))
-                    }
-                />
-            </Labeled>
-            <Labeled label="Value" value={color.v.toFixed(2)}>
-                <Slider
-                    percentage={color.v}
-                    onChange={pct =>
-                        sender.setColor(Color.rgbToHsluv(color.with({ v: pct }).toRgb()))
-                    }
-                />
-            </Labeled>
-        </>
-    )
+function HsvSliders(sender: MsgSender, color: Color.Hsv): Op {
+    return [
+        Labeled({
+            label: "Hue",
+            value: color.h.toFixed(2),
+            children: Slider({
+                percentage: color.h,
+                onChange: pct => sender.setColor(Color.rgbToHsluv(color.with({ h: pct }).toRgb())),
+            }),
+        }),
+        Labeled({
+            label: "Saturation",
+            value: color.s.toFixed(2),
+            children: Slider({
+                percentage: color.s,
+                onChange: pct => sender.setColor(Color.rgbToHsluv(color.with({ s: pct }).toRgb())),
+            }),
+        }),
+        Labeled({
+            label: "Value",
+            value: color.v.toFixed(2),
+            children: Slider({
+                percentage: color.v,
+                onChange: pct => sender.setColor(Color.rgbToHsluv(color.with({ v: pct }).toRgb())),
+            }),
+        }),
+    ]
 }

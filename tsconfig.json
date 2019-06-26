@@ -14,9 +14,9 @@
         "esModuleInterop": true,
         "resolveJsonModule": true,
         "preserveConstEnums": false,
-        "types": ["node", "jest", "react", "react-dom"]
+        "types": ["node", "jest"]
     },
-    "include": ["src/**/*.ts", "src/**/*.tsx"]
+    "include": ["src/**/*.ts"]
     // ,
     // "exclude": ["node_modules/@types/react-native/**/*"]
 }

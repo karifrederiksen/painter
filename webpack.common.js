@@ -7,7 +7,7 @@ const MiniCssExtractPlugin = require("mini-css-extract-plugin")
 const { resolve } = require("path")
 
 const babelConfig = {
-    presets: [["@babel/preset-env", { modules: false }], "@babel/preset-react"],
+    presets: [["@babel/preset-env", { modules: false }]],
     plugins: ["@babel/plugin-transform-runtime"],
 }
 
@@ -16,13 +16,13 @@ function create(env) {
 
     return {
         mode: env,
-        entry: resolve(__dirname, "src", "app", "index.tsx"),
+        entry: resolve(__dirname, "src", "app", "index.ts"),
         output: {
             path: resolve(__dirname, "dist"),
             filename: "[name]-[hash].js",
             pathinfo: false,
         },
-        devtool: isDev ? "cheap-module-eval-source-map" : "source-map",
+        devtool: isDev ? "source-map" : "source-map",
         optimization: {
             nodeEnv: env,
             minimizer: isDev
@@ -45,12 +45,12 @@ function create(env) {
                   ],
         },
         resolve: {
-            extensions: [".mjs", ".js", ".ts", ".tsx", ".json"],
+            extensions: [".mjs", ".js", ".ts", ".json"],
         },
         module: {
             rules: [
                 {
-                    test: /\.(jsx?|tsx?)$/,
+                    test: /\.(js?|ts?)$/,
                     exclude: /node_modules/,
                     use: [
                         { loader: "babel-loader", options: babelConfig },
@@ -84,7 +84,7 @@ function create(env) {
         },
         plugins: [
             new ForkTsCheckerPlugin({
-                reportFiles: ["src/**/*.{ts,tsx}"],
+                reportFiles: ["src/**/*.ts"],
             }),
             new MiniCssExtractPlugin({
                 filename: isDev ? "[name].css" : "[name]-[hash].css",

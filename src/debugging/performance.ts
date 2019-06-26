@@ -1,4 +1,5 @@
-import * as React from "react"
+import { Op, component, useEffect, _ } from "ivi"
+import { div } from "ivi-html"
 import * as Signals from "../signals"
 import { PerfTracker } from "../util"
 
@@ -6,35 +7,38 @@ export interface PerformanceProps {
     readonly samplesSignal: Signals.Signal<readonly PerfTracker.Sample[]>
 }
 
-export function Performance(props: PerformanceProps) {
-    const [samples, setSamples] = React.useState(SamplesOverTime.empty)
+export const Performance = component<PerformanceProps>(c => {
+    let samples = SamplesOverTime.empty
 
-    React.useEffect(() => {
-        const { dispose } = props.samplesSignal.subscribe(samples =>
-            setSamples(x => x.update(samples))
-        )
+    const subscribe = useEffect<Signals.Signal<readonly PerfTracker.Sample[]>>(c, samplesSignal => {
+        const { dispose } = samplesSignal.subscribe(nextSamples => {
+            samples = samples.update(nextSamples)
+        })
 
         return dispose
-    }, [props.samplesSignal])
-
-    const samplecount = samples.length()
-    let max = Number.MIN_VALUE
-    let sum = 0
-    samples.forEach((sample, index) => {
-        const time = sample.endMs - sample.startMs
-        sum += time
-        if (time > max) {
-            max = time
-        }
     })
 
-    return (
-        <div>
-            <div>Max: {max.toFixed(3)} ms</div>
-            <div>Avg: {(sum / samplecount).toFixed(3)} ms</div>
-        </div>
-    )
-}
+    return (props): Op => {
+        subscribe(props.samplesSignal)
+
+        const samplecount = samples.length()
+        let max = Number.MIN_VALUE
+        let sum = 0
+
+        samples.forEach((sample, index) => {
+            const time = sample.endMs - sample.startMs
+            sum += time
+            if (time > max) {
+                max = time
+            }
+        })
+
+        return div(_, _, [
+            div(_, _, "Max: " + max.toFixed(3) + " ms"),
+            div(_, _, "Avg: " + (sum / samplecount).toFixed(3) + " ms"),
+        ])
+    }
+})
 
 class SamplesOverTime {
     static empty = new SamplesOverTime([], [], [], [])
