@@ -4,7 +4,6 @@ import * as Eraser from "./eraser"
 import * as Camera from "./camera"
 import * as BrushShader from "../canvas/brushShader"
 import { Blend } from "../webgl"
-import { T2, T3 } from "../util"
 
 export const enum ToolMsgType {
     SetToolMsg,
@@ -190,7 +189,7 @@ export function onClick(
     tool: Tool,
     ephemeral_: EphemeralState,
     pointer: Input.PointerInput
-): T3<Tool, EphemeralState, readonly BrushShader.BrushPoint[]> {
+): readonly [Tool, EphemeralState, readonly BrushShader.BrushPoint[]] {
     const ephemeral = syncEphemeral(tool, ephemeral_)
 
     switch (ephemeral.type) {
@@ -236,7 +235,7 @@ export function onDrag(
     tool: Tool,
     ephemeral_: EphemeralState,
     pointers: readonly Input.PointerInput[]
-): T3<Tool, EphemeralState, readonly BrushShader.BrushPoint[]> {
+): readonly [Tool, EphemeralState, readonly BrushShader.BrushPoint[]] {
     const ephemeral = syncEphemeral(tool, ephemeral_)
 
     switch (ephemeral.type) {
@@ -306,7 +305,7 @@ export function onRelease(
     tool: Tool,
     ephemeral_: EphemeralState,
     pointer: Input.PointerInput
-): T3<Tool, EphemeralState, readonly BrushShader.BrushPoint[]> {
+): readonly [Tool, EphemeralState, readonly BrushShader.BrushPoint[]] {
     const ephemeral = syncEphemeral(tool, ephemeral_)
 
     switch (ephemeral.type) {
@@ -359,7 +358,7 @@ export function onFrame(
     tool: Tool,
     ephemeral_: EphemeralState,
     currentTime: number
-): T2<EphemeralState, readonly BrushShader.BrushPoint[]> {
+): [EphemeralState, readonly BrushShader.BrushPoint[]] {
     const ephemeral = syncEphemeral(tool, ephemeral_)
 
     switch (ephemeral.type) {

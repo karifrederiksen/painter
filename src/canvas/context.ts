@@ -6,7 +6,7 @@ import * as BrushShader from "./brushShader"
 import * as Layers from "../layers/model"
 import * as BlockRender from "./blockRender"
 import { Blend } from "../webgl"
-import { T2, Result, Vec2, Vec4 } from "../util"
+import { Result, Vec2, Vec4 } from "../util"
 import { RgbLinear } from "color"
 import { Texture, TextureId, createTextureWithFramebuffer, ensureTextureIsBound } from "./texture"
 import * as Render from "./render"
@@ -142,7 +142,7 @@ class InternalContext implements Context {
     readonly outputRenderer: OutputShader.Shader
     readonly drawpointBatch: BrushShader.Shader
     readonly allTextures: Texture[]
-    readonly textureBindings: T2<TextureId | null, number>[]
+    readonly textureBindings: (readonly [TextureId | null, number])[]
     readonly layerTextureMap: Map<Layers.Id, Texture>
     internalCanvasSize: Vec2
     stroke: Texture | null

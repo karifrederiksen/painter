@@ -1,5 +1,3 @@
-import { Lazy, T3 } from "."
-
 export interface Store<state, ephemeral, msg> {
     send(msg: msg): void
     getState(): state
@@ -13,8 +11,8 @@ export namespace Store {
             state: state,
             ephemeral: ephemeral,
             msg: msg
-        ) => T3<state, ephemeral, effects>
-        readonly effectsHandler: Lazy<(eff: effects) => void>
+        ) => readonly [state, ephemeral, effects]
+        readonly effectsHandler: (eff: effects) => void
         readonly forceRender: () => void
     }
 
@@ -32,7 +30,7 @@ export namespace Store {
                 forceRender()
                 state = nextState
             }
-            effectsHandler.value(effect)
+            effectsHandler(effect)
             ephemeral = nextEphemeral
         }
 

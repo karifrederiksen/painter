@@ -1,4 +1,4 @@
-import { Brand, T2, Vec2, PushOnlyArray } from "../util"
+import { Brand, Vec2, PushOnlyArray } from "../util"
 
 export type TextureId = Brand<"Texture Id", number>
 
@@ -21,7 +21,7 @@ export class Texture {
 export function createTextureWithFramebuffer(
     gl: WebGLRenderingContext,
     allTextures: PushOnlyArray<Texture>,
-    textureBindings: T2<TextureId | null, number>[],
+    textureBindings: (readonly [TextureId | null, number])[],
     size: Vec2
 ): Texture {
     const texture = new Texture(
@@ -64,7 +64,7 @@ export function createTextureWithFramebuffer(
 
 export function ensureTextureIsBound(
     gl: WebGLRenderingContext,
-    textureBindings: T2<TextureId | null, number>[],
+    textureBindings: (readonly [TextureId | null, number])[],
     { texture, id }: Texture
 ): number {
     for (let i = 0; i < textureBindings.length; i++) {

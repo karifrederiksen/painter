@@ -6,11 +6,6 @@ const TerserPlugin = require("terser-webpack-plugin")
 const MiniCssExtractPlugin = require("mini-css-extract-plugin")
 const { resolve } = require("path")
 
-const babelConfig = {
-    presets: [["@babel/preset-env", { modules: false }]],
-    plugins: ["@babel/plugin-transform-runtime"],
-}
-
 function create(env) {
     const isDev = env !== "production"
 
@@ -18,11 +13,11 @@ function create(env) {
         mode: env,
         entry: resolve(__dirname, "src", "app", "index.ts"),
         output: {
-            path: resolve(__dirname, "dist"),
+            path: resolve(__dirname, "dist", env),
             filename: "[name]-[hash].js",
             pathinfo: false,
         },
-        devtool: isDev ? "source-map" : "source-map",
+        devtool: isDev ? "cheap-module-eval-source-map" : "source-map",
         optimization: {
             nodeEnv: env,
             minimizer: isDev
@@ -53,15 +48,11 @@ function create(env) {
                     test: /\.(js?|ts?)$/,
                     exclude: /node_modules/,
                     use: [
-                        { loader: "babel-loader", options: babelConfig },
                         {
                             loader: "ts-loader",
-                            options: {
-                                transpileOnly: true,
-                                experimentalWatchApi: true,
-                            },
+                            options: { transpileOnly: true },
                         },
-                    ].filter(Boolean),
+                    ],
                 },
                 {
                     test: /\.s?css$/,
@@ -70,11 +61,13 @@ function create(env) {
                         {
                             loader: "css-loader",
                             options: {
-                                modules: true,
-                                namedExport: true,
-                                camelCase: true,
-                                localIdentName: "[path][name]__[local]--[hash:base64:5]",
-                                context: resolve(__dirname, "src"),
+                                sourceMap: true,
+                                localsConvention: "camelCase",
+                                modules: {
+                                    mode: "local",
+                                    localIdentName: "[path][name]__[local]--[hash:base64:5]",
+                                    context: resolve(__dirname, "src"),
+                                },
                             },
                         },
                         { loader: "sass-loader", options: {} },
@@ -90,15 +83,8 @@ function create(env) {
                 filename: isDev ? "[name].css" : "[name]-[hash].css",
             }),
             new HtmlPlugin({ template: resolve(__dirname, "src", "index.html") }),
-            new CleanPlugin(["dist"]),
+            new CleanPlugin(["dist/" + env]),
         ],
-        serve: {
-            clipboard: true,
-            host: "localhost",
-            port: 6789,
-            compress: true,
-            hotClient: true,
-        },
     }
 }
 module.exports = { create }

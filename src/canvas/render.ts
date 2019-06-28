@@ -1,5 +1,5 @@
 import * as Layers from "../layers/model"
-import { Vec2, T2, PushOnlyArray } from "../util"
+import { Vec2, PushOnlyArray } from "../util"
 import { TextureId, Texture, createTextureWithFramebuffer } from "./texture"
 import { Shader as TextureShader } from "./textureShader"
 
@@ -75,7 +75,7 @@ export interface CombineLayersArgs {
     readonly allTextures: PushOnlyArray<Texture>
     readonly layersToRender: LayersToCombine
     readonly textureShader: TextureShader
-    readonly textureBindings: T2<TextureId | null, number>[]
+    readonly textureBindings: (readonly [TextureId | null, number])[]
     readonly layerTextureMap: Map<Layers.Id, Texture>
     readonly textureAbove: Texture
     readonly textureBelow: Texture
@@ -186,7 +186,7 @@ export function combineLayers(args: CombineLayersArgs): void {
 
 function ensureTextureIsBound(
     gl: WebGLRenderingContext,
-    textureBindings: T2<TextureId | null, number>[],
+    textureBindings: (readonly [TextureId | null, number])[],
     { texture, id }: Texture
 ): number {
     for (let i = 0; i < textureBindings.length; i++) {

@@ -1,6 +1,5 @@
 export { Store } from "./store"
 export { Decode } from "./decode"
-export * from "./tuples"
 export * from "./maybe"
 export * from "./result"
 export * from "./vec2"

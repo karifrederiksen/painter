@@ -5,6 +5,7 @@
         "module": "esnext",
         "jsx": "react",
         "outDir": ".cache/js",
+        "sourceMap": true,
 
         /* Strict Type-Checking Options */
         "strict": true,

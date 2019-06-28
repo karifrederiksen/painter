@@ -1,4 +1,4 @@
-import { Brand, orDefault, arrUpdate, arrInsert, T2, arrRemove } from "../util"
+import { Brand, orDefault, arrUpdate, arrInsert, arrRemove } from "../util"
 import { Stack, PushArray } from "../collections"
 
 export type Id = Brand<number, "LayerId">
@@ -136,7 +136,7 @@ export class GroupLayer {
         }
     }
 
-    remove(selectedPath: Stack.NonEmpty<number>): T2<GroupLayer, Stack.Stack<number>> {
+    remove(selectedPath: Stack.NonEmpty<number>): readonly [GroupLayer, Stack.Stack<number>] {
         const index = selectedPath.head
         const selected = this.children[index]
 

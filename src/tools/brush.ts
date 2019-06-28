@@ -7,7 +7,7 @@ import * as BrushShader from "../canvas/brushShader"
 import * as Camera from "./camera"
 import * as Input from "../input"
 import * as Color from "color"
-import { T2, Vec2, ColorMode, colorModeToString, clamp } from "../util"
+import { Vec2, ColorMode, colorModeToString, clamp } from "../util"
 import { ZipperList } from "../collections/zipperList"
 import { Menu } from "../views/menu"
 import { ColorWheel } from "../views/colorWheel"
@@ -197,7 +197,7 @@ export function onClick(
     camera: Camera.State,
     brush: State,
     input: Input.PointerInput
-): T2<EphemeralState, BrushShader.BrushPoint> {
+): [EphemeralState, BrushShader.BrushPoint] {
     const brushInput = pointerToBrushInput(camera, input)
     const interpState = Interp.init(createInputPoint(brush, brushInput))
     const delayState = BrushDelay.init(input.time, brushInput)
@@ -209,7 +209,7 @@ export function onDrag(
     state: State,
     tempState: EphemeralState,
     inputs: readonly Input.PointerInput[]
-): T2<EphemeralState, readonly BrushShader.BrushPoint[]> {
+): [EphemeralState, readonly BrushShader.BrushPoint[]] {
     if (tempState === null) {
         const res = onClick(camera, state, inputs[0])
         return [res[0], [res[1]]]
@@ -246,7 +246,7 @@ export function onFrame(
     brush: State,
     state: EphemeralState,
     currentTime: number
-): T2<EphemeralState, readonly BrushShader.BrushPoint[]> {
+): [EphemeralState, readonly BrushShader.BrushPoint[]] {
     if (state === null) {
         return [null, []]
     }
@@ -272,7 +272,7 @@ export function onRelease(
     brush: State,
     state: EphemeralState,
     input: Input.PointerInput
-): T2<EphemeralState, readonly BrushShader.BrushPoint[]> {
+): [EphemeralState, readonly BrushShader.BrushPoint[]] {
     if (state === null) {
         return [null, []]
     }

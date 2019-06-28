@@ -1,6 +1,4 @@
-import { T0, T1 } from "./tuples"
-
-export type Maybe<a> = T0 | T1<a>
+export type Maybe<a> = (readonly []) | (readonly [a])
 
 export namespace Maybe {
     export function of<a>(val: a | null | undefined): Maybe<a> {

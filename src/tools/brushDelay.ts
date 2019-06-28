@@ -1,4 +1,4 @@
-import { T2, lerp } from "../util"
+import { lerp } from "../util"
 
 export interface Config {
     readonly duration: number
@@ -46,7 +46,7 @@ export function updateWithInput(
     state: State,
     currentTime: number,
     end: Input
-): T2<State, Input> {
+): [State, Input] {
     if (config.duration === 0) {
         return [{ startTime: currentTime, start: end, end }, end]
     }
@@ -56,7 +56,7 @@ export function updateWithInput(
     return [{ startTime: currentTime, start: output, end }, output]
 }
 
-export function update(config: Config, state: State, currentTime: number): T2<State, Input> {
+export function update(config: Config, state: State, currentTime: number): [State, Input] {
     const deltaTime = currentTime - state.startTime
     if (deltaTime >= config.duration) {
         return [state, state.end]

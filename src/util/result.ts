@@ -1,12 +1,10 @@
-import { T2 } from "./tuples"
-
-export type Result<ok, err> = T2<false, err> | T2<true, ok>
+export type Result<ok, err> = readonly [false, err] | readonly [true, ok]
 
 export namespace Result {
-    export function isOk<ok, err>(res: Result<ok, err>): res is T2<true, ok> {
+    export function isOk<ok, err>(res: Result<ok, err>): res is readonly [true, ok] {
         return res[0]
     }
-    export function isErr<ok, err>(res: Result<ok, err>): res is T2<false, err> {
+    export function isErr<ok, err>(res: Result<ok, err>): res is readonly [false, err] {
         return !res[0]
     }
 

@@ -5,7 +5,7 @@ import * as Rng from "../rng"
 import * as Theme from "../theme"
 import * as Context from "./context"
 import { BrushPoint } from "./brushShader"
-import { Vec2, Result, PerfTracker, T3 } from "../util"
+import { Vec2, Result, PerfTracker } from "../util"
 
 export interface Hooks {
     // readonly onCanvasSnapshot: (snapshot: Snapshot) => void
@@ -156,7 +156,7 @@ export function update(
     state: State,
     ephemeral: EphemeralState,
     msg: CanvasMsg
-): T3<State, EphemeralState, Effect> {
+): readonly [State, EphemeralState, Effect] {
     switch (msg.type) {
         case CanvasMsgType.OnFrame: {
             const [nextToolEphemeral, brushPoints] = Tools.onFrame(

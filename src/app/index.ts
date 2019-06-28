@@ -47,9 +47,13 @@ const App = component(c => {
     >({
         initialState: Canvas.initState(),
         initialEphemeral: Canvas.initEphemeral(),
-        effectsHandler: new Lazy(() => (ef: Canvas.Effect) => canvasModel.value.handle(ef)),
+        effectsHandler: (ef: Canvas.Effect) => canvasModel.value.handle(ef),
         forceRender: () => invalidate(c),
-        update: Canvas.update,
+        update: (state, ephState, msg) => {
+            const result = Canvas.update(state, ephState, msg)
+            canvasModel.value.update(result[0])
+            return result
+        },
     })
     const sender = Canvas.createSender(store.send)
     const canvasRef = box<OpState | null>(null)
@@ -62,10 +66,6 @@ const App = component(c => {
             Theme.updateDiff(prevTheme, nextTheme)
         }
         prevTheme = nextTheme
-    })
-
-    const updateCanvas = useLayoutEffect<Canvas.State>(c, nextState => {
-        canvasModel.value.update(nextState)
     })
 
     const setupCanvas = useLayoutEffect(c, () => {
@@ -121,7 +121,6 @@ const App = component(c => {
         const state = store.getState()
 
         setupCanvas()
-        updateCanvas(state)
         updateTheme(state.theme)
 
         return div(styles.appContainer, _, [

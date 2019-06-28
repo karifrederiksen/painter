@@ -1,6 +1,6 @@
 import * as BrushShader from "../canvas/brushShader"
 import * as Color from "color"
-import { lerp, distance, T2, Vec2 } from "../util"
+import { lerp, distance, Vec2 } from "../util"
 
 export interface Interpolatable {
     readonly diameterPx: number
@@ -27,7 +27,7 @@ export function interpolate(
     brush: Interpolatable,
     state: State,
     end: InputPoint
-): T2<State, readonly BrushShader.BrushPoint[]> {
+): [State, readonly BrushShader.BrushPoint[]] {
     if (state === null) {
         const brushPoint = {
             alpha: end.alpha,

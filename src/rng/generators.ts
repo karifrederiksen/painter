@@ -1,10 +1,9 @@
 import * as Rng from "./rng"
-import { T2, T3 } from "../util"
 
-type GenResult<a> = T2<a, Rng.Seed>
+export type GenResult<a> = readonly [a, Rng.Seed]
 
 export interface Generators<a> {
-    (rng: Rng.Seed): T2<a, Rng.Seed>
+    (rng: Rng.Seed): GenResult<a>
 }
 
 export namespace Generators {
@@ -39,7 +38,7 @@ export namespace Generators {
         return [pct * delta + min, nextSeed]
     }
 
-    export function t2<a, b>(genA: Generators<a>, genB: Generators<b>): Generators<T2<a, b>> {
+    export function t2<a, b>(genA: Generators<a>, genB: Generators<b>): Generators<[a, b]> {
         return rng => t2_(genA, genB, rng)
     }
 
@@ -47,7 +46,7 @@ export namespace Generators {
         genA: Generators<a>,
         genB: Generators<b>,
         rng0: Rng.Seed
-    ): GenResult<T2<a, b>> {
+    ): GenResult<[a, b]> {
         const [valA, rng1] = genA(rng0)
         const [valB, rng2] = genB(rng1)
         return [[valA, valB], rng2]
@@ -57,7 +56,7 @@ export namespace Generators {
         genA: Generators<a>,
         genB: Generators<b>,
         genC: Generators<c>
-    ): Generators<T3<a, b, c>> {
+    ): Generators<[a, b, c]> {
         return rng => t3_(genA, genB, genC, rng)
     }
 
@@ -66,7 +65,7 @@ export namespace Generators {
         genB: Generators<b>,
         genC: Generators<c>,
         rng0: Rng.Seed
-    ): GenResult<T3<a, b, c>> {
+    ): GenResult<[a, b, c]> {
         const [valA, rng1] = genA(rng0)
         const [valB, rng2] = genB(rng1)
         const [valC, rng3] = genC(rng2)
