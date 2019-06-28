@@ -11,9 +11,8 @@ import {
     findDOMNode,
     _,
     useMutationEffect,
+    scheduleMicrotask,
     UpdateFlags,
-    memo,
-    shallowEqual,
 } from "ivi"
 import { div, canvas } from "ivi-html"
 import * as styles from "./colorWheel.scss"
@@ -108,13 +107,12 @@ export const ColorWheel = component<ColorWheelProps>(c => {
     const initializeCanvas = useMutationEffect(c, () => {
         const canvas = findDOMNode<HTMLCanvasElement>(canvasRef)
         if (canvas == null) {
-            return
+            throw { "canvas ref not fonud": canvasRef }
         }
 
         glState = new GlState(canvas)
 
-        invalidate(c, 1 as UpdateFlags.RequestSyncUpdate)
-
+        scheduleMicrotask(() => invalidate(c, 1 as UpdateFlags.RequestSyncUpdate))
         return () => {
             if (glState) {
                 glState.dispose()
@@ -180,7 +178,7 @@ export const ColorWheel = component<ColorWheelProps>(c => {
         }
     }
 
-    return memo(props => {
+    return props => {
         listenToMouse()
         initializeCanvas()
         renderCanvas({ colorMode: props.colorType, color: props.color })
@@ -241,7 +239,7 @@ export const ColorWheel = component<ColorWheelProps>(c => {
                 )
             )
         )
-    }, shallowEqual)
+    }
 })
 
 function clamp(x: number, min: number, max: number): number {
