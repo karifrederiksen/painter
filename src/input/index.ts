@@ -71,18 +71,14 @@ const uncoalesce = (() => {
 })()
 
 function localizePointer(
-    bounds: ClientRect | DOMRect,
     time: number,
     event: PointerEvent,
     // we get the pressure off of the original event because firefox's coalesced events have a bug which causes them to always be 0
     originalEvent: PointerEvent
 ): PointerInput {
-    const x = event.x - bounds.left
-    const y = event.y - bounds.top
-
     return {
-        x,
-        y,
+        x: event.x,
+        y: event.y,
         pressure: getPressure(originalEvent),
         shift: event.shiftKey,
         alt: event.altKey,
@@ -91,16 +87,12 @@ function localizePointer(
     }
 }
 
-function uncoalesceAndLocalize(
-    bounds: ClientRect | DOMRect,
-    time: number,
-    originalEvent: PointerEvent
-): PointerInput[] {
+function uncoalesceAndLocalize(time: number, originalEvent: PointerEvent): PointerInput[] {
     const events = uncoalesce(originalEvent)
     const result = new Array<PointerInput>(events.length)
     for (let i = 0; i < events.length; i++) {
         // we need to deal with pressure
-        result[i] = localizePointer(bounds, time, events[i], originalEvent)
+        result[i] = localizePointer(time, events[i], originalEvent)
     }
     return result
 }
@@ -110,25 +102,22 @@ function listenForPointers(canvas: HTMLCanvasElement, listeners: Listeners): Rem
         if (ev.button === 1 || ev.button === 2) {
             return
         }
-        const bounds = canvas.getBoundingClientRect()
         const time = performance.now()
-        listeners.click(localizePointer(bounds, time, ev, ev))
+        listeners.click(localizePointer(time, ev, ev))
     }
 
     const pointerUp = (ev: PointerEvent) => {
-        const bounds = canvas.getBoundingClientRect()
         const time = performance.now()
-        listeners.release(localizePointer(bounds, time, ev, ev))
+        listeners.release(localizePointer(time, ev, ev))
     }
 
     const pointerMove = (ev: PointerEvent) => {
-        const bounds = canvas.getBoundingClientRect()
         const time = performance.now()
-        listeners.move(uncoalesceAndLocalize(bounds, time, ev))
+        listeners.move(uncoalesceAndLocalize(time, ev))
         // listeners.move([localizePointer(bounds, time, ev)])
 
         if (ev.pressure > 0) {
-            listeners.drag(uncoalesceAndLocalize(bounds, time, ev))
+            listeners.drag(uncoalesceAndLocalize(time, ev))
             // listeners.drag([localizePointer(bounds, time, ev)])
         }
     }
@@ -153,25 +142,22 @@ function listenForMouse(canvas: HTMLCanvasElement, listeners: Listeners): Remove
         if (ev.button === 1 || ev.button === 2) {
             return
         }
-        const bounds = canvas.getBoundingClientRect()
         const time = performance.now()
-        listeners.click(localizeMouse(bounds, time, ev, false))
+        listeners.click(localizeMouse(time, ev, false))
         isDown = true
     }
 
     const mouseUp = (ev: MouseEvent) => {
-        const bounds = canvas.getBoundingClientRect()
         const time = performance.now()
-        listeners.release(localizeMouse(bounds, time, ev, true))
+        listeners.release(localizeMouse(time, ev, true))
         isDown = false
     }
     const mouseMove = (ev: MouseEvent) => {
-        const bounds = canvas.getBoundingClientRect()
         const time = performance.now()
-        listeners.move([localizeMouse(bounds, time, ev, false)])
+        listeners.move([localizeMouse(time, ev, false)])
 
         if (isDown) {
-            listeners.drag([localizeMouse(bounds, time, ev, false)])
+            listeners.drag([localizeMouse(time, ev, false)])
         }
     }
 
@@ -186,18 +172,10 @@ function listenForMouse(canvas: HTMLCanvasElement, listeners: Listeners): Remove
     }
 }
 
-function localizeMouse(
-    bounds: ClientRect | DOMRect,
-    time: number,
-    ev: MouseEvent,
-    isRelease: boolean
-): PointerInput {
-    const x = ev.x - bounds.left
-    const y = ev.y - bounds.top
-
+function localizeMouse(time: number, ev: MouseEvent, isRelease: boolean): PointerInput {
     return {
-        x,
-        y,
+        x: ev.x,
+        y: ev.y,
         pressure: isRelease ? 0.0 : 1.0,
         shift: ev.shiftKey,
         alt: ev.altKey,

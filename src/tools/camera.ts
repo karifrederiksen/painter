@@ -1,10 +1,10 @@
 import * as Input from "../input"
-import { Vec2 } from "../util"
 
 export interface State {
-    readonly offsetPx: Vec2
+    readonly offsetX: number
+    readonly offsetY: number
     readonly zoomPct: number
-    readonly rotationRad: number
+    readonly rotateTurns: number
 }
 
 export type Msg = SetZoomMsg | SetOffsetMsg | SetRotationMsg
@@ -23,7 +23,7 @@ class SetZoomMsg {
 class SetOffsetMsg {
     readonly type: MsgType.SetOffsetMsg = MsgType.SetOffsetMsg
     private nominal: void
-    constructor(readonly offsetPx: Vec2) {}
+    constructor(readonly offsetX: number, readonly offsetY: number) {}
 }
 class SetRotationMsg {
     readonly type: MsgType.SetRotationMsg = MsgType.SetRotationMsg
@@ -33,9 +33,10 @@ class SetRotationMsg {
 
 export function init(): State {
     return {
+        offsetX: 0,
+        offsetY: 0,
         zoomPct: 1,
-        offsetPx: new Vec2(0, 0),
-        rotationRad: 0,
+        rotateTurns: 0,
     }
 }
 
@@ -44,9 +45,9 @@ export function update(state: State, msg: Msg): State {
         case MsgType.SetZoomMsg:
             return { ...state, zoomPct: msg.zoomPct }
         case MsgType.SetOffsetMsg:
-            return { ...state, offsetPx: msg.offsetPx }
+            return { ...state, offsetX: msg.offsetX, offsetY: msg.offsetY }
         case MsgType.SetRotationMsg:
-            return { ...state, rotationRad: msg.rotationRad }
+            return { ...state, rotateTurns: msg.rotationRad }
         default:
             const never: never = msg
             throw { "unexpected msg": msg }
@@ -55,14 +56,14 @@ export function update(state: State, msg: Msg): State {
 
 export interface MsgSender {
     setZoom(pct: number): void
-    setOffset(xyPct: Vec2): void
+    setOffset(x: number, y: number): void
     setRotation(pct: number): void
 }
 
 export function createSender(sendMessage: (msg: Msg) => void): MsgSender {
     return {
         setRotation: pct => sendMessage(new SetRotationMsg(pct)),
-        setOffset: xyPx => sendMessage(new SetOffsetMsg(xyPx)),
+        setOffset: (x, y) => sendMessage(new SetOffsetMsg(x, y)),
         setZoom: pct => sendMessage(new SetZoomMsg(pct)),
     }
 }
@@ -96,6 +97,5 @@ export function moveToolUpdate(
 ): Msg {
     const xd = input.x - dragState.prevPoint.x
     const yd = input.y - dragState.prevPoint.y
-    const offset = new Vec2(camera.offsetPx.x + xd, camera.offsetPx.y + yd)
-    return new SetOffsetMsg(offset)
+    return new SetOffsetMsg(camera.offsetX + xd, camera.offsetY + yd)
 }

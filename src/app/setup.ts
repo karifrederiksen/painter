@@ -3,7 +3,11 @@ import * as Input from "../input"
 import * as Color from "color"
 import { delay, ColorMode } from "../util"
 
-export async function setup(getState: () => Canvas.State, sender: Canvas.MsgSender): Promise<void> {
+export async function setup(
+    canvas: HTMLCanvasElement,
+    getState: () => Canvas.State,
+    sender: Canvas.MsgSender
+): Promise<void> {
     const forceRender = () => sender.onFrame(performance.now())
 
     const mkPt = (x: number, y: number, p: number): Input.PointerInput => ({
@@ -12,14 +16,17 @@ export async function setup(getState: () => Canvas.State, sender: Canvas.MsgSend
         shift: false,
         time: performance.now(),
         pressure: p,
-        x: x,
-        y: y,
+        x: x + canvas.offsetLeft,
+        y: y + canvas.offsetTop,
     })
 
     const mkPts = (x: number, y: number, p: number): readonly Input.PointerInput[] => [
         mkPt(x, y, p),
     ]
 
+    sender.tool.camera.setRotation(0.125)
+    sender.tool.camera.setOffset(150, 0)
+    sender.tool.camera.setZoom(1)
     sender.tool.brush.setOpacity(0.6)
     sender.tool.brush.setColor(new Color.Hsluv(0, 100, 50))
     sender.tool.brush.setDiameter(100)
@@ -32,7 +39,7 @@ export async function setup(getState: () => Canvas.State, sender: Canvas.MsgSend
     forceRender()
     sender.layer.newLayer(getState().layers.current().id)
     forceRender()
-    sender.layer.setOpacity(getState().layers.current().id, 0.5)
+    sender.layer.setOpacity(getState().layers.current().id, 0.8)
     forceRender()
     sender.tool.brush.setColor(new Color.Hsluv(240, 40, 30))
     sender.onClick(mkPt(100, 700, 0.2))

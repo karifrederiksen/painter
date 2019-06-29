@@ -22,7 +22,7 @@ export const View = memo((props: ToolbarProps): Op => {
     const currentToolType = props.tool.current
     const setTool = props.msgSender.setTool
 
-    return div(styles.toolBarContainer, _, [
+    return div(styles.toolBarContainer, { style: { "z-index": 1 } }, [
         div(surfaceLook + " " + styles.leftBar, _, [
             SinkableButton({
                 isDown: currentToolType === Tools.ToolType.Brush,

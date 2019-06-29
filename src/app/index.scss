@@ -31,3 +31,14 @@
 .appContainer {
     font-family: $fonts-normal;
 }
+
+.layersViewContainer {
+    width: 14rem;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.canvas {
+    cursor: crosshair;
+    z-index: 0;
+}

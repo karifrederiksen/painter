@@ -1,11 +1,12 @@
 import * as Layers from "../layers/model"
 import * as Tools from "../tools"
 import * as Input from "../input"
+import * as Camera from "../tools/camera"
 import * as Rng from "../rng"
 import * as Theme from "../theme"
 import * as Context from "./context"
 import { BrushPoint } from "./brushShader"
-import { Vec2, Result, PerfTracker } from "../util"
+import { Vec2, Result, PerfTracker, turn } from "../util"
 
 export interface Hooks {
     // readonly onCanvasSnapshot: (snapshot: Snapshot) => void
@@ -134,7 +135,7 @@ export interface MsgSender {
     readonly onFrame: (timeMs: number) => void
     readonly onClick: (input: Input.PointerInput) => void
     readonly onRelease: (input: Input.PointerInput) => void
-    readonly onDrag: (input: readonly Input.PointerInput[]) => void
+    readonly onDrag: (inputs: readonly Input.PointerInput[]) => void
     readonly randomizeTheme: () => void
     readonly tool: Tools.MsgSender
     readonly layer: Layers.MsgSender
@@ -145,14 +146,63 @@ export function createSender(sendMessage: (msg: CanvasMsg) => void): MsgSender {
         onFrame: timeMs => sendMessage(new OnFrame(timeMs)),
         onClick: input => sendMessage(new OnClick(input)),
         onRelease: input => sendMessage(new OnRelease(input)),
-        onDrag: input => sendMessage(new OnDrag(input)),
+        onDrag: inputs => {
+            if (inputs.length === 0) {
+                const errorMsg = "Expected inputs be be 1 or greater"
+                console.error(errorMsg, inputs)
+                throw { [errorMsg]: inputs }
+            }
+            sendMessage(new OnDrag(inputs))
+        },
         randomizeTheme: () => sendMessage(new RandomizeTheme()),
         tool: Tools.createSender(msg => sendMessage(new ToolMsg(msg))),
         layer: Layers.createSender(msg => sendMessage(new LayersMsg(msg))),
     }
 }
 
+export interface CanvasInfo {
+    readonly offset: Vec2
+    readonly resolution: Vec2
+    readonly halfResoution: Vec2
+}
+
+function pointerToBrushInput(
+    canvasInfo: CanvasInfo,
+    camera: Camera.State,
+    input: Input.PointerInput
+): Input.PointerInput {
+    const point = new Vec2(input.x, input.y)
+        .subtract(canvasInfo.offset)
+        .subtractScalars(camera.offsetX, camera.offsetY)
+        .subtract(canvasInfo.halfResoution)
+        .multiplyScalar(1 / camera.zoomPct)
+
+    const { x, y } = turn(-camera.rotateTurns, Vec2.zeroes, point).add(canvasInfo.halfResoution)
+
+    return {
+        x,
+        y,
+        pressure: input.pressure,
+        alt: input.alt,
+        ctrl: input.ctrl,
+        shift: input.shift,
+        time: input.time,
+    }
+}
+function pointersToBrushInputs(
+    canvasInfo: CanvasInfo,
+    camera: Camera.State,
+    inputs: readonly Input.PointerInput[]
+): Input.PointerInput[] {
+    const arr = new Array<Input.PointerInput>(inputs.length)
+    for (let i = 0; i < inputs.length; i++) {
+        arr[i] = pointerToBrushInput(canvasInfo, camera, inputs[i])
+    }
+    return arr
+}
+
 export function update(
+    canvasInfo: CanvasInfo,
     state: State,
     ephemeral: EphemeralState,
     msg: CanvasMsg
@@ -171,7 +221,7 @@ export function update(
             const [nextTool, nextToolEphemeral, brushPoints] = Tools.onClick(
                 state.tool,
                 ephemeral.tool,
-                msg.input
+                pointerToBrushInput(canvasInfo, state.tool.camera, msg.input)
             )
             const nextState = { ...state, hasPressedDown: true, tool: nextTool }
             const nextEphemeral = { tool: nextToolEphemeral }
@@ -182,7 +232,7 @@ export function update(
             const [nextTool, nextToolEphemeral, brushPoints] = Tools.onRelease(
                 state.tool,
                 ephemeral.tool,
-                msg.input
+                pointerToBrushInput(canvasInfo, state.tool.camera, msg.input)
             )
             const nextState = { ...state, hasPressedDown: false, tool: nextTool }
             const nextEphemeral = { tool: nextToolEphemeral }
@@ -190,18 +240,13 @@ export function update(
             return [nextState, nextEphemeral, effect]
         }
         case CanvasMsgType.OnDrag: {
-            if (msg.inputs.length === 0) {
-                const errorMsg = "Expected inputs be be 1 or greater"
-                console.error(errorMsg, msg)
-                throw { [errorMsg]: msg }
-            }
             if (!state.hasPressedDown) {
                 return [state, ephemeral, NoOpEffect.value]
             }
             const [nextTool, nextToolEphemeral, brushPoints] = Tools.onDrag(
                 state.tool,
                 ephemeral.tool,
-                msg.inputs
+                pointersToBrushInputs(canvasInfo, state.tool.camera, msg.inputs)
             )
             const nextState = { ...state, tool: nextTool }
             const nextEphemeral = { tool: nextToolEphemeral }

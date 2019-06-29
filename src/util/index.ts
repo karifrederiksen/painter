@@ -1,3 +1,5 @@
+import { Vec2 } from "./vec2"
+
 export { Store } from "./store"
 export { Decode } from "./decode"
 export * from "./maybe"
@@ -108,4 +110,25 @@ export function colorModeToString(type: ColorMode): string {
         case ColorMode.Hsluv:
             return "Hsluv"
     }
+}
+
+export function turnsToDegrees(turns: number): number {
+    return turns * 360
+}
+
+export function turnsFromDegrees(degrees: number): number {
+    return degrees / 360
+}
+
+export function turn(turns: number, center: Vec2, point: Vec2): Vec2 {
+    const radians = turns * 360 * (Math.PI / 180)
+    const x =
+        Math.cos(radians) * (point.x - center.x) -
+        Math.sin(radians) * (point.y - center.y) +
+        center.x
+    const y =
+        Math.sin(radians) * (point.x - center.x) +
+        Math.cos(radians) * (point.y - center.y) +
+        center.y
+    return new Vec2(x, y)
 }
