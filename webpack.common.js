@@ -14,7 +14,7 @@ function create(env) {
         entry: resolve(__dirname, "src", "app", "index.ts"),
         output: {
             path: resolve(__dirname, "dist", env),
-            filename: "[name]-[hash].js",
+            filename: isDev ? "[name].js" : "[name]-[hash].js",
             pathinfo: false,
         },
         devtool: isDev ? "cheap-module-eval-source-map" : "source-map",
@@ -65,12 +65,12 @@ function create(env) {
                                 localsConvention: "camelCase",
                                 modules: {
                                     mode: "local",
-                                    localIdentName: "[path][name]__[local]--[hash:base64:5]",
+                                    localIdentName: "[path][name]__[local]",
                                     context: resolve(__dirname, "src"),
                                 },
                             },
                         },
-                        { loader: "sass-loader", options: {} },
+                        { loader: "sass-loader", options: { sourceMap: true } },
                     ],
                 },
             ],
