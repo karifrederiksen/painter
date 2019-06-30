@@ -1,7 +1,8 @@
 import * as Canvas from "../canvas"
-import * as Input from "../input"
+import * as Input from "../canvas/input"
 import * as Color from "color"
 import { delay, ColorMode } from "../util"
+import { ToolType } from "../tools"
 
 export async function setup(
     canvas: HTMLCanvasElement,
@@ -51,4 +52,6 @@ export async function setup(
     sender.tool.brush.setDiameter(15)
     sender.tool.brush.setColorMode(ColorMode.Hsv)
     forceRender()
+    // sender.tool.setTool(ToolType.Zoom)
+    // forceRender()
 }

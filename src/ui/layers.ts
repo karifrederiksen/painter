@@ -1,14 +1,14 @@
 import { Op, Events, onClick, _, memo, shallowEqual } from "ivi"
 import { div, span } from "ivi-html"
-import styles from "./view.scss"
-import { State, MsgSender, Id, Layer } from "./model"
-import { Row } from "../views/row"
-import { Slider } from "../views/slider"
-import { Labeled } from "../views/labeled"
-import { InlineLabeled } from "../views/inlineLabeled"
-import { Switch } from "../views/switch"
-import { DefaultButton } from "../views/buttons"
-import { Surface } from "../views/surface"
+import styles from "./layers.scss"
+import { State, MsgSender, Id, Layer } from "../canvas/layers"
+import { Row } from "./views/row"
+import { Slider } from "./views/slider"
+import { Labeled } from "./views/labeled"
+import { InlineLabeled } from "./views/inlineLabeled"
+import { Switch } from "./views/switch"
+import { DefaultButton } from "./views/buttons"
+import { Surface } from "./views/surface"
 
 export interface LayersViewProps {
     readonly layers: State

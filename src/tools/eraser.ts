@@ -1,18 +1,10 @@
-import { Op, _ } from "ivi"
-import { div } from "ivi-html"
-import * as styles from "./eraser.scss"
 import * as Interp from "./interpolation"
 import * as BrushDelay from "./brushDelay"
 import * as BrushShader from "../canvas/brushShader"
 import * as Camera from "./camera"
-import * as Input from "../input"
 import * as Color from "color"
 import { Vec2, clamp } from "../util"
-import { Surface } from "../views/surface"
-import { Labeled } from "../views/labeled"
-import { Slider } from "../views/slider"
-import { InlineLabeled } from "../views/inlineLabeled"
-import { Switch } from "../views/switch"
+import { TransformedPointerInput } from "../canvas"
 
 export type Msg =
     | SetDiameterMsg
@@ -69,26 +61,37 @@ class SetDelayMsg {
     constructor(readonly delayMs: number) {}
 }
 
-export interface MsgSender {
-    setDelay(ms: number): void
-    setDiameter(px: number): void
-    setSoftness(softness: number): void
-    setOpacity(opacity: number): void
-    setSpacing(px: number): void
-    setPressureAffectsOpacity(setPressureAffectsOpacity: boolean): void
-    setPressureAffectsSize(setPressureAffectsSize: boolean): void
+export class MsgSender {
+    constructor(private sendMessage: (msg: Msg) => void) {}
+    readonly setDelay = (ms: number): void => {
+        this.sendMessage(new SetDelayMsg(ms))
+    }
+    readonly setDiameter = (px: number): void => {
+        this.sendMessage(new SetDiameterMsg(px))
+    }
+    readonly setSoftness = (softness: number): void => {
+        this.sendMessage(new SetSoftnessMsg(softness))
+    }
+    readonly setOpacity = (opacity: number): void => {
+        this.sendMessage(new SetOpacityMsg(opacity))
+    }
+    readonly setSpacing = (px: number): void => {
+        this.sendMessage(new SetSpacingMsg(px))
+    }
+    readonly setPressureAffectsOpacity = (setPressureAffectsOpacity: boolean): void => {
+        this.sendMessage(new SetPressureAffectsOpacityMsg(setPressureAffectsOpacity))
+    }
+    readonly setPressureAffectsSize = (setPressureAffectsSize: boolean): void => {
+        this.sendMessage(new SetPressureAffectsSizeMsg(setPressureAffectsSize))
+    }
 }
 
-export function createBrushSender(sendMessage: (msg: Msg) => void): MsgSender {
-    return {
-        setDelay: ms => sendMessage(new SetDelayMsg(ms)),
-        setDiameter: px => sendMessage(new SetDiameterMsg(px)),
-        setSoftness: pct => sendMessage(new SetSoftnessMsg(pct)),
-        setOpacity: pct => sendMessage(new SetOpacityMsg(pct)),
-        setSpacing: px => sendMessage(new SetSpacingMsg(px)),
-        setPressureAffectsOpacity: x => sendMessage(new SetPressureAffectsOpacityMsg(x)),
-        setPressureAffectsSize: x => sendMessage(new SetPressureAffectsSizeMsg(x)),
-    }
+function pointerToBrushInput(
+    _camera: Camera.State,
+    input: TransformedPointerInput
+): BrushDelay.Input {
+    // TODO: offset, zoom, and stuff
+    return { x: input.x, y: input.y, pressure: input.pressure }
 }
 
 export type EphemeralState = {
@@ -147,19 +150,18 @@ export function update(state: State, msg: Msg): State {
 export function onClick(
     camera: Camera.State,
     state: State,
-    input: Input.PointerInput
+    input: TransformedPointerInput
 ): [EphemeralState, BrushShader.BrushPoint] {
-    const brushInput = pointerToBrushInput(camera, input)
-    const interpState = Interp.init(createInputPoint(state, brushInput))
-    const delayState = BrushDelay.init(input.time, brushInput)
-    return [{ interpState, delayState }, createBrushPoint(state, brushInput)]
+    const interpState = Interp.init(createInputPoint(state, input))
+    const delayState = BrushDelay.init(input.time, pointerToBrushInput(camera, input))
+    return [{ interpState, delayState }, createBrushPoint(state, input)]
 }
 
 export function onDrag(
     camera: Camera.State,
     state: State,
     tempState: EphemeralState,
-    inputs: readonly Input.PointerInput[]
+    inputs: readonly TransformedPointerInput[]
 ): [EphemeralState, readonly BrushShader.BrushPoint[]] {
     if (tempState === null) {
         const res = onClick(camera, state, inputs[0])
@@ -169,14 +171,13 @@ export function onDrag(
         let brushPoints: readonly BrushShader.BrushPoint[] = []
         let delayState = tempState.delayState
         for (let i = 0; i < inputs.length; i++) {
-            const input = inputs[i]
-            let brushDelayInput = pointerToBrushInput(camera, input)
+            const input = pointerToBrushInput(camera, inputs[i])
 
             const updateResult = BrushDelay.updateWithInput(
                 state.delay,
                 delayState,
-                input.time,
-                brushDelayInput
+                inputs[i].time,
+                input
             )
 
             const interpReslt = Interp.interpolate(
@@ -221,18 +222,13 @@ export function onRelease(
     camera: Camera.State,
     state: State,
     tempState: EphemeralState,
-    input: Input.PointerInput
+    input: TransformedPointerInput
 ): [EphemeralState, readonly BrushShader.BrushPoint[]] {
     if (tempState === null) {
         return [null, []]
     }
 
     return [null, []]
-}
-
-function pointerToBrushInput(_camera: Camera.State, input: Input.PointerInput): BrushDelay.Input {
-    // TODO: offset, zoom, and stuff
-    return { x: input.x, y: input.y, pressure: input.pressure }
 }
 
 function createBrushPoint(state: State, input: BrushDelay.Input): BrushShader.BrushPoint {
@@ -253,74 +249,4 @@ function createInputPoint(state: State, input: BrushDelay.Input): Interp.InputPo
         pressure: input.pressure,
         rotation: 0,
     }
-}
-
-/*
- *
- * Views
- *
- */
-
-export function Details(props: { readonly messageSender: MsgSender; readonly tool: State }): Op {
-    const sender = props.messageSender
-    const brush = props.tool
-
-    return Surface(
-        div(styles.detailsContainer, _, [
-            Labeled({
-                label: "Size",
-                value: brush.diameterPx.toFixed(1) + "px",
-                children: Slider({
-                    percentage: brush.diameterPx / 500,
-                    onChange: pct => sender.setDiameter(pct * 500),
-                }),
-            }),
-            Labeled({
-                label: "Softness",
-                value: brush.softness.toFixed(2),
-                children: Slider({
-                    percentage: brush.softness,
-                    onChange: sender.setSoftness,
-                }),
-            }),
-            Labeled({
-                label: "Flow",
-                value: brush.flowPct.toFixed(2),
-                children: Slider({
-                    percentage: brush.flowPct,
-                    onChange: sender.setOpacity,
-                }),
-            }),
-            Labeled({
-                label: "Spacing",
-                value: brush.spacingPct.toFixed(2) + "%",
-                children: Slider({
-                    percentage: brush.spacingPct,
-                    onChange: sender.setSpacing,
-                }),
-            }),
-            InlineLabeled({
-                label: "Pressure-Opacity",
-                children: Switch({
-                    checked: brush.pressureAffectsOpacity,
-                    onCheck: sender.setPressureAffectsOpacity,
-                }),
-            }),
-            InlineLabeled({
-                label: "Pressure-Size",
-                children: Switch({
-                    checked: brush.pressureAffectsSize,
-                    onCheck: sender.setPressureAffectsSize,
-                }),
-            }),
-            Labeled({
-                label: "Delay",
-                value: brush.delay.duration.toFixed(0) + "ms",
-                children: Slider({
-                    percentage: brush.delay.duration / 500,
-                    onChange: pct => sender.setDelay(pct * 500),
-                }),
-            }),
-        ])
-    )
 }

@@ -7,8 +7,9 @@ export * from "./result"
 export * from "./vec2"
 export * from "./vec3"
 export * from "./vec4"
+import * as Signals from "./signals"
+export { Signals }
 export * from "./frameStream"
-
 export * from "./perfTracker"
 
 export type Brand<a, brand> = a & { "@..brand": brand }

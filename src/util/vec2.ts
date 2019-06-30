@@ -43,6 +43,14 @@ export class Vec2 {
         return new Vec2(this.x * x, this.y * y)
     }
 
+    divide(other: Vec2): Vec2 {
+        return new Vec2(this.x / other.x, this.y / other.y)
+    }
+
+    divideScalar(x: number): Vec2 {
+        return new Vec2(this.x / x, this.y / x)
+    }
+
     toString(): string {
         return "Vec2(" + this.x + ", " + this.y + ")"
     }

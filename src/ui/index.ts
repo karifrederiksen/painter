@@ -14,26 +14,16 @@ import {
 } from "ivi"
 import { div, canvas } from "ivi-html"
 import * as styles from "./index.scss"
-import * as Toolbar from "../tools/toolbar"
+import * as Toolbar from "./toolbar"
 import * as Camera from "../tools/camera"
-import * as Theme from "../theme"
-import * as Layers from "../layers/view"
-import * as Input from "../input"
+import * as Theme from "./theme"
+import * as Layers from "./layers"
+import * as Input from "../canvas/input"
 import * as Canvas from "../canvas"
 import * as Setup from "./setup"
-import { SetOnce, FrameStream, CancelFrameStream, Store, PerfTracker, Vec2 } from "../util"
-import * as Buttons from "../views/buttons"
-import * as Debugging from "../debugging"
-import * as Signals from "../signals"
-
-// HMR hooks
-declare global {
-    interface NodeModule {
-        readonly hot?: {
-            accept(): void
-        }
-    }
-}
+import { SetOnce, FrameStream, CancelFrameStream, Store, PerfTracker, Vec2, Signals } from "../util"
+import * as Buttons from "./views/buttons"
+import * as Debugging from "./debugging"
 
 function getDocumentResolution(): Vec2 {
     return new Vec2(document.documentElement.clientWidth, document.documentElement.clientHeight)
@@ -105,7 +95,7 @@ const App = component(c => {
         })
     }
 
-    const sender = Canvas.createSender(store.send)
+    const sender = new Canvas.MsgSender(store.send)
 
     let prevTheme: Theme.Theme | null = null
     const updateTheme = useEffect<Theme.Theme>(c, nextTheme => {
@@ -188,7 +178,7 @@ const App = component(c => {
 
         return div(styles.appContainer, _, [
             div(styles.wrapper, _, [
-                Toolbar.View({
+                Toolbar.Toolbar({
                     msgSender: sender.tool,
                     tool: state.tool,
                     transientState: { isDetailsExpanded: true },
@@ -243,8 +233,4 @@ const App = component(c => {
     }
 
     render(App(), rootElement)
-
-    if (typeof module.hot === "object") {
-        module.hot.accept()
-    }
 }

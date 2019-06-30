@@ -1,4 +1,4 @@
-@import "../theme/theme.scss";
+@import "./theme.scss";
 
 .wrapper {
     display: flex;
@@ -29,6 +29,9 @@
 }
 
 .appContainer {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
     font-family: $fonts-normal;
 }
 

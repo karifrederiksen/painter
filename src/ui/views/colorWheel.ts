@@ -17,8 +17,8 @@ import {
 import { div, canvas } from "ivi-html"
 import * as styles from "./colorWheel.scss"
 import * as Color from "color"
-import { DEFINE_TAU, createProgram, DEFINE_hsluv_etc, DEFINE_hsvToRgb } from "../webgl"
-import { ColorMode } from "../util"
+import { DEFINE_TAU, createProgram, DEFINE_hsluv_etc, DEFINE_hsvToRgb } from "../../webgl"
+import { ColorMode } from "../../util"
 
 export interface ColorWheelProps {
     readonly color: Color.Hsluv

@@ -15,7 +15,7 @@ import {
 } from "ivi"
 import { div } from "ivi-html"
 import * as styles from "./menu.scss"
-import { ZipperList } from "../collections/zipperList"
+import { ZipperList } from "../../collections/zipperList"
 
 export interface Props<a> {
     readonly choices: ZipperList<a>

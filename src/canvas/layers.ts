@@ -237,21 +237,22 @@ class SetHiddenMsg {
     private nominal: void
     constructor(readonly id: Id, readonly isHidden: boolean) {}
 }
-export interface MsgSender {
-    newLayer(id: Id): void
-    removeLayer(id: Id): void
-    selectLayer(id: Id): void
-    setOpacity(id: Id, opacity: number): void
-    setHidden(id: Id, isHidden: boolean): void
-}
-
-export function createSender(sendMessage: (msg: Msg) => void): MsgSender {
-    return {
-        newLayer: id => sendMessage(new NewLayerMsg(id)),
-        removeLayer: id => sendMessage(new RemoveMsg(id)),
-        selectLayer: id => sendMessage(new SelectMsg(id)),
-        setOpacity: (id, opacity) => sendMessage(new SetOpacityMsg(id, opacity)),
-        setHidden: (id, isHidden) => sendMessage(new SetHiddenMsg(id, isHidden)),
+export class MsgSender {
+    constructor(private sendMessage: (msg: Msg) => void) {}
+    readonly newLayer = (id: Id): void => {
+        this.sendMessage(new NewLayerMsg(id))
+    }
+    readonly removeLayer = (id: Id): void => {
+        this.sendMessage(new RemoveMsg(id))
+    }
+    readonly selectLayer = (id: Id): void => {
+        this.sendMessage(new SelectMsg(id))
+    }
+    readonly setOpacity = (id: Id, opacity: number): void => {
+        this.sendMessage(new SetOpacityMsg(id, opacity))
+    }
+    readonly setHidden = (id: Id, isHidden: boolean): void => {
+        this.sendMessage(new SetHiddenMsg(id, isHidden))
     }
 }
 

@@ -1,9 +1,9 @@
-import * as Input from "../input"
 import * as Brush from "./brush"
 import * as Eraser from "./eraser"
 import * as Camera from "./camera"
 import * as BrushShader from "../canvas/brushShader"
 import { Blend } from "../webgl"
+import { TransformedPointerInput } from "../canvas"
 
 export const enum ToolMsgType {
     SetToolMsg,
@@ -35,19 +35,19 @@ class CameraMsg {
     constructor(readonly msg: Camera.Msg) {}
 }
 
-export interface MsgSender {
+export class MsgSender {
     readonly brush: Brush.MsgSender
     readonly eraser: Eraser.MsgSender
     readonly camera: Camera.MsgSender
-    setTool(type: ToolType): void
-}
 
-export function createSender(sendMessage: (msg: ToolMsg) => void): MsgSender {
-    return {
-        brush: Brush.createBrushSender(msg => sendMessage(new BrushMsg(msg))),
-        eraser: Eraser.createBrushSender(msg => sendMessage(new EraserMsg(msg))),
-        camera: Camera.createSender(msg => sendMessage(new CameraMsg(msg))),
-        setTool: type => sendMessage(new SetToolMsg(type)),
+    readonly setTool = (type: ToolType) => {
+        this.sendMessage(new SetToolMsg(type))
+    }
+
+    constructor(private sendMessage: (msg: ToolMsg) => void) {
+        this.brush = new Brush.MsgSender(msg => sendMessage(new BrushMsg(msg)))
+        this.eraser = new Eraser.MsgSender(msg => sendMessage(new EraserMsg(msg)))
+        this.camera = new Camera.MsgSender(msg => sendMessage(new CameraMsg(msg)))
     }
 }
 
@@ -79,17 +79,17 @@ class EraserState {
 class MoveState {
     readonly type: ToolType.Move = ToolType.Move
     private nominal: void
-    constructor(readonly state: Input.DragState | null) {}
+    constructor(readonly state: Camera.DragState | null) {}
 }
 class ZoomState {
     readonly type: ToolType.Zoom = ToolType.Zoom
     private nominal: void
-    constructor(readonly state: Input.DragState | null) {}
+    constructor(readonly state: Camera.DragState | null) {}
 }
 class RotateState {
     readonly type: ToolType.Rotate = ToolType.Rotate
     private nominal: void
-    constructor(readonly state: Input.DragState | null) {}
+    constructor(readonly state: Camera.DragState | null) {}
 }
 
 export type EphemeralState = BrushState | EraserState | MoveState | ZoomState | RotateState
@@ -106,7 +106,7 @@ export function init(): Tool {
     return {
         brush: Brush.init(),
         eraser: Eraser.init(),
-        camera: Camera.init(),
+        camera: Camera.State.init,
         current: ToolType.Brush,
     }
 }
@@ -157,7 +157,7 @@ export function update(tool: Tool, msg: ToolMsg): Tool {
         case ToolMsgType.EraserMsg:
             return { ...tool, eraser: Eraser.update(tool.eraser, msg.msg) }
         case ToolMsgType.CameraMsg:
-            return { ...tool, camera: Camera.update(tool.camera, msg.msg) }
+            return { ...tool, camera: tool.camera.update(msg.msg) }
         default:
             const never: never = msg
             throw { "unexpected msg": msg }
@@ -188,7 +188,7 @@ function syncEphemeral(tool: Tool, ephemeral: EphemeralState): EphemeralState {
 export function onClick(
     tool: Tool,
     ephemeral_: EphemeralState,
-    pointer: Input.PointerInput
+    pointer: TransformedPointerInput
 ): readonly [Tool, EphemeralState, readonly BrushShader.BrushPoint[]] {
     const ephemeral = syncEphemeral(tool, ephemeral_)
 
@@ -202,39 +202,54 @@ export function onClick(
             return [tool, new EraserState(value), [brushPoint]]
         }
         case ToolType.Move: {
-            if (ephemeral.state !== null) return [tool, ephemeral, []]
+            if (ephemeral.state !== null) {
+                return [tool, ephemeral, []]
+            }
 
-            const dragState: Input.DragState = { clickPoint: pointer, prevPoint: pointer }
-
-            const cameraMsg = Camera.moveToolUpdate(tool.camera, dragState, pointer)
-            const camera = Camera.update(tool.camera, cameraMsg)
+            const dragState: Camera.DragState = {
+                clickPoint: pointer,
+                prevPoint: pointer,
+                originalScale: tool.camera.zoomPct,
+            }
+            const camera = tool.camera.moveUpdate(dragState, pointer)
             return [{ ...tool, camera }, new MoveState(dragState), []]
         }
         case ToolType.Zoom: {
-            if (ephemeral.state !== null) return [tool, ephemeral, []]
+            if (ephemeral.state !== null) {
+                return [tool, ephemeral, []]
+            }
 
-            const dragState: Input.DragState = { clickPoint: pointer, prevPoint: pointer }
-
-            const cameraMsg = Camera.zoomToolUpdate(tool.camera, dragState, pointer)
-            const camera = Camera.update(tool.camera, cameraMsg)
+            const dragState: Camera.DragState = {
+                clickPoint: pointer,
+                prevPoint: pointer,
+                originalScale: tool.camera.zoomPct,
+            }
+            const camera = tool.camera.zoomUpdate(dragState, pointer)
             return [{ ...tool, camera }, new ZoomState(dragState), []]
         }
         case ToolType.Rotate: {
-            if (ephemeral.state !== null) return [tool, ephemeral, []]
+            if (ephemeral.state !== null) {
+                return [tool, ephemeral, []]
+            }
 
-            const dragState: Input.DragState = { clickPoint: pointer, prevPoint: pointer }
-
-            const cameraMsg = Camera.rotateToolUpdate(tool.camera, dragState, pointer)
-            const camera = Camera.update(tool.camera, cameraMsg)
+            const dragState: Camera.DragState = {
+                clickPoint: pointer,
+                prevPoint: pointer,
+                originalScale: tool.camera.zoomPct,
+            }
+            const camera = tool.camera.rotateUpdate(dragState, pointer)
             return [{ ...tool, camera }, new RotateState(dragState), []]
         }
+        default:
+            const never: never = ephemeral
+            throw { "unxpected state": ephemeral }
     }
 }
 
 export function onDrag(
     tool: Tool,
     ephemeral_: EphemeralState,
-    pointers: readonly Input.PointerInput[]
+    pointers: readonly TransformedPointerInput[]
 ): readonly [Tool, EphemeralState, readonly BrushShader.BrushPoint[]] {
     const ephemeral = syncEphemeral(tool, ephemeral_)
 
@@ -262,11 +277,11 @@ export function onDrag(
                 return [tool, ephemeral, []]
             }
             const pointer = pointers[pointers.length - 1]
-            const cameraMsg = Camera.moveToolUpdate(tool.camera, ephemeral.state, pointer)
-            const camera = Camera.update(tool.camera, cameraMsg)
-            const dragState: Input.DragState = {
+            const camera = tool.camera.moveUpdate(ephemeral.state, pointer)
+            const dragState: Camera.DragState = {
                 clickPoint: ephemeral.state.clickPoint,
                 prevPoint: pointer,
+                originalScale: ephemeral.state.originalScale,
             }
             return [{ ...tool, camera }, new MoveState(dragState), []]
         }
@@ -275,11 +290,11 @@ export function onDrag(
                 return [tool, ephemeral, []]
             }
             const pointer = pointers[pointers.length - 1]
-            const cameraMsg = Camera.zoomToolUpdate(tool.camera, ephemeral.state, pointer)
-            const camera = Camera.update(tool.camera, cameraMsg)
-            const dragState: Input.DragState = {
+            const camera = tool.camera.zoomUpdate(ephemeral.state, pointer)
+            const dragState: Camera.DragState = {
                 clickPoint: ephemeral.state.clickPoint,
                 prevPoint: pointer,
+                originalScale: ephemeral.state.originalScale,
             }
             return [{ ...tool, camera }, new ZoomState(dragState), []]
         }
@@ -288,23 +303,24 @@ export function onDrag(
                 return [tool, ephemeral, []]
             }
             const pointer = pointers[pointers.length - 1]
-            const cameraMsg = Camera.rotateToolUpdate(tool.camera, ephemeral.state, pointer)
-            const camera = Camera.update(tool.camera, cameraMsg)
-            const dragState: Input.DragState = {
+            const camera = tool.camera.rotateUpdate(ephemeral.state, pointer)
+            const dragState: Camera.DragState = {
                 clickPoint: ephemeral.state.clickPoint,
                 prevPoint: pointer,
+                originalScale: ephemeral.state.originalScale,
             }
             return [{ ...tool, camera }, new RotateState(dragState), []]
         }
+        default:
+            const never: never = ephemeral
+            throw { "unxpected state": ephemeral }
     }
-    const never: never = ephemeral
-    throw { "expected state": ephemeral }
 }
 
 export function onRelease(
     tool: Tool,
     ephemeral_: EphemeralState,
-    pointer: Input.PointerInput
+    pointer: TransformedPointerInput
 ): readonly [Tool, EphemeralState, readonly BrushShader.BrushPoint[]] {
     const ephemeral = syncEphemeral(tool, ephemeral_)
 
@@ -328,29 +344,32 @@ export function onRelease(
             return [tool, new EraserState(value), brushPoints]
         }
         case ToolType.Move: {
-            if (ephemeral.state === null) return [tool, ephemeral, []]
+            if (ephemeral.state === null) {
+                return [tool, ephemeral, []]
+            }
 
-            const cameraMsg = Camera.moveToolUpdate(tool.camera, ephemeral.state, pointer)
-            const camera = Camera.update(tool.camera, cameraMsg)
+            const camera = tool.camera.moveUpdate(ephemeral.state, pointer)
             return [{ ...tool, camera }, new MoveState(null), []]
         }
         case ToolType.Zoom: {
-            if (ephemeral.state === null) return [tool, ephemeral, []]
+            if (ephemeral.state === null) {
+                return [tool, ephemeral, []]
+            }
 
-            const cameraMsg = Camera.zoomToolUpdate(tool.camera, ephemeral.state, pointer)
-            const camera = Camera.update(tool.camera, cameraMsg)
+            const camera = tool.camera.zoomUpdate(ephemeral.state, pointer)
             return [{ ...tool, camera }, new ZoomState(null), []]
         }
         case ToolType.Rotate: {
-            if (ephemeral.state === null) return [tool, ephemeral, []]
+            if (ephemeral.state === null) {
+                return [tool, ephemeral, []]
+            }
 
-            const cameraMsg = Camera.rotateToolUpdate(tool.camera, ephemeral.state, pointer)
-            const camera = Camera.update(tool.camera, cameraMsg)
+            const camera = tool.camera.rotateUpdate(ephemeral.state, pointer)
             return [{ ...tool, camera }, new RotateState(null), []]
         }
         default:
             const never: never = ephemeral
-            throw { "expected state": ephemeral }
+            throw { "unxpected state": ephemeral }
     }
 }
 
@@ -390,11 +409,6 @@ export function getBlendMode(tool: Tool): Blend.Mode {
         case ToolType.Eraser:
             return Blend.Mode.Erase
         default:
-            console.warn(
-                "Getting BlendMode for type " +
-                    tool.current +
-                    ", which is neithre a Brush or Eraser"
-            )
             return Blend.Mode.Normal
     }
 }
@@ -406,9 +420,6 @@ export function getSoftness(tool: Tool): number {
         case ToolType.Eraser:
             return tool.eraser.softness
         default:
-            console.warn(
-                "Getting Softness for type " + tool.current + ", which is neithre a Brush or Eraser"
-            )
             return 0
     }
 }

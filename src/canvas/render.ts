@@ -1,4 +1,4 @@
-import * as Layers from "../layers/model"
+import * as Layers from "./layers"
 import { Vec2, PushOnlyArray } from "../util"
 import { TextureId, Texture, createTextureWithFramebuffer } from "./texture"
 import { Shader as TextureShader } from "./textureShader"

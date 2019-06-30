@@ -1,10 +1,9 @@
-import * as Input from "../input"
+import { TransformedPointerInput } from "../canvas"
 
-export interface State {
-    readonly offsetX: number
-    readonly offsetY: number
-    readonly zoomPct: number
-    readonly rotateTurns: number
+export interface DragState {
+    readonly originalScale: number
+    readonly clickPoint: TransformedPointerInput
+    readonly prevPoint: TransformedPointerInput
 }
 
 export type Msg = SetZoomMsg | SetOffsetMsg | SetRotationMsg
@@ -28,74 +27,82 @@ class SetOffsetMsg {
 class SetRotationMsg {
     readonly type: MsgType.SetRotationMsg = MsgType.SetRotationMsg
     private nominal: void
-    constructor(readonly rotationRad: number) {}
+    constructor(readonly rotationTurns: number) {}
 }
 
-export function init(): State {
-    return {
-        offsetX: 0,
-        offsetY: 0,
-        zoomPct: 1,
-        rotateTurns: 0,
+export class MsgSender {
+    constructor(private sendMessage: (msg: Msg) => void) {}
+
+    readonly setRotation = (pct: number) => {
+        this.sendMessage(new SetRotationMsg(pct))
+    }
+    readonly setOffset = (x: number, y: number) => {
+        this.sendMessage(new SetOffsetMsg(x, y))
+    }
+    readonly setZoom = (pct: number) => {
+        this.sendMessage(new SetZoomMsg(pct))
     }
 }
 
-export function update(state: State, msg: Msg): State {
-    switch (msg.type) {
-        case MsgType.SetZoomMsg:
-            return { ...state, zoomPct: msg.zoomPct }
-        case MsgType.SetOffsetMsg:
-            return { ...state, offsetX: msg.offsetX, offsetY: msg.offsetY }
-        case MsgType.SetRotationMsg:
-            return { ...state, rotateTurns: msg.rotationRad }
-        default:
-            const never: never = msg
-            throw { "unexpected msg": msg }
+export class State {
+    static init: State = new State(0, 0, 1, 0)
+    private nominal: void
+    readonly offsetX: number
+    readonly offsetY: number
+    readonly zoomPct: number
+    readonly rotateTurns: number
+
+    private constructor(offsetX: number, offsetY: number, zoomPct: number, rotateTurns: number) {
+        this.offsetX = offsetX
+        this.offsetY = offsetY
+        this.zoomPct = Math.max(0.01, zoomPct)
+        this.rotateTurns = rotateTurns
     }
-}
 
-export interface MsgSender {
-    setZoom(pct: number): void
-    setOffset(x: number, y: number): void
-    setRotation(pct: number): void
-}
-
-export function createSender(sendMessage: (msg: Msg) => void): MsgSender {
-    return {
-        setRotation: pct => sendMessage(new SetRotationMsg(pct)),
-        setOffset: (x, y) => sendMessage(new SetOffsetMsg(x, y)),
-        setZoom: pct => sendMessage(new SetZoomMsg(pct)),
+    update(msg: Msg): State {
+        switch (msg.type) {
+            case MsgType.SetZoomMsg:
+                return new State(this.offsetX, this.offsetY, msg.zoomPct, this.rotateTurns)
+            case MsgType.SetOffsetMsg:
+                return new State(msg.offsetX, msg.offsetY, this.zoomPct, this.rotateTurns)
+            case MsgType.SetRotationMsg:
+                return new State(this.offsetX, this.offsetY, this.zoomPct, msg.rotationTurns)
+            default:
+                const never: never = msg
+                throw { "unexpected msg": msg }
+        }
     }
-}
 
-export function zoomToolUpdate(
-    camera: State,
-    dragState: Input.DragState,
-    input: Input.PointerInput
-): Msg {
-    const xd = input.x - dragState.prevPoint.x
-    const zoomPct = camera.zoomPct + xd / 150
-    return new SetZoomMsg(zoomPct)
-}
+    zoomUpdate(dragState: DragState, input: TransformedPointerInput): State {
+        const xd = input.x - dragState.clickPoint.x
+        let addedPct = xd / 500
+        if (addedPct >= 0) {
+            addedPct = addedPct ** 2
+        } else {
+            addedPct = -((-addedPct) ** 2)
+        }
+        const zoomPct = dragState.originalScale + addedPct
+        console.log({
+            originalScale: dragState.originalScale,
+            clickX: dragState.clickPoint.x,
+            x: input.originalX,
+            addedPct: addedPct,
+        })
+        return new State(this.offsetX, this.offsetY, Math.min(5000, zoomPct), this.rotateTurns)
+    }
 
-export function rotateToolUpdate(
-    _camera: State,
-    dragState: Input.DragState,
-    input: Input.PointerInput
-): Msg {
-    const rotationRad = Math.atan2(
-        input.y - dragState.clickPoint.y,
-        input.x - dragState.clickPoint.x
-    )
-    return new SetRotationMsg(rotationRad)
-}
+    rotateUpdate(dragState: DragState, input: TransformedPointerInput): State {
+        throw "todo: should be turns, not rad"
+        // const rotationRad = Math.atan2(
+        //     input.y - dragState.clickPoint.y,
+        //     input.x - dragState.clickPoint.x
+        // )
+        // return new State(this.offsetX, this.offsetY, this.zoomPct, rotationRad)
+    }
 
-export function moveToolUpdate(
-    camera: State,
-    dragState: Input.DragState,
-    input: Input.PointerInput
-): Msg {
-    const xd = input.x - dragState.prevPoint.x
-    const yd = input.y - dragState.prevPoint.y
-    return new SetOffsetMsg(camera.offsetX + xd, camera.offsetY + yd)
+    moveUpdate(dragState: DragState, input: TransformedPointerInput): State {
+        const xd = input.x - dragState.prevPoint.x
+        const yd = input.y - dragState.prevPoint.y
+        return new State(this.offsetX + xd, this.offsetY + yd, this.zoomPct, this.rotateTurns)
+    }
 }

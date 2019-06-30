@@ -1,8 +1,3 @@
-export interface DragState {
-    readonly clickPoint: PointerInput
-    readonly prevPoint: PointerInput
-}
-
 declare global {
     interface PointerEvent {
         // According to mozzila, this method is deprecated, but I can't find a source on that.

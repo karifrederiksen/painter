@@ -1,9 +1,9 @@
-import * as Layers from "../layers/model"
+import * as Layers from "./layers"
 import * as Tools from "../tools"
-import * as Input from "../input"
+import * as Input from "./input"
 import * as Camera from "../tools/camera"
 import * as Rng from "../rng"
-import * as Theme from "../theme"
+import * as Theme from "../ui/theme"
 import * as Context from "./context"
 import { BrushPoint } from "./brushShader"
 import { Vec2, Result, PerfTracker, turn } from "../util"
@@ -131,32 +131,34 @@ class ReleaseEffect {
     constructor(readonly brushPoints: readonly BrushPoint[]) {}
 }
 
-export interface MsgSender {
-    readonly onFrame: (timeMs: number) => void
-    readonly onClick: (input: Input.PointerInput) => void
-    readonly onRelease: (input: Input.PointerInput) => void
-    readonly onDrag: (inputs: readonly Input.PointerInput[]) => void
-    readonly randomizeTheme: () => void
+export class MsgSender {
     readonly tool: Tools.MsgSender
     readonly layer: Layers.MsgSender
-}
 
-export function createSender(sendMessage: (msg: CanvasMsg) => void): MsgSender {
-    return {
-        onFrame: timeMs => sendMessage(new OnFrame(timeMs)),
-        onClick: input => sendMessage(new OnClick(input)),
-        onRelease: input => sendMessage(new OnRelease(input)),
-        onDrag: inputs => {
-            if (inputs.length === 0) {
-                const errorMsg = "Expected inputs be be 1 or greater"
-                console.error(errorMsg, inputs)
-                throw { [errorMsg]: inputs }
-            }
-            sendMessage(new OnDrag(inputs))
-        },
-        randomizeTheme: () => sendMessage(new RandomizeTheme()),
-        tool: Tools.createSender(msg => sendMessage(new ToolMsg(msg))),
-        layer: Layers.createSender(msg => sendMessage(new LayersMsg(msg))),
+    readonly onFrame = (timeMs: number): void => {
+        this.sendMessage(new OnFrame(timeMs))
+    }
+    readonly onClick = (input: Input.PointerInput): void => {
+        this.sendMessage(new OnClick(input))
+    }
+    readonly onRelease = (input: Input.PointerInput): void => {
+        this.sendMessage(new OnRelease(input))
+    }
+    readonly onDrag = (inputs: readonly Input.PointerInput[]): void => {
+        if (inputs.length === 0) {
+            const errorMsg = "Expected inputs be be 1 or greater"
+            console.error(errorMsg, inputs)
+            throw { [errorMsg]: inputs }
+        }
+        this.sendMessage(new OnDrag(inputs))
+    }
+    readonly randomizeTheme = (): void => {
+        this.sendMessage(new RandomizeTheme())
+    }
+
+    constructor(private sendMessage: (msg: CanvasMsg) => void) {
+        this.tool = new Tools.MsgSender(msg => sendMessage(new ToolMsg(msg)))
+        this.layer = new Layers.MsgSender(msg => sendMessage(new LayersMsg(msg)))
     }
 }
 
@@ -166,11 +168,20 @@ export interface CanvasInfo {
     readonly halfResoution: Vec2
 }
 
+export interface TransformedPointerInput {
+    readonly x: number
+    readonly y: number
+    readonly pressure: number
+    readonly originalX: number
+    readonly originalY: number
+    readonly time: number
+}
+
 function pointerToBrushInput(
     canvasInfo: CanvasInfo,
     camera: Camera.State,
     input: Input.PointerInput
-): Input.PointerInput {
+): TransformedPointerInput {
     const point = new Vec2(input.x, input.y)
         .subtract(canvasInfo.offset)
         .subtractScalars(camera.offsetX, camera.offsetY)
@@ -183,18 +194,17 @@ function pointerToBrushInput(
         x,
         y,
         pressure: input.pressure,
-        alt: input.alt,
-        ctrl: input.ctrl,
-        shift: input.shift,
         time: input.time,
+        originalX: input.x,
+        originalY: input.y,
     }
 }
 function pointersToBrushInputs(
     canvasInfo: CanvasInfo,
     camera: Camera.State,
     inputs: readonly Input.PointerInput[]
-): Input.PointerInput[] {
-    const arr = new Array<Input.PointerInput>(inputs.length)
+): TransformedPointerInput[] {
+    const arr = new Array<TransformedPointerInput>(inputs.length)
     for (let i = 0; i < inputs.length; i++) {
         arr[i] = pointerToBrushInput(canvasInfo, camera, inputs[i])
     }
@@ -275,13 +285,13 @@ export function update(
 export class Canvas {
     static create(canvas: HTMLCanvasElement, initialState: State, hooks: Hooks): Canvas | null {
         const context = Context.create(canvas)
-        if (Result.isOk(context)) {
+        if (context.isOk()) {
             if (process.env.NODE_ENV === "development") {
-                hooks.onWebglContextCreated(context[1][1])
+                hooks.onWebglContextCreated(context.value[1])
             }
-            return new Canvas(canvas, initialState, hooks, context[1][0])
+            return new Canvas(canvas, initialState, hooks, context.value[0])
         }
-        console.error("Error in Context setup:", context[1])
+        console.error("Error in Context setup:", context.value)
         return null
     }
 

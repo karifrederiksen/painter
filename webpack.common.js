@@ -11,7 +11,7 @@ function create(env) {
 
     return {
         mode: env,
-        entry: resolve(__dirname, "src", "app", "index.ts"),
+        entry: resolve(__dirname, "src", "ui", "index.ts"),
         output: {
             path: resolve(__dirname, "dist", env),
             filename: isDev ? "[name].js" : "[name]-[hash].js",

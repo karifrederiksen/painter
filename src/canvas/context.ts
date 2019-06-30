@@ -3,10 +3,10 @@ import * as BrushTextureShader from "./brushTextureGenerator"
 import * as TextureShader from "./textureShader"
 import * as ClearBlocksShader from "./clearBlocksShader"
 import * as BrushShader from "./brushShader"
-import * as Layers from "../layers/model"
+import * as Layers from "./layers"
 import * as BlockRender from "./blockRender"
 import { Blend } from "../webgl"
-import { Result, Vec2, Vec4 } from "../util"
+import { Result, Ok, Err, Vec2, Vec4 } from "../util"
 import { RgbLinear } from "color"
 import { Texture, TextureId, createTextureWithFramebuffer, ensureTextureIsBound } from "./texture"
 import * as Render from "./render"
@@ -45,7 +45,7 @@ declare global {
 
 export function create(
     canvas: HTMLCanvasElement
-): Result<[Context, WebGLRenderingContext], string> {
+): Result<readonly [Context, WebGLRenderingContext], string> {
     const wglArgs: WebGLContextAttributes = {
         antialias: false,
         depth: false,
@@ -58,7 +58,7 @@ export function create(
     const gl = canvas.getContext("webgl", wglArgs)
     if (gl === null) {
         console.error("Failed to initialize WebGL renderer for canvas: ", canvas)
-        return Result.err("Failed to initialize WebGL")
+        return new Err("Failed to initialize WebGL")
     }
     const attrs = gl.getContextAttributes()
     if (!(attrs && attrs.desynchronized)) {
@@ -89,35 +89,35 @@ export function create(
     if (drawpointBatch === null) {
         const msg = "Failed to initialize BrushShader"
         console.error(msg)
-        return Result.err(msg)
+        return new Err(msg)
     }
 
     const brushTextureGenerator = BrushTextureShader.Generator.create(gl)
     if (brushTextureGenerator === null) {
         const msg = "Failed to initialize BrushTextureGenerator"
         console.error(msg)
-        return Result.err(msg)
+        return new Err(msg)
     }
 
     const textureRenderer = TextureShader.Shader.create(gl)
     if (textureRenderer === null) {
         const msg = "Failed to initialize TextureShader"
         console.error(msg)
-        return Result.err(msg)
+        return new Err(msg)
     }
 
     const clearBlocksRenderer = ClearBlocksShader.Shader.create(gl)
     if (clearBlocksRenderer === null) {
         const msg = "Failed to initialize ClearBlocksShader"
         console.error(msg)
-        return Result.err(msg)
+        return new Err(msg)
     }
 
     const outputRenderer = OutputShader.Shader.create(gl)
     if (outputRenderer === null) {
         const msg = "Failed to initialize OutputShader"
         console.error(msg)
-        return Result.err(msg)
+        return new Err(msg)
     }
 
     gl.viewport(0, 0, canvas.width, canvas.height)
@@ -131,7 +131,7 @@ export function create(
         clearBlocksRenderer,
         resolution: new Vec2(canvas.width, canvas.height),
     })
-    return Result.ok<[Context, WebGLRenderingContext], string>([context, gl])
+    return new Ok([context, gl] as const)
 }
 
 class InternalContext implements Context {

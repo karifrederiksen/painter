@@ -1,51 +1,74 @@
-export type Result<ok, err> = readonly [false, err] | readonly [true, ok]
+export type Result<a, error> = Ok<a, error> | Err<a, error>
 
-export namespace Result {
-    export function isOk<ok, err>(res: Result<ok, err>): res is readonly [true, ok] {
-        return res[0]
-    }
-    export function isErr<ok, err>(res: Result<ok, err>): res is readonly [false, err] {
-        return !res[0]
-    }
+abstract class ResultBase<a, error> {
+    readonly value: a | null = null
+    readonly error: error | null = null
 
-    export function ok<ok, err>(val: ok): Result<ok, err> {
-        return [true, val]
-    }
+    abstract isOk(): this is Ok<a, error>
+    abstract isErr(): this is Err<a, error>
+    abstract map<b>(f: (val: a) => b): Result<b, error>
+    abstract mapError<errorB>(f: (val: error) => errorB): Result<a, errorB>
+    abstract andThen<b>(f: (val: a) => Result<b, error>): Result<b, error>
+}
 
-    export function err<ok, err>(val: err): Result<ok, err> {
-        return [false, val]
-    }
+export class Ok<a, error> extends ResultBase<a, error> {
+    private nominal: void
+    readonly value: a
+    readonly error: null
 
-    export function map<ok, err, newOk>(
-        res: Result<ok, err>,
-        f: (val: ok) => newOk
-    ): Result<newOk, err> {
-        if (isOk(res)) {
-            return [true, f(res[1])]
-        } else {
-            return [false, res[1]]
-        }
+    constructor(value: a) {
+        super()
+        this.value = value
     }
 
-    export function mapErr<ok, err, newErr>(
-        res: Result<ok, err>,
-        f: (val: err) => newErr
-    ): Result<ok, newErr> {
-        if (isOk(res)) {
-            return [true, res[1]]
-        } else {
-            return [false, f(res[1])]
-        }
+    isOk(): this is Ok<a, error> {
+        return true
     }
 
-    export function andThen<ok, err, newOk>(
-        res: Result<ok, err>,
-        f: (val: ok) => Result<newOk, err>
-    ): Result<newOk, err> {
-        if (isOk(res)) {
-            return f(res[1])
-        } else {
-            return [false, res[1]]
-        }
+    isErr(): this is Err<a, error> {
+        return false
+    }
+
+    map<b>(f: (val: a) => b): Ok<b, error> {
+        return new Ok(f(this.value))
+    }
+
+    mapError<errorB>(f: (val: error) => errorB): Ok<a, errorB> {
+        return new Ok(this.value)
+    }
+
+    andThen<b>(f: (val: a) => Result<b, error>): Result<b, error> {
+        return f(this.value)
+    }
+}
+
+export class Err<a, error> extends ResultBase<a, error> {
+    private nominal: void
+    readonly value: null
+    readonly error: error
+
+    constructor(error: error) {
+        super()
+        this.error = error
+    }
+
+    isOk(): this is Ok<a, error> {
+        return false
+    }
+
+    isErr(): this is Err<a, error> {
+        return true
+    }
+
+    map<b>(f: (val: a) => b): Err<b, error> {
+        return new Err(this.error)
+    }
+
+    mapError<errorB>(f: (val: error) => errorB): Err<a, errorB> {
+        return new Err(f(this.error))
+    }
+
+    andThen<b>(f: (val: a) => Result<b, error>): Err<b, error> {
+        return new Err(this.error)
     }
 }
