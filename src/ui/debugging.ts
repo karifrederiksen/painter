@@ -14,8 +14,7 @@ import {
 import { div, ul, li, span, textarea, CONTENT } from "ivi-html"
 import * as styles from "./debugging.scss"
 import { SetOnce, PerfTracker, Signals } from "../util"
-import { Surface } from "./views/surface"
-import { DefaultButton } from "./views/buttons"
+import { Surface, DefaultButton } from "./views"
 import * as Canvas from "../canvas"
 
 interface PerformanceProps {

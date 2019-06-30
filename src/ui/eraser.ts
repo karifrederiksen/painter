@@ -1,17 +1,15 @@
-import { Op, _ } from "ivi"
+import { _, shallowEqual, statelessComponent } from "ivi"
 import { div } from "ivi-html"
 import * as styles from "./eraser.scss"
-import { Surface } from "./views/surface"
-import { Labeled } from "./views/labeled"
-import { Slider } from "./views/slider"
-import { InlineLabeled } from "./views/inlineLabeled"
-import { Switch } from "./views/switch"
+import { Surface, Labeled, Slider, InlineLabeled, Switch } from "./views"
 import * as Eraser from "../tools/eraser"
 
-export function Details(props: {
+export interface DetailsProps {
     readonly messageSender: Eraser.MsgSender
     readonly tool: Eraser.State
-}): Op {
+}
+
+export const Details = statelessComponent<DetailsProps>(props => {
     const sender = props.messageSender
     const brush = props.tool
 
@@ -73,4 +71,4 @@ export function Details(props: {
             }),
         ])
     )
-}
+}, shallowEqual)

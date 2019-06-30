@@ -22,8 +22,9 @@ import * as Input from "../canvas/input"
 import * as Canvas from "../canvas"
 import * as Setup from "./setup"
 import { SetOnce, FrameStream, CancelFrameStream, Store, PerfTracker, Vec2, Signals } from "../util"
-import * as Buttons from "./views/buttons"
+import { PrimaryButton, Surface } from "./views"
 import * as Debugging from "./debugging"
+import { MiniMapDetails } from "./miniMap"
 
 function getDocumentResolution(): Vec2 {
     return new Vec2(document.documentElement.clientWidth, document.documentElement.clientHeight)
@@ -193,19 +194,23 @@ const App = component(c => {
                         },
                     })
                 ),
-                div(
-                    styles.layersViewContainer,
-                    _,
+                div(styles.layersViewContainer, _, [
+                    Surface(
+                        MiniMapDetails({
+                            camera: state.tool.camera,
+                            sender: sender.tool.camera,
+                        })
+                    ),
                     Layers.LayersView({
                         layers: state.layers,
                         sender: sender.layer,
-                    })
-                ),
+                    }),
+                ]),
             ]),
             div(
                 styles.bottomLeft,
                 _,
-                Buttons.PrimaryButton({
+                PrimaryButton({
                     content: "Next theme",
                     onClick: sender.randomizeTheme,
                 })

@@ -14,6 +14,7 @@ import {
 import { div } from "ivi-html"
 import { Hsv } from "color"
 import * as styles from "./slider.scss"
+import { clamp } from "../../util"
 
 // Generic slider
 
@@ -23,33 +24,26 @@ export interface SliderProps {
     readonly color?: Hsv
 }
 
-function clamp(x: number, min: number, max: number): number {
-    return x < min ? min : x > max ? max : x
-}
-
-interface WithClientX {
-    readonly clientX: number
-}
-
 function noOp() {}
 
 export const Slider = component<SliderProps>(c => {
-    let containerRef = box<OpState<HTMLDivElement> | null>(null)
+    const containerRef = box<OpState<HTMLDivElement> | null>(null)
     let isDown = false
     let handler: (pct: number) => void = noOp
 
-    function signal(ev: WithClientX): void {
+    function signal(ev: MouseEvent): void {
+        ev.preventDefault()
         const bounds = findDOMNode<HTMLDivElement>(containerRef)!.getBoundingClientRect()
         const Rem = 16
         const dotWidth = Rem * 0.75
         const width = bounds.width - dotWidth
 
-        const localX = clamp(ev.clientX - bounds.left - dotWidth / 2, 0, width)
+        const localX = clamp(0, width, ev.clientX - bounds.left - dotWidth / 2)
 
         handler(localX / width)
     }
 
-    function onDown(ev: WithClientX) {
+    function onDown(ev: MouseEvent) {
         signal(ev)
         isDown = true
         invalidate(c)
@@ -60,7 +54,7 @@ export const Slider = component<SliderProps>(c => {
         invalidate(c)
     }
 
-    function onMove(ev: WithClientX) {
+    function onMove(ev: MouseEvent) {
         if (isDown) {
             signal(ev)
         }
@@ -83,9 +77,8 @@ export const Slider = component<SliderProps>(c => {
         const color = props.color !== undefined ? props.color.toStyle() : undefined
         const percentage = Math.max(0, Math.min(1, props.percentage))
 
-        //
         return Events(
-            onMouseDown(onDown),
+            onMouseDown(ev => onDown(ev), true),
             Ref(
                 containerRef,
                 div(styles.container, _, [

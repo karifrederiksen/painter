@@ -1,21 +1,15 @@
-import { Op, Events, onClick, _, memo, shallowEqual } from "ivi"
+import { Op, Events, onClick, _, shallowEqual, statelessComponent } from "ivi"
 import { div, span } from "ivi-html"
 import styles from "./layers.scss"
 import { State, MsgSender, Id, Layer } from "../canvas/layers"
-import { Row } from "./views/row"
-import { Slider } from "./views/slider"
-import { Labeled } from "./views/labeled"
-import { InlineLabeled } from "./views/inlineLabeled"
-import { Switch } from "./views/switch"
-import { DefaultButton } from "./views/buttons"
-import { Surface } from "./views/surface"
+import { Row, Slider, Labeled, InlineLabeled, Switch, DefaultButton, Surface } from "./views"
 
 export interface LayersViewProps {
     readonly layers: State
     readonly sender: MsgSender
 }
 
-export const LayersView = memo<LayersViewProps, Op>(({ layers, sender }) => {
+export const LayersView = statelessComponent<LayersViewProps>(({ layers, sender }) => {
     const topLayers = layers.layers.children
     const current = layers.current()
 

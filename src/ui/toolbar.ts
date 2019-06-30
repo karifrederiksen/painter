@@ -1,12 +1,10 @@
-import { Op, _, memo, shallowEqual } from "ivi"
-import { div, span } from "ivi-html"
+import { _, shallowEqual, statelessComponent } from "ivi"
+import { div } from "ivi-html"
 
 import * as Tools from "../tools"
 import * as Brush from "./brush"
 import * as Eraser from "./eraser"
-import { SinkableButton } from "./views/buttons"
-import { surfaceLook } from "./views/surface"
-import * as Icons from "./views/icons"
+import { SinkableButton, surfaceLook, Icons } from "./views"
 import * as styles from "./toolbar.scss"
 
 export interface TransientState {
@@ -19,7 +17,7 @@ export interface ToolbarProps {
     readonly transientState: TransientState
 }
 
-export const Toolbar = memo((props: ToolbarProps): Op => {
+export const Toolbar = statelessComponent<ToolbarProps>(props => {
     const currentToolType = props.tool.current
     const setTool = props.msgSender.setTool
 

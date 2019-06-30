@@ -1,9 +1,13 @@
-import { Op, component, _ } from "ivi"
+import { _, shallowEqual, statelessComponent } from "ivi"
 import { div } from "ivi-html"
 import styles from "./camera.scss"
+import * as Camera from "../tools/camera"
 
-export const Camera = component(c => {
-    return () => {
-        return div(_, _, "Hello!")
-    }
-})
+interface DetailsProps {
+    readonly camera: Camera.State
+    readonly sender: Camera.MsgSender
+}
+
+export const Details = statelessComponent<DetailsProps>(props => {
+    return div(_, _, "Hello!")
+}, shallowEqual)

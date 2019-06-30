@@ -20,15 +20,9 @@
     padding-left: 0.5rem;
     padding-right: 0.5rem;
     width: 100%;
-    pointer-events: all;
-}
-
-@mixin layerWrapper {
-    pointer-events: all;
 }
 
 .unselectedLayerWrapper {
-    @include layerWrapper;
     cursor: pointer;
     border: 1px solid transparent;
 
@@ -38,7 +32,6 @@
 }
 
 .selectedLayerWrapper {
-    @include layerWrapper;
     border: 1px solid $color-secondary;
 }
 

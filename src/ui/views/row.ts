@@ -1,4 +1,4 @@
-import { Op, _ } from "ivi"
+import { Op, _, statelessComponent, shallowEqual } from "ivi"
 import { div } from "ivi-html"
 import * as styles from "./row.scss"
 
@@ -7,7 +7,7 @@ export interface RowProps {
     readonly children: readonly Op[]
 }
 
-export function Row({ spacing, children }: RowProps): Op {
+export const Row = statelessComponent<RowProps>(({ spacing, children }) => {
     spacing = spacing || "0"
     const spacedChildren = new Array<Op>(children.length)
 
@@ -23,4 +23,4 @@ export function Row({ spacing, children }: RowProps): Op {
     }
 
     return div(styles.row, _, spacedChildren)
-}
+}, shallowEqual)

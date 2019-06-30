@@ -4,6 +4,7 @@
     background-color: $color-surface;
     color: $color-onSurface;
     box-shadow: $shadows-surface;
+    pointer-events: all;
 }
 
 .surfaceLook {

@@ -12,12 +12,13 @@ import {
     onMouseDown,
     findDOMNode,
     _,
+    shallowEqual,
 } from "ivi"
 import { div } from "ivi-html"
 import * as styles from "./menu.scss"
 import { ZipperList } from "../../collections/zipperList"
 
-export interface Props<a> {
+export interface MenuProps<a> {
     readonly choices: ZipperList<a>
     readonly show: (val: a) => string
     readonly onSelect: (val: a) => void
@@ -70,7 +71,7 @@ function Menu_<a>(c: OpState) {
         }
     })
 
-    return (props: Props<a>) => {
+    return (props: MenuProps<a>) => {
         listenToMouse(isExpanded)
 
         selectHandler = props.onSelect
@@ -141,4 +142,6 @@ function Menu_<a>(c: OpState) {
     }
 }
 
-export const Menu = component(Menu_) as <a>(props: Props<a>) => DOMElementOp<Props<a>>
+export const Menu = component(Menu_, shallowEqual) as <a>(
+    props: MenuProps<a>
+) => DOMElementOp<MenuProps<a>>

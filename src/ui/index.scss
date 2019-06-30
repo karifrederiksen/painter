@@ -38,7 +38,12 @@
 .layersViewContainer {
     width: 14rem;
     z-index: 1;
-    pointer-events: none;
+
+    > :not(:first-child)::before {
+        display: block;
+        height: 1rem;
+        content: " ";
+    }
 }
 
 .canvas {

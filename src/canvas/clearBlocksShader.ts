@@ -1,6 +1,4 @@
 import * as WebGL from "../webgl"
-import { Vec2 } from "../util"
-import { RgbLinear } from "color"
 
 const VERT_SRC = `
 precision highp float;

@@ -1,4 +1,4 @@
-import { Op, Events, onClick } from "ivi"
+import { Op, Events, onClick, shallowEqual, statelessComponent } from "ivi"
 import { span } from "ivi-html"
 import * as styles from "./switch.scss"
 
@@ -7,7 +7,7 @@ export interface SwitchProps {
     readonly onCheck: (checked: boolean) => void
 }
 
-export function Switch(props: SwitchProps): Op {
+export const Switch = statelessComponent<SwitchProps>(props => {
     function handler() {
         props.onCheck(!props.checked)
     }
@@ -33,4 +33,4 @@ export function Switch(props: SwitchProps): Op {
             span(styles.switchBar),
         ])
     )
-}
+}, shallowEqual)
