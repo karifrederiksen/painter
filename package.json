@@ -2,13 +2,13 @@
     "name": "painter",
     "version": "0.1.0",
     "scripts": {
-        "start": "npx webpack-serve --config webpack.dev.js --port 6789 --host localhost --compress --live-reload --wait-for-build --open --static dist/development",
-        "start-css": "npx tcm src --camelCase --watch",
-        "build-dev": "npx webpack-cli --config webpack.dev.js",
-        "build-prod": "npx webpack-cli --config webpack.prod.js",
-        "typecheck": "npx tsc --project tsconfig.json --noEmit",
-        "test": "npx jest --config jest.config.js",
-        "generate": "npx tsm src --nameFormat \"camel\""
+        "start": "yarn webpack-serve --config webpack.dev.js --port 6789 --host localhost --compress --live-reload --wait-for-build --open --static dist/development",
+        "start-css": "yarn tcm src --camelCase --watch",
+        "build-dev": "yarn webpack-cli --config webpack.dev.js",
+        "build-prod": "yarn webpack-cli --config webpack.prod.js",
+        "typecheck": "yarn tsc --project tsconfig.json --noEmit",
+        "test": "yarn jest --config jest.config.js",
+        "generate": "yarn tsm src --nameFormat \"camel\""
     },
     "dependencies": {
         "@types/jest": "24.0.15",
