@@ -6,7 +6,7 @@ import * as Camera from "../tools/camera"
 import { clamp } from "../util"
 
 export interface MiniMapDetailsProps {
-    readonly camera: Camera.State
+    readonly camera: Camera.Config
     readonly sender: Camera.MsgSender
 }
 

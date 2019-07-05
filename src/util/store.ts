@@ -1,6 +1,7 @@
 export interface Store<state, ephemeral, msg> {
     send(msg: msg): void
     getState(): state
+    getEphemeral(): ephemeral
 }
 
 export namespace Store {
@@ -37,6 +38,7 @@ export namespace Store {
         return {
             send: handleMsg,
             getState: () => state,
+            getEphemeral: () => ephemeral,
         }
     }
 }

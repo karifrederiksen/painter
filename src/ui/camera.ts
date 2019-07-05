@@ -4,7 +4,7 @@ import styles from "./camera.scss"
 import * as Camera from "../tools/camera"
 
 interface DetailsProps {
-    readonly camera: Camera.State
+    readonly camera: Camera.Config
     readonly sender: Camera.MsgSender
 }
 

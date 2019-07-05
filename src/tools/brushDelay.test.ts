@@ -1,15 +1,11 @@
 import * as Delay from "./brushDelay"
 
 function mkInput(x: number, y: number, pressure: number): Delay.Input {
-    return { x, y, pressure }
+    return new Delay.Input(x, y, pressure)
 }
 
 describe("brushDelay", () => {
-    const state: Delay.State = {
-        start: mkInput(0, 0, 0),
-        end: mkInput(100, 100, 1),
-        startTime: 0,
-    }
+    const state: Delay.State = { startTime: 0, start: mkInput(0, 0, 0), end: mkInput(100, 100, 1) }
 
     test("(update) should produce state.end when delay is 0", () => {
         for (let time = 0; time < 10; time++) {

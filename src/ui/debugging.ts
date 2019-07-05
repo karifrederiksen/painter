@@ -15,7 +15,7 @@ import { div, ul, li, span, textarea, CONTENT } from "ivi-html"
 import * as styles from "./debugging.scss"
 import { SetOnce, PerfTracker, Signals } from "../util"
 import { Surface, DefaultButton } from "./views"
-import * as Canvas from "../canvas"
+import { Seed } from "../rng"
 
 interface PerformanceProps {
     readonly samplesSignal: Signals.Signal<readonly PerfTracker.Sample[]>
@@ -154,7 +154,7 @@ const Scripting = component<ScriptingProps>(c => {
 })
 
 interface DebugWindowProps {
-    readonly state: Canvas.State
+    readonly themeRng: Seed
     readonly gl: SetOnce<WebGLRenderingContext>
     readonly perfSamplesSignal: Signals.Signal<readonly PerfTracker.Sample[]>
 }
@@ -176,7 +176,7 @@ export const DebugWindow = component<DebugWindowProps>(c => {
     }
 
     return props => {
-        const { state } = props
+        const { themeRng } = props
         return Surface(
             !isOpen
                 ? DefaultButton({
@@ -190,7 +190,7 @@ export const DebugWindow = component<DebugWindowProps>(c => {
                       }),
                       div(styles.contentContainer, _, [
                           "RNG: ",
-                          div(styles.monospaced, _, state.rng.display()),
+                          div(styles.monospaced, _, themeRng.display()),
                           Performance({
                               samplesSignal: props.perfSamplesSignal,
                           }),

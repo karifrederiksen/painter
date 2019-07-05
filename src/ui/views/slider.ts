@@ -61,9 +61,9 @@ export const Slider = component<SliderProps>(c => {
     }
 
     const listenToMouse = useEffect(c, () => {
-        document.body.addEventListener("mouseup", onUp, { passive: true })
+        document.body.addEventListener("mouseup", onUp, { passive: false })
         document.body.addEventListener("mousemove", onMove, {
-            passive: true,
+            passive: false,
         })
         return () => {
             document.body.removeEventListener("mouseup", onUp)

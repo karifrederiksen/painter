@@ -17,7 +17,7 @@ import { ColorMode, colorModeToString } from "../util"
 
 export interface DetailsProps {
     readonly messageSender: Brush.MsgSender
-    readonly tool: Brush.State
+    readonly tool: Brush.Config
 }
 
 export const Details = statelessComponent<DetailsProps>(props => {
@@ -62,15 +62,15 @@ export const Details = statelessComponent<DetailsProps>(props => {
                 _,
                 { style: { margin: "0.5rem 0" } },
                 Events(
-                    onPaste(ev => onColorText((ev.target as any).value)),
-                    Events(
+                    [
+                        onPaste(ev => onColorText((ev.target as any).value)),
                         onChange(ev => onColorText((ev.target as any).value)),
-                        input(styles.textInput, {
-                            type: "text",
-                            style: { width: "100%" },
-                            value: VALUE(brush.color.toStyle()),
-                        })
-                    )
+                    ],
+                    input(styles.textInput, {
+                        type: "text",
+                        style: { width: "100%" },
+                        value: VALUE(brush.color.toStyle()),
+                    })
                 )
             ),
             Labeled({

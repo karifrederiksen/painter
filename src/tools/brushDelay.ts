@@ -17,17 +17,17 @@ export function delay(duration: number): Config {
     return { duration }
 }
 
-export interface Input {
-    readonly x: number
-    readonly y: number
-    readonly pressure: number
-}
+export class Input {
+    private nominal: void
 
-function inputLerp(pct: number, start: Input, end: Input): Input {
-    return {
-        pressure: lerp(pct, start.pressure, end.pressure),
-        x: lerp(pct, start.x, end.x),
-        y: lerp(pct, start.y, end.y),
+    constructor(readonly x: number, readonly y: number, readonly pressure: number) {}
+
+    lerp(pct: number, end: Input): Input {
+        return new Input(
+            lerp(pct, this.x, end.x),
+            lerp(pct, this.y, end.y),
+            lerp(pct, this.pressure, end.pressure)
+        )
     }
 }
 
@@ -40,7 +40,6 @@ export interface State {
 export function init(currentTime: number, start: Input): State {
     return { startTime: currentTime, start, end: start }
 }
-
 export function updateWithInput(
     config: Config,
     state: State,
@@ -52,7 +51,7 @@ export function updateWithInput(
     }
     const deltaTime = currentTime - state.startTime
     const pct = easing(Math.min(deltaTime / config.duration, 1))
-    const output: Input = inputLerp(pct, state.start, end)
+    const output = state.start.lerp(pct, end)
     return [{ startTime: currentTime, start: output, end }, output]
 }
 
@@ -63,6 +62,6 @@ export function update(config: Config, state: State, currentTime: number): [Stat
     }
 
     const pct = easing(Math.min(deltaTime / config.duration, 1))
-    const output: Input = inputLerp(pct, state.start, state.end)
+    const output = state.start.lerp(pct, state.end)
     return [state, output]
 }

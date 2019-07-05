@@ -6,7 +6,7 @@ import * as Eraser from "../tools/eraser"
 
 export interface DetailsProps {
     readonly messageSender: Eraser.MsgSender
-    readonly tool: Eraser.State
+    readonly tool: Eraser.Config
 }
 
 export const Details = statelessComponent<DetailsProps>(props => {

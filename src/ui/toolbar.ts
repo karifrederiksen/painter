@@ -13,7 +13,7 @@ export interface TransientState {
 
 export interface ToolbarProps {
     readonly msgSender: Tools.MsgSender
-    readonly tool: Tools.Tool
+    readonly tool: Tools.Config
     readonly transientState: TransientState
 }
 

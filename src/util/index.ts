@@ -12,8 +12,6 @@ export { Signals }
 export * from "./frameStream"
 export * from "./perfTracker"
 
-export type Brand<a, brand> = a & { "@..brand": brand }
-
 export class Lazy<a> {
     private __value: a | null = null
     constructor(private readonly __fn: () => a) {}
@@ -113,12 +111,40 @@ export function colorModeToString(type: ColorMode): string {
     }
 }
 
-export function turnsToDegrees(turns: number): number {
-    return turns * 360
+export declare class Degrees {
+    private nominal: void
 }
 
-export function turnsFromDegrees(degrees: number): number {
-    return degrees / 360
+export namespace Degrees {
+    export function fromNumber(x: number): Degrees {
+        return x as any
+    }
+
+    export function toNumber(x: Degrees): number {
+        return x as any
+    }
+}
+
+export declare class Turns {
+    private nominal: void
+}
+
+export namespace Turns {
+    export function fromNumber(x: number): Turns {
+        return x as any
+    }
+
+    export function toNumber(x: Turns): number {
+        return x as any
+    }
+}
+
+export function turnsToDegrees(turns: Turns): Degrees {
+    return Degrees.fromNumber(Turns.toNumber(turns) * 360)
+}
+
+export function turnsFromDegrees(degrees: Degrees): Turns {
+    return Turns.fromNumber(Degrees.toNumber(degrees) / 360)
 }
 
 export function turn(turns: number, center: Vec2, point: Vec2): Vec2 {
@@ -132,4 +158,55 @@ export function turn(turns: number, center: Vec2, point: Vec2): Vec2 {
         Math.cos(radians) * (point.y - center.y) +
         center.y
     return new Vec2(x, y)
+}
+
+export declare class Pct {
+    private nominal: void
+}
+
+export namespace Pct {
+    export function fromNumber(x: number): Pct {
+        return x as any
+    }
+    export function toNumber(pct: Pct): number {
+        return pct as any
+    }
+}
+
+export declare class Px {
+    private nominal: void
+}
+
+export namespace Px {
+    export function fromNumber(x: number): Px {
+        return x as any
+    }
+
+    export function toNumber(px: Px): number {
+        return px as any
+    }
+}
+
+export declare class Ms {
+    private nominal: void
+}
+
+export namespace Ms {
+    export function fromNumber(x: number): Px {
+        return x as any
+    }
+
+    export function toNumber(px: Px): number {
+        return px as any
+    }
+}
+
+export class Position {
+    private nominal: void
+    constructor(readonly x: Px, readonly y: Px) {}
+}
+
+export class Size {
+    private nominal: void
+    constructor(readonly width: Px, readonly height: Px) {}
 }

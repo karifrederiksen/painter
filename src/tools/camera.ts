@@ -44,65 +44,69 @@ export class MsgSender {
     }
 }
 
-export class State {
-    static init: State = new State(0, 0, 1, 0)
-    private nominal: void
+export interface Config {
     readonly offsetX: number
     readonly offsetY: number
     readonly zoomPct: number
     readonly rotateTurns: number
+}
 
-    private constructor(offsetX: number, offsetY: number, zoomPct: number, rotateTurns: number) {
-        this.offsetX = offsetX
-        this.offsetY = offsetY
-        this.zoomPct = Math.max(0.01, zoomPct)
-        this.rotateTurns = rotateTurns
-    }
+export const init: Config = {
+    offsetX: 0,
+    offsetY: 0,
+    zoomPct: 1,
+    rotateTurns: 0,
+}
 
-    update(msg: Msg): State {
-        switch (msg.type) {
-            case MsgType.SetZoomMsg:
-                return new State(this.offsetX, this.offsetY, msg.zoomPct, this.rotateTurns)
-            case MsgType.SetOffsetMsg:
-                return new State(msg.offsetX, msg.offsetY, this.zoomPct, this.rotateTurns)
-            case MsgType.SetRotationMsg:
-                return new State(this.offsetX, this.offsetY, this.zoomPct, msg.rotationTurns)
-            default:
-                const never: never = msg
-                throw { "unexpected msg": msg }
-        }
+export function update(state: Config, msg: Msg): Config {
+    switch (msg.type) {
+        case MsgType.SetZoomMsg:
+            return { ...state, zoomPct: Math.max(0.01, msg.zoomPct) }
+        case MsgType.SetOffsetMsg:
+            return { ...state, offsetX: msg.offsetX, offsetY: msg.offsetY }
+        case MsgType.SetRotationMsg:
+            return { ...state, rotateTurns: msg.rotationTurns }
+        default:
+            const never: never = msg
+            throw { "unexpected msg": msg }
     }
+}
 
-    zoomUpdate(dragState: DragState, input: TransformedPointerInput): State {
-        const xd = input.x - dragState.clickPoint.x
-        let addedPct = xd / 500
-        if (addedPct >= 0) {
-            addedPct = addedPct ** 2
-        } else {
-            addedPct = -((-addedPct) ** 2)
-        }
-        const zoomPct = dragState.originalScale + addedPct
-        console.log({
-            originalScale: dragState.originalScale,
-            clickX: dragState.clickPoint.x,
-            x: input.originalX,
-            addedPct: addedPct,
-        })
-        return new State(this.offsetX, this.offsetY, Math.min(5000, zoomPct), this.rotateTurns)
+export function zoomUpdate(
+    state: Config,
+    dragState: DragState,
+    input: TransformedPointerInput
+): Config {
+    const xd = input.x - dragState.clickPoint.x
+    let addedPct = xd / 500
+    if (addedPct >= 0) {
+        addedPct = addedPct ** 2
+    } else {
+        addedPct = -((-addedPct) ** 2)
     }
+    const zoomPct = dragState.originalScale + addedPct
+    return { ...state, zoomPct: Math.min(5000, zoomPct) }
+}
 
-    rotateUpdate(dragState: DragState, input: TransformedPointerInput): State {
-        throw "todo: should be turns, not rad"
-        // const rotationRad = Math.atan2(
-        //     input.y - dragState.clickPoint.y,
-        //     input.x - dragState.clickPoint.x
-        // )
-        // return new State(this.offsetX, this.offsetY, this.zoomPct, rotationRad)
-    }
+export function rotateUpdate(
+    state: Config,
+    dragState: DragState,
+    input: TransformedPointerInput
+): Config {
+    throw "todo: should be turns, not rad"
+    // const rotationRad = Math.atan2(
+    //     input.y - dragState.clickPoint.y,
+    //     input.x - dragState.clickPoint.x
+    // )
+    // return new State(this.offsetX, this.offsetY, this.zoomPct, rotationRad)
+}
 
-    moveUpdate(dragState: DragState, input: TransformedPointerInput): State {
-        const xd = input.x - dragState.prevPoint.x
-        const yd = input.y - dragState.prevPoint.y
-        return new State(this.offsetX + xd, this.offsetY + yd, this.zoomPct, this.rotateTurns)
-    }
+export function moveUpdate(
+    state: Config,
+    dragState: DragState,
+    input: TransformedPointerInput
+): Config {
+    const xd = input.x - dragState.prevPoint.x
+    const yd = input.y - dragState.prevPoint.y
+    return { ...state, offsetX: state.offsetX + xd, offsetY: state.offsetY + yd }
 }

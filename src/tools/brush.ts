@@ -118,16 +118,16 @@ export class MsgSender {
     }
 }
 
-export type EphemeralState = {
+export type State = {
     readonly interpState: Interp.State
     readonly delayState: BrushDelay.State
 } | null
 
-export function initTempState(): EphemeralState {
+export function initTempState(): State {
     return null
 }
 
-export interface State extends Interp.Interpolatable {
+export interface Config extends Interp.Config {
     readonly diameterPx: number
     readonly softness: number
     readonly flowPct: number
@@ -142,22 +142,20 @@ export interface State extends Interp.Interpolatable {
     readonly delay: BrushDelay.Config
 }
 
-export function init(): State {
-    return {
-        diameterPx: 15,
-        softness: 0.4,
-        flowPct: 0.3,
-        colorMode: ZipperList.unsafeFromArray([ColorMode.Hsluv, ColorMode.Hsv]),
-        color: new Color.Hsluv(73, 100, 16),
-        colorSecondary: new Color.Hsluv(0, 0, 100),
-        spacingPct: 0.05,
-        pressureAffectsOpacity: false,
-        pressureAffectsSize: true,
-        delay: BrushDelay.delay(5),
-    }
+export const init: Config = {
+    diameterPx: 15,
+    softness: 0.4,
+    flowPct: 0.3,
+    colorMode: ZipperList.unsafeFromArray([ColorMode.Hsluv, ColorMode.Hsv]),
+    color: new Color.Hsluv(73, 100, 16),
+    colorSecondary: new Color.Hsluv(0, 0, 100),
+    spacingPct: 0.05,
+    pressureAffectsOpacity: false,
+    pressureAffectsSize: true,
+    delay: BrushDelay.delay(5),
 }
 
-export function update(state: State, msg: Msg): State {
+export function update(state: Config, msg: Msg): Config {
     switch (msg.type) {
         case MsgType.SetDiameterMsg:
             return { ...state, diameterPx: clamp(0.1, 500, msg.diameterPx) }
@@ -176,11 +174,7 @@ export function update(state: State, msg: Msg): State {
         case MsgType.SetPressureAffectsSizeMsg:
             return { ...state, pressureAffectsSize: msg.pressureAffectsSize }
         case MsgType.SwapColorMsg:
-            return {
-                ...state,
-                color: state.colorSecondary,
-                colorSecondary: state.color,
-            }
+            return { ...state, color: state.colorSecondary, colorSecondary: state.color }
         case MsgType.SetDelayMsg:
             return { ...state, delay: BrushDelay.delay(clamp(0, 500, msg.delayMs)) }
         default:
@@ -190,101 +184,87 @@ export function update(state: State, msg: Msg): State {
 }
 
 export function onClick(
-    camera: Camera.State,
-    brush: State,
+    state: Config,
+    camera: Camera.Config,
     input: TransformedPointerInput
-): [EphemeralState, BrushShader.BrushPoint] {
-    const brushInput = pointerToBrushInput(camera, input)
-    const interpState = Interp.init(createInputPoint(brush, brushInput))
+): [State, BrushShader.BrushPoint] {
+    const brushInput = pointerToBrushInput(input)
+    const interpState = Interp.init(createInputPoint(state, brushInput))
     const delayState = BrushDelay.init(input.time, brushInput)
-    return [{ interpState, delayState }, createBrushPoint(brush, brushInput)]
+    return [{ interpState, delayState }, createBrushPoint(state, brushInput)]
 }
 
 export function onDrag(
-    camera: Camera.State,
-    state: State,
-    tempState: EphemeralState,
+    state: Config,
+    camera: Camera.Config,
+    tempState: State,
     inputs: readonly TransformedPointerInput[]
-): [EphemeralState, readonly BrushShader.BrushPoint[]] {
+): [State, readonly BrushShader.BrushPoint[]] {
     if (tempState === null) {
-        const res = onClick(camera, state, inputs[0])
+        const res = onClick(state, camera, inputs[0])
         return [res[0], [res[1]]]
-    } else {
-        let interpState: Interp.State = tempState.interpState
-        let brushPoints: readonly BrushShader.BrushPoint[] = []
-        let delayState = tempState.delayState
-        for (let i = 0; i < inputs.length; i++) {
-            const input = inputs[i]
-            const brushDelayInput = pointerToBrushInput(camera, input)
-
-            const updateResult = BrushDelay.updateWithInput(
-                state.delay,
-                delayState,
-                input.time,
-                brushDelayInput
-            )
-
-            const interpReslt = Interp.interpolate(
-                state,
-                interpState,
-                createInputPoint(state, updateResult[1])
-            )
-            delayState = updateResult[0]
-            interpState = interpReslt[0]
-            brushPoints = brushPoints.concat(interpReslt[1])
-        }
-
-        return [{ delayState, interpState }, brushPoints]
     }
+
+    let interpState: Interp.State = tempState.interpState
+    let brushPoints: readonly BrushShader.BrushPoint[] = []
+    let delayState = tempState.delayState
+    for (let i = 0; i < inputs.length; i++) {
+        const input = inputs[i]
+        const brushDelayInput = pointerToBrushInput(input)
+
+        const updateResult = BrushDelay.updateWithInput(
+            state.delay,
+            delayState,
+            input.time,
+            brushDelayInput
+        )
+
+        const interpReslt = Interp.interpolate(
+            interpState,
+            state,
+            createInputPoint(state, updateResult[1])
+        )
+        delayState = updateResult[0]
+        interpState = interpReslt[0]
+        brushPoints = brushPoints.concat(interpReslt[1])
+    }
+
+    return [{ delayState, interpState }, brushPoints]
 }
 
 export function onFrame(
-    brush: State,
-    state: EphemeralState,
+    state: Config,
+    ephState: State,
     currentTime: number
-): [EphemeralState, readonly BrushShader.BrushPoint[]] {
-    if (state === null) {
+): [State, readonly BrushShader.BrushPoint[]] {
+    if (ephState === null) {
         return [null, []]
     }
-    // if (brush.delay.duration <= 0) return [null, []]
 
     const [delayState, newBrushInput] = BrushDelay.update(
-        brush.delay,
-        state.delayState,
+        state.delay,
+        ephState.delayState,
         currentTime
     )
 
     const [interpState, brushPoints] = Interp.interpolate(
-        brush,
-        state.interpState,
-        createInputPoint(brush, newBrushInput)
+        ephState.interpState,
+        state,
+        createInputPoint(state, newBrushInput)
     )
 
     return [{ delayState, interpState }, brushPoints]
 }
 
-export function onRelease(
-    camera: Camera.State,
-    brush: State,
-    state: EphemeralState,
-    input: TransformedPointerInput
-): [EphemeralState, readonly BrushShader.BrushPoint[]] {
-    if (state === null) {
-        return [null, []]
-    }
-
+export function onRelease(): [State, readonly BrushShader.BrushPoint[]] {
     return [null, []]
 }
 
-function pointerToBrushInput(
-    _camera: Camera.State,
-    input: TransformedPointerInput
-): BrushDelay.Input {
-    // TODO: offset, zoom, and stuff
-    return { x: input.x, y: input.y, pressure: input.pressure }
+function pointerToBrushInput(input: TransformedPointerInput): BrushDelay.Input {
+    return new BrushDelay.Input(input.x, input.y, input.pressure)
 }
 
-function createBrushPoint(brush: State, input: BrushDelay.Input): BrushShader.BrushPoint {
+function createBrushPoint(brush: Config, input: BrushDelay.Input): BrushShader.BrushPoint {
     const alpha = brush.flowPct * input.pressure
     const color =
         alpha === 1
@@ -303,7 +283,7 @@ function createBrushPoint(brush: State, input: BrushDelay.Input): BrushShader.Br
     }
 }
 
-function createInputPoint(brush: State, input: BrushDelay.Input): Interp.InputPoint {
+function createInputPoint(brush: Config, input: BrushDelay.Input): Interp.InputPoint {
     const alpha = brush.flowPct * input.pressure
     const color =
         alpha === 1

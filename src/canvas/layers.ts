@@ -1,7 +1,9 @@
-import { Brand, orDefault, arrUpdate, arrInsert, arrRemove } from "../util"
+import { orDefault, arrUpdate, arrInsert, arrRemove } from "../util"
 import { Stack, PushArray } from "../collections"
 
-export type Id = Brand<number, "LayerId">
+export declare class Id {
+    private nominal: void
+}
 
 export interface CollectedLayer {
     readonly id: Id
@@ -260,12 +262,14 @@ export class State {
     static init(): State {
         const getNextLayerId: () => Id = (() => {
             let layerId = 1
-            return () => layerId++ as Id
+            return () => layerId++ as any
         })()
         const leaf = LeafLayer.init(getNextLayerId())
         const group = GroupLayer.init(getNextLayerId()).withChildren([leaf])
         return new State(getNextLayerId, group, Stack.empty<number>().cons(0))
     }
+
+    private cachedSplitLayers: SplitLayers | null = null
 
     private constructor(
         readonly getNextLayerId: () => Id,
@@ -304,49 +308,59 @@ export class State {
     }
 
     split(): SplitLayers {
-        const children = this.layers.children
-        const selectedIdx = this.selectedPath.head
-        const above: PushArray<CollectedLayer> = []
-        const below: PushArray<CollectedLayer> = []
-        const baseOpacity = 1
+        if (this.cachedSplitLayers === null) {
+            const children = this.layers.children
+            const selectedIdx = this.selectedPath.head
+            const above: PushArray<CollectedLayer> = []
+            const below: PushArray<CollectedLayer> = []
+            const baseOpacity = 1
 
-        for (let i = 0; i < selectedIdx; i++) {
-            const child = children[i]
-            if (child.isLeaf)
-                above.push({
-                    id: child.id,
-                    name: child.name,
-                    opacity: baseOpacity * child.opacity,
-                })
-            else child.collectLeaves(above, baseOpacity)
-        }
-
-        for (let i = this.selectedPath.head + 1; i < children.length; i++) {
-            const child = children[i]
-            if (child.isLeaf)
-                below.push({
-                    id: child.id,
-                    name: child.name,
-                    opacity: baseOpacity * child.opacity,
-                })
-            else child.collectLeaves(below, baseOpacity)
-        }
-
-        const current = this.layers.get(this.selectedPath)
-        if (current.isLeaf)
-            return {
-                above,
-                current: this.layers.getWithContext(this.selectedPath, baseOpacity),
-                below,
+            for (let i = 0; i < selectedIdx; i++) {
+                const child = children[i]
+                if (!child.isLeaf) {
+                    child.collectLeaves(above, baseOpacity)
+                } else {
+                    above.push({
+                        id: child.id,
+                        name: child.name,
+                        opacity: baseOpacity * child.opacity,
+                    })
+                }
             }
 
-        current.collectLeaves(below, baseOpacity)
-        return { above, current: null, below }
+            for (let i = this.selectedPath.head + 1; i < children.length; i++) {
+                const child = children[i]
+                if (!child.isLeaf) {
+                    child.collectLeaves(below, baseOpacity)
+                } else {
+                    below.push({
+                        id: child.id,
+                        name: child.name,
+                        opacity: baseOpacity * child.opacity,
+                    })
+                }
+            }
+
+            const current = this.layers.get(this.selectedPath)
+            if (current.isLeaf) {
+                return {
+                    above,
+                    current: this.layers.getWithContext(this.selectedPath, baseOpacity),
+                    below,
+                }
+            }
+
+            current.collectLeaves(below, baseOpacity)
+            this.cachedSplitLayers = { above, current: null, below }
+        }
+        return this.cachedSplitLayers
     }
 
     private select(id: Id): State {
         const path = this.layers.findPath(id)
-        if (path === null) return this
+        if (path === null) {
+            return this
+        }
 
         return new State(this.getNextLayerId, this.layers, path)
     }
@@ -364,9 +378,9 @@ export class State {
     private removeCurrent(): State {
         const [newLayers, newSelectedPath] = this.layers.remove(this.selectedPath)
 
-        if (newSelectedPath.isNonEmpty())
+        if (newSelectedPath.isNonEmpty()) {
             return new State(this.getNextLayerId, newLayers, newSelectedPath)
-
+        }
         const oldIndex = this.selectedPath.head
         const newIndex = newLayers.children.length <= oldIndex ? oldIndex : oldIndex - 1
         return new State(this.getNextLayerId, newLayers, Stack.NonEmpty.of(newIndex))

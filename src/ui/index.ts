@@ -49,7 +49,7 @@ function getCanvasInfo({
 }
 
 const App = component(c => {
-    const initialState = Canvas.initState()
+    const [initialState, initialEphemeral] = Canvas.initState()
     const removeInputListeners = new SetOnce<Input.RemoveListeners>()
     const cancelFrameStream = new SetOnce<CancelFrameStream>()
     const canvasModel = new SetOnce<Canvas.Canvas>()
@@ -65,21 +65,18 @@ const App = component(c => {
         canvasResolution,
     })
 
-    const store = Store.create<
-        Canvas.State,
-        Canvas.EphemeralState,
-        Canvas.CanvasMsg,
-        Canvas.Effect
-    >({
+    const store = Store.create<Canvas.Config, Canvas.State, Canvas.CanvasMsg, Canvas.Effect>({
         initialState,
-        initialEphemeral: Canvas.initEphemeral(),
-        effectsHandler: (ef: Canvas.Effect) => canvasModel.value.handle(ef),
-        forceRender: () => invalidate(c),
-        update: (state, ephState, msg) => {
-            const result = Canvas.update(canvasInfo, state, ephState, msg)
-            canvasModel.value.update(result[0])
-            return result
+        initialEphemeral,
+        effectsHandler: (ef: Canvas.Effect) => {
+            try {
+                canvasModel.value.handle(ef)
+            } catch (ex) {
+                console.error(ef, ex)
+            }
         },
+        forceRender: () => invalidate(c),
+        update: (state, ephState, msg) => Canvas.update(canvasInfo, state, ephState, msg),
     })
 
     {
@@ -115,15 +112,13 @@ const App = component(c => {
             throw "Canvas not found"
         }
 
-        const state = store.getState()
-
         canvasInfo = getCanvasInfo({
             canvasOffset: getCanvasOffset(htmlCanvas),
             canvasResolution,
         })
 
         {
-            const canvas = Canvas.Canvas.create(htmlCanvas, state, {
+            const canvas = Canvas.Canvas.create(htmlCanvas, {
                 onStats: stats => {
                     perfTrackerData.push(stats)
                 },
@@ -164,7 +159,7 @@ const App = component(c => {
         }
     })
 
-    function getCanvasTransform(cam: Camera.State): string {
+    function getCanvasTransform(cam: Camera.Config): string {
         const translate = "translate(" + cam.offsetX + "px, " + cam.offsetY + "px) "
         const rotate = "rotate(" + cam.rotateTurns + "turn) "
         const scale = "scale(" + cam.zoomPct + ", " + cam.zoomPct + ")"
@@ -222,7 +217,7 @@ const App = component(c => {
                       _,
                       Debugging.DebugWindow({
                           gl: debuggingGl,
-                          state,
+                          themeRng: store.getEphemeral().themeRng,
                           perfSamplesSignal: perfTrackerData.signal,
                       })
                   ),

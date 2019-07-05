@@ -1,6 +1,8 @@
-import { Brand, Vec2, PushOnlyArray } from "../util"
+import { Vec2, PushOnlyArray } from "../util"
 
-export type TextureId = Brand<"Texture Id", number>
+export declare class TextureId {
+    private nominal: void
+}
 
 let nextTextureId = 1
 
@@ -12,7 +14,7 @@ export class Texture {
     readonly framebuffer: WebGLFramebuffer
 
     constructor(texture: WebGLTexture, framebuffer: WebGLFramebuffer) {
-        this.id = (nextTextureId++ as any) as TextureId
+        this.id = nextTextureId++ as any
         this.texture = texture
         this.framebuffer = framebuffer
     }

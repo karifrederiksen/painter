@@ -6,7 +6,7 @@ import { ToolType } from "../tools"
 
 export async function setup(
     canvas: HTMLCanvasElement,
-    getState: () => Canvas.State,
+    getState: () => Canvas.Config,
     sender: Canvas.MsgSender
 ): Promise<void> {
     const forceRender = () => sender.onFrame(performance.now())

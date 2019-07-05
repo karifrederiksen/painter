@@ -6,44 +6,7 @@ import * as Rng from "../rng"
 import * as Theme from "../ui/theme"
 import * as Context from "./context"
 import { BrushPoint } from "./brushShader"
-import { Vec2, Result, PerfTracker, turn } from "../util"
-
-export interface Hooks {
-    // readonly onCanvasSnapshot: (snapshot: Snapshot) => void
-    // readonly onLayerSnapshot: (snapshot: Snapshot, layerId: number) => void
-    readonly onStats: (stats: readonly PerfTracker.Sample[]) => void
-    readonly onWebglContextCreated: (gl: WebGLRenderingContext) => void
-}
-
-export interface State {
-    readonly rng: Rng.Seed
-    readonly theme: Theme.Theme
-    readonly tool: Tools.Tool
-    readonly layers: Layers.State
-    readonly hasPressedDown: boolean
-}
-
-export interface EphemeralState {
-    readonly tool: Tools.EphemeralState
-}
-
-export function initState(): State {
-    const [theme, rng] = Theme.random(Rng.XorshiftSeed.create(145264772))
-
-    return {
-        rng,
-        theme,
-        tool: Tools.init(),
-        layers: Layers.State.init(),
-        hasPressedDown: false,
-    }
-}
-
-export function initEphemeral(): EphemeralState {
-    return {
-        tool: Tools.initEphemeral(),
-    }
-}
+import { Vec2, PerfTracker, turn } from "../util"
 
 export type CanvasMsg =
     | OnFrame
@@ -118,7 +81,7 @@ class NoOpEffect {
 class FrameEffect {
     readonly type: EffectType.FrameEffect = EffectType.FrameEffect
     private nominal: void
-    constructor(readonly brushPoints: readonly BrushPoint[], readonly state: State) {}
+    constructor(readonly brushPoints: readonly BrushPoint[], readonly state: Config) {}
 }
 class BrushPointsEffect {
     readonly type: EffectType.BrushPointsEffect = EffectType.BrushPointsEffect
@@ -162,6 +125,34 @@ export class MsgSender {
     }
 }
 
+export interface Config {
+    readonly theme: Theme.Theme
+    readonly tool: Tools.Config
+    readonly layers: Layers.State
+}
+
+export interface State {
+    readonly themeRng: Rng.Seed
+    readonly tool: Tools.State
+    readonly hasPressedDown: boolean
+}
+
+export function initState(): [Config, State] {
+    const [theme, themeRng] = Theme.random(Rng.XorshiftSeed.create(145264772))
+
+    const config: Config = {
+        theme,
+        tool: Tools.init,
+        layers: Layers.State.init(),
+    }
+    const state: State = {
+        themeRng,
+        tool: Tools.initEphemeral(),
+        hasPressedDown: false,
+    }
+    return [config, state]
+}
+
 export interface CanvasInfo {
     readonly offset: Vec2
     readonly resolution: Vec2
@@ -179,7 +170,7 @@ export interface TransformedPointerInput {
 
 function pointerToBrushInput(
     canvasInfo: CanvasInfo,
-    camera: Camera.State,
+    camera: Camera.Config,
     input: Input.PointerInput
 ): TransformedPointerInput {
     const point = new Vec2(input.x, input.y)
@@ -201,7 +192,7 @@ function pointerToBrushInput(
 }
 function pointersToBrushInputs(
     canvasInfo: CanvasInfo,
-    camera: Camera.State,
+    camera: Camera.Config,
     inputs: readonly Input.PointerInput[]
 ): TransformedPointerInput[] {
     const arr = new Array<TransformedPointerInput>(inputs.length)
@@ -213,10 +204,10 @@ function pointersToBrushInputs(
 
 export function update(
     canvasInfo: CanvasInfo,
-    state: State,
-    ephemeral: EphemeralState,
+    state: Config,
+    ephemeral: State,
     msg: CanvasMsg
-): readonly [State, EphemeralState, Effect] {
+): readonly [Config, State, Effect] {
     switch (msg.type) {
         case CanvasMsgType.OnFrame: {
             const [nextToolEphemeral, brushPoints] = Tools.onFrame(
@@ -225,7 +216,7 @@ export function update(
                 msg.ms
             )
             const effect = new FrameEffect(brushPoints, state)
-            return [state, { tool: nextToolEphemeral }, effect]
+            return [state, { ...ephemeral, tool: nextToolEphemeral }, effect]
         }
         case CanvasMsgType.OnClick: {
             const [nextTool, nextToolEphemeral, brushPoints] = Tools.onClick(
@@ -233,8 +224,8 @@ export function update(
                 ephemeral.tool,
                 pointerToBrushInput(canvasInfo, state.tool.camera, msg.input)
             )
-            const nextState = { ...state, hasPressedDown: true, tool: nextTool }
-            const nextEphemeral = { tool: nextToolEphemeral }
+            const nextState = { ...state, tool: nextTool }
+            const nextEphemeral = { ...ephemeral, hasPressedDown: true, tool: nextToolEphemeral }
             const effect = new BrushPointsEffect(brushPoints)
             return [nextState, nextEphemeral, effect]
         }
@@ -244,13 +235,13 @@ export function update(
                 ephemeral.tool,
                 pointerToBrushInput(canvasInfo, state.tool.camera, msg.input)
             )
-            const nextState = { ...state, hasPressedDown: false, tool: nextTool }
-            const nextEphemeral = { tool: nextToolEphemeral }
+            const nextState = { ...state, tool: nextTool }
+            const nextEphemeral = { ...ephemeral, hasPressedDown: false, tool: nextToolEphemeral }
             const effect = new ReleaseEffect(brushPoints)
             return [nextState, nextEphemeral, effect]
         }
         case CanvasMsgType.OnDrag: {
-            if (!state.hasPressedDown) {
+            if (!ephemeral.hasPressedDown) {
                 return [state, ephemeral, NoOpEffect.value]
             }
             const [nextTool, nextToolEphemeral, brushPoints] = Tools.onDrag(
@@ -259,12 +250,12 @@ export function update(
                 pointersToBrushInputs(canvasInfo, state.tool.camera, msg.inputs)
             )
             const nextState = { ...state, tool: nextTool }
-            const nextEphemeral = { tool: nextToolEphemeral }
+            const nextEphemeral = { ...ephemeral, tool: nextToolEphemeral }
             const effect = new BrushPointsEffect(brushPoints)
             return [nextState, nextEphemeral, effect]
         }
         case CanvasMsgType.RandomizeTheme: {
-            const [theme, rng] = Theme.random(state.rng)
+            const [theme, rng] = Theme.random(ephemeral.themeRng)
             const nextState = { ...state, rng, theme }
             return [nextState, ephemeral, NoOpEffect.value]
         }
@@ -282,25 +273,30 @@ export function update(
     }
 }
 
+export interface Hooks {
+    // readonly onCanvasSnapshot: (snapshot: Snapshot) => void
+    // readonly onLayerSnapshot: (snapshot: Snapshot, layerId: number) => void
+    readonly onStats: (stats: readonly PerfTracker.Sample[]) => void
+    readonly onWebglContextCreated: (gl: WebGLRenderingContext) => void
+}
+
 export class Canvas {
-    static create(canvas: HTMLCanvasElement, initialState: State, hooks: Hooks): Canvas | null {
+    static create(canvas: HTMLCanvasElement, hooks: Hooks): Canvas | null {
         const context = Context.create(canvas)
         if (context.isOk()) {
             if (process.env.NODE_ENV === "development") {
                 hooks.onWebglContextCreated(context.value[1])
             }
-            return new Canvas(canvas, initialState, hooks, context.value[0])
+            return new Canvas(new Vec2(canvas.width, canvas.height), hooks, context.value[0])
         }
         console.error("Error in Context setup:", context.value)
         return null
     }
 
     private readonly perfTracker: PerfTracker
-    private splitLayers: Layers.SplitLayers
 
     private constructor(
-        readonly canvasElement: HTMLCanvasElement,
-        initialState: State,
+        private readonly resolution: Vec2,
         private readonly hooks: Hooks,
         private readonly context: Context.Context
     ) {
@@ -308,11 +304,6 @@ export class Canvas {
             maxSamples: 50,
             onSamples: this.hooks.onStats,
         })
-        this.splitLayers = initialState.layers.split()
-    }
-
-    update(newState: State): void {
-        this.splitLayers = newState.layers.split()
     }
 
     handle(eff: Effect): void {
@@ -322,14 +313,11 @@ export class Canvas {
             case EffectType.FrameEffect: {
                 this.perfTracker.start()
                 this.context.addBrushPoints(eff.brushPoints)
-                const resolution = new Vec2(this.canvasElement.width, this.canvasElement.height)
-                const state = eff.state
-
                 this.context.render({
-                    blendMode: Tools.getBlendMode(state.tool),
-                    nextLayers: this.splitLayers,
-                    resolution,
-                    brush: { softness: Tools.getSoftness(state.tool) },
+                    blendMode: Tools.getBlendMode(eff.state.tool),
+                    nextLayers: eff.state.layers.split(),
+                    resolution: this.resolution,
+                    brush: { softness: Tools.getSoftness(eff.state.tool) },
                 })
                 this.perfTracker.end()
                 return
