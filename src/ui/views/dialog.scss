@@ -1,0 +1,39 @@
+@import "../theme.scss";
+
+.backgroundLayer {
+    z-index: 2000;
+    position: "absolute";
+    background-color: rgba(0, 0, 0, 0.5);
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+}
+
+.container {
+    width: "fit-content";
+    min-width: 400px;
+    background-color: $color-surface;
+    color: $color-onSurface;
+    border-radius: 0.25rem;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 8rem;
+    padding: 0.5rem 1rem;
+}
+
+.content {
+    color: inherit;
+}
+
+.divider {
+    width: 100%;
+    height: 1px;
+    background-color: adjust-color($color-onSurface, $alpha: -0.4);
+    margin: 0.5rem 0;
+}
+
+.footer {
+    display: flex;
+    justify-content: flex-end;
+}
