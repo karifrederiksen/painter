@@ -11,7 +11,7 @@ import {
     Ref,
     shallowEqual,
 } from "ivi"
-import { div, button } from "ivi-html"
+import { div } from "ivi-html"
 import styles from "./dialog.scss"
 
 function noOp() {}
@@ -20,6 +20,7 @@ export interface DialogProps {
     readonly isOpen: boolean
     readonly onClose: () => void
     readonly content: Op
+    readonly footer: Op
 }
 export const Dialog = component<DialogProps>(c => {
     const backgroundRef = box<OpState<HTMLDivElement> | null>(null)
@@ -53,9 +54,7 @@ export const Dialog = component<DialogProps>(c => {
                     div(styles.container, _, [
                         div(styles.content, _, props.content),
                         div(styles.divider, _),
-                        div(styles.footer, _, [
-                            Events(onClick(props.onClose), button(_, _, "Close")),
-                        ]),
+                        div(styles.footer, _, props.footer),
                     ])
                 )
             )

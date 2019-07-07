@@ -75,6 +75,22 @@ export function delay(ms: number): Promise<void> {
     })
 }
 
+export function stringToInt(text: string): number | null {
+    const x = parseInt(text, 10)
+    if (isNaN(x)) {
+        return null
+    }
+    return x
+}
+
+export function stringToFloat(text: string): number | null {
+    const x = parseFloat(text)
+    if (isNaN(x)) {
+        return null
+    }
+    return x
+}
+
 export interface PushOnlyArray<a> extends ReadonlyArray<a> {
     push(item: a): unknown
 }

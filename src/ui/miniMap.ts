@@ -1,9 +1,19 @@
 import { Op, _, statelessComponent, shallowEqual } from "ivi"
 import { div } from "ivi-html"
 import * as styles from "./miniMap.scss"
-import { Labeled, InlineLabeled, Slider } from "./views"
+import { LabeledSlider } from "./views"
 import * as Camera from "../tools/camera"
-import { clamp } from "../util"
+import { clamp, stringToFloat } from "../util"
+
+function zoomToString(pct: number): string {
+    return (pct * 100).toFixed(2)
+}
+function rotateToString(pct: number): string {
+    return (pct * 360).toFixed(1)
+}
+function toFixed0(px: number): string {
+    return px.toFixed(0)
+}
 
 export interface MiniMapDetailsProps {
     readonly camera: Camera.Config
@@ -12,46 +22,50 @@ export interface MiniMapDetailsProps {
 
 export const MiniMapDetails = statelessComponent<MiniMapDetailsProps>(({ camera, sender }) => {
     return div(styles.container, _, [
-        Labeled({
+        LabeledSlider({
             label: "Zoom",
-            value: (camera.zoomPct * 100).toFixed(1) + "%",
-            children: Slider({
-                percentage: camera.zoomPct / 4,
-                onChange: pct => {
-                    sender.setZoom(pct * 4)
-                },
-            }),
+            valuePostfix: "%",
+            value: camera.zoomPct,
+            fromString: stringToFloat,
+            toString: zoomToString,
+            percentage: camera.zoomPct / 4,
+            onChange: pct => {
+                sender.setZoom(pct * 4)
+            },
         }),
-        Labeled({
+        LabeledSlider({
             label: "Rotate",
-            value: (camera.rotateTurns * 360).toFixed(1) + " deg",
-            children: Slider({
-                percentage: camera.rotateTurns,
-                onChange: pct => {
-                    console.log(camera.rotateTurns, pct)
-                    sender.setRotation(pct)
-                },
-            }),
+            valuePostfix: " deg",
+            value: camera.rotateTurns,
+            fromString: stringToFloat,
+            toString: rotateToString,
+            percentage: camera.rotateTurns,
+            onChange: pct => {
+                console.log(camera.rotateTurns, pct)
+                sender.setRotation(pct)
+            },
         }),
-        Labeled({
+        LabeledSlider({
             label: "Offset X",
-            value: camera.offsetX.toFixed(0) + " px",
-            children: Slider({
-                percentage: clamp(-5000, 5000, (camera.offsetX + 2500) / 5000),
-                onChange: pct => {
-                    sender.setOffset(pct * 5000 - 2500, camera.offsetY)
-                },
-            }),
+            valuePostfix: " px",
+            value: camera.offsetX,
+            fromString: stringToFloat,
+            toString: toFixed0,
+            percentage: clamp(-5000, 5000, (camera.offsetX + 2500) / 5000),
+            onChange: pct => {
+                sender.setOffset(pct * 5000 - 2500, camera.offsetY)
+            },
         }),
-        Labeled({
+        LabeledSlider({
             label: "Offset Y",
-            value: camera.offsetY.toFixed(0) + " px",
-            children: Slider({
-                percentage: clamp(-5000, 5000, (camera.offsetY + 2500) / 5000),
-                onChange: pct => {
-                    sender.setOffset(camera.offsetX, pct * 5000 - 2500)
-                },
-            }),
+            valuePostfix: " px",
+            value: camera.offsetY,
+            fromString: stringToFloat,
+            toString: toFixed0,
+            percentage: clamp(-5000, 5000, (camera.offsetY + 2500) / 5000),
+            onChange: pct => {
+                sender.setOffset(camera.offsetX, pct * 5000 - 2500)
+            },
         }),
     ])
 }, shallowEqual)

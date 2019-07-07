@@ -2,11 +2,16 @@ import { Op, Events, onClick, _, shallowEqual, statelessComponent } from "ivi"
 import { div, span } from "ivi-html"
 import styles from "./layers.scss"
 import { State, MsgSender, Id, Layer } from "../canvas/layers"
-import { Row, Slider, Labeled, InlineLabeled, Switch, DefaultButton, Surface } from "./views"
+import { Row, DefaultButton, Surface, LabeledSlider, LabeledSwitch } from "./views"
+import { stringToFloat } from "../util"
 
 export interface LayersViewProps {
     readonly layers: State
     readonly sender: MsgSender
+}
+
+function toFixed2(n: number): string {
+    return n.toFixed(2)
 }
 
 export const LayersView = statelessComponent<LayersViewProps>(({ layers, sender }) => {
@@ -31,20 +36,18 @@ export const LayersView = statelessComponent<LayersViewProps>(({ layers, sender 
                         }),
                     ],
                 }),
-                InlineLabeled({
+                LabeledSwitch({
                     label: "Hidden",
-                    children: Switch({
-                        checked: current.isHidden,
-                        onCheck: isHidden => sender.setHidden(current.id, isHidden),
-                    }),
+                    checked: current.isHidden,
+                    onCheck: isHidden => sender.setHidden(current.id, isHidden),
                 }),
-                Labeled({
+                LabeledSlider({
                     label: "Opacity",
-                    value: current.opacity.toFixed(2),
-                    children: Slider({
-                        percentage: current.opacity,
-                        onChange: pct => sender.setOpacity(current.id, pct),
-                    }),
+                    value: current.opacity,
+                    toString: toFixed2,
+                    fromString: stringToFloat,
+                    percentage: current.opacity,
+                    onChange: pct => sender.setOpacity(current.id, pct),
                 }),
             ])
         ),

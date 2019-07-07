@@ -1,0 +1,16 @@
+@import "../theme.scss";
+
+.textInput {
+    background-color: $color-surface;
+    color: $color-onSurface;
+    padding: 0.25rem 0.5rem;
+    border-color: $color-onSurface;
+    border-width: 1px;
+    border-style: solid;
+    border-radius: 0.25rem;
+    font-family: $fonts-monospace;
+
+    &:focus {
+        border-color: $color-primary;
+    }
+}

@@ -10,6 +10,7 @@ import {
     useEffect,
     findDOMNode,
     _,
+    shallowEqual,
 } from "ivi"
 import { div } from "ivi-html"
 import { Hsv } from "color"
@@ -101,4 +102,4 @@ export const Slider = component<SliderProps>(c => {
             )
         )
     }
-})
+}, shallowEqual)

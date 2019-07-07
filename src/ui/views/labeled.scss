@@ -1,3 +1,5 @@
+@import "../theme.scss";
+
 .container {
     color: inherit;
     margin: 0.5rem 0;
@@ -19,4 +21,15 @@
     justify-content: space-between;
     color: inherit;
     user-select: none;
+}
+
+.value-editor {
+    background-color: $color-surface;
+    color: $color-onSurface;
+}
+
+.title-text {
+    font-family: $fonts-normal;
+    font-size: 1.25rem;
+    padding-bottom: 0.5rem;
 }

@@ -86,11 +86,11 @@ const hsluvGen = (maxSat: number, luminance: number) =>
 
 const colorsGen = Gen.object({
     primary: hsluvGen(100, 80),
-    primaryLight: hsluvGen(100, 80),
-    primaryDark: hsluvGen(100, 80),
-    secondary: hsluvGen(100, 77),
-    secondaryLight: hsluvGen(100, 77),
-    secondaryDark: hsluvGen(100, 77),
+    primaryLight: hsluvGen(100, 90),
+    primaryDark: hsluvGen(100, 70),
+    secondary: hsluvGen(70, 77),
+    secondaryLight: hsluvGen(70, 87),
+    secondaryDark: hsluvGen(70, 67),
     background: hsluvGen(20, 46),
     surface: hsluvGen(35, 38),
     onPrimary: hsluvGen(100, 0),

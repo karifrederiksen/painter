@@ -81,7 +81,7 @@ class NoOpEffect {
 class FrameEffect {
     readonly type: EffectType.FrameEffect = EffectType.FrameEffect
     private nominal: void
-    constructor(readonly brushPoints: readonly BrushPoint[], readonly state: Config) {}
+    constructor(readonly brushPoints: readonly BrushPoint[], readonly config: Config) {}
 }
 class BrushPointsEffect {
     readonly type: EffectType.BrushPointsEffect = EffectType.BrushPointsEffect
@@ -204,68 +204,69 @@ function pointersToBrushInputs(
 
 export function update(
     canvasInfo: CanvasInfo,
-    state: Config,
+    config: Config,
     ephemeral: State,
     msg: CanvasMsg
 ): readonly [Config, State, Effect] {
     switch (msg.type) {
         case CanvasMsgType.OnFrame: {
             const [nextToolEphemeral, brushPoints] = Tools.onFrame(
-                state.tool,
+                config.tool,
                 ephemeral.tool,
                 msg.ms
             )
-            const effect = new FrameEffect(brushPoints, state)
-            return [state, { ...ephemeral, tool: nextToolEphemeral }, effect]
+            const effect = new FrameEffect(brushPoints, config)
+            return [config, { ...ephemeral, tool: nextToolEphemeral }, effect]
         }
         case CanvasMsgType.OnClick: {
             const [nextTool, nextToolEphemeral, brushPoints] = Tools.onClick(
-                state.tool,
+                config.tool,
                 ephemeral.tool,
-                pointerToBrushInput(canvasInfo, state.tool.camera, msg.input)
+                pointerToBrushInput(canvasInfo, config.tool.camera, msg.input)
             )
-            const nextState = { ...state, tool: nextTool }
+            const nextState = { ...config, tool: nextTool }
             const nextEphemeral = { ...ephemeral, hasPressedDown: true, tool: nextToolEphemeral }
             const effect = new BrushPointsEffect(brushPoints)
             return [nextState, nextEphemeral, effect]
         }
         case CanvasMsgType.OnRelease: {
             const [nextTool, nextToolEphemeral, brushPoints] = Tools.onRelease(
-                state.tool,
+                config.tool,
                 ephemeral.tool,
-                pointerToBrushInput(canvasInfo, state.tool.camera, msg.input)
+                pointerToBrushInput(canvasInfo, config.tool.camera, msg.input)
             )
-            const nextState = { ...state, tool: nextTool }
+            const nextConfig = { ...config, tool: nextTool }
             const nextEphemeral = { ...ephemeral, hasPressedDown: false, tool: nextToolEphemeral }
             const effect = new ReleaseEffect(brushPoints)
-            return [nextState, nextEphemeral, effect]
+            return [nextConfig, nextEphemeral, effect]
         }
         case CanvasMsgType.OnDrag: {
             if (!ephemeral.hasPressedDown) {
-                return [state, ephemeral, NoOpEffect.value]
+                return [config, ephemeral, NoOpEffect.value]
             }
             const [nextTool, nextToolEphemeral, brushPoints] = Tools.onDrag(
-                state.tool,
+                config.tool,
                 ephemeral.tool,
-                pointersToBrushInputs(canvasInfo, state.tool.camera, msg.inputs)
+                pointersToBrushInputs(canvasInfo, config.tool.camera, msg.inputs)
             )
-            const nextState = { ...state, tool: nextTool }
+            const nextConfig = { ...config, tool: nextTool }
             const nextEphemeral = { ...ephemeral, tool: nextToolEphemeral }
             const effect = new BrushPointsEffect(brushPoints)
-            return [nextState, nextEphemeral, effect]
+            return [nextConfig, nextEphemeral, effect]
         }
         case CanvasMsgType.RandomizeTheme: {
-            const [theme, rng] = Theme.random(ephemeral.themeRng)
-            const nextState = { ...state, rng, theme }
-            return [nextState, ephemeral, NoOpEffect.value]
+            const [theme, themeRng] = Theme.random(ephemeral.themeRng)
+            const nextConfig = { ...config, theme }
+            const nextState = { ...ephemeral, themeRng }
+            return [nextConfig, nextState, NoOpEffect.value]
         }
         case CanvasMsgType.ToolMsg: {
-            const nextState = { ...state, tool: Tools.update(state.tool, msg.msg) }
-            return [nextState, ephemeral, NoOpEffect.value]
+            const nextConfig = { ...config, tool: Tools.update(config.tool, msg.msg) }
+            return [nextConfig, ephemeral, NoOpEffect.value]
         }
         case CanvasMsgType.LayersMsg: {
-            const nextState = { ...state, layers: state.layers.update(msg.msg) }
-            return [nextState, ephemeral, NoOpEffect.value]
+            const nextConfig = { ...config, layers: config.layers.update(msg.msg) }
+            return [nextConfig, ephemeral, NoOpEffect.value]
         }
         default:
             const never: never = msg
@@ -314,10 +315,10 @@ export class Canvas {
                 this.perfTracker.start()
                 this.context.addBrushPoints(eff.brushPoints)
                 this.context.render({
-                    blendMode: Tools.getBlendMode(eff.state.tool),
-                    nextLayers: eff.state.layers.split(),
+                    blendMode: Tools.getBlendMode(eff.config.tool),
+                    nextLayers: eff.config.layers.split(),
                     resolution: this.resolution,
-                    brush: { softness: Tools.getSoftness(eff.state.tool) },
+                    brush: { softness: Tools.getSoftness(eff.config.tool) },
                 })
                 this.perfTracker.end()
                 return
