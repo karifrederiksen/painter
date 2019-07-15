@@ -1,4 +1,5 @@
 import { BrushPoint } from "./brushShader"
+import { Vec2 } from "../util"
 
 const PX_PER_BLOCK_X = 32
 const PX_PER_BLOCK_Y = 32
@@ -109,6 +110,23 @@ export class BlockTracker {
             }
             if (!exists) {
                 strokeBlocks.push(block)
+            }
+        }
+    }
+
+    /**
+     * Mark entire canvas as needing re-rendering.
+     *
+     * Useful for
+     */
+    fillAll(resolution: Vec2): void {
+        const xBlockMax = (resolution.x / PX_PER_BLOCK_X) | 0
+        const yBlockMax = (resolution.y / PX_PER_BLOCK_Y) | 0
+        const frameBlocks = this._frameBlocks
+        let i = 0
+        for (let y = 0; y < yBlockMax; y++) {
+            for (let x = 0; x < xBlockMax; x++) {
+                frameBlocks[i++] = new Block(x, y)
             }
         }
     }

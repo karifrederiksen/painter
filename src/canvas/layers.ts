@@ -343,15 +343,15 @@ export class State {
 
             const current = this.layers.get(this.selectedPath)
             if (current.isLeaf) {
-                return {
+                this.cachedSplitLayers = {
                     above,
                     current: this.layers.getWithContext(this.selectedPath, baseOpacity),
                     below,
                 }
+            } else {
+                current.collectLeaves(below, baseOpacity)
+                this.cachedSplitLayers = { above, current: null, below }
             }
-
-            current.collectLeaves(below, baseOpacity)
-            this.cachedSplitLayers = { above, current: null, below }
         }
         return this.cachedSplitLayers
     }

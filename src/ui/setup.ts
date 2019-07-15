@@ -38,6 +38,7 @@ export async function setup(
     forceRender()
     sender.onRelease(mkPt(600, 700, 1.0))
     forceRender()
+    sender.layer.setOpacity(getState().layers.current().id, 0.5)
     sender.layer.newLayer(getState().layers.current().id)
     forceRender()
     sender.layer.setOpacity(getState().layers.current().id, 0.8)

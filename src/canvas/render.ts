@@ -15,43 +15,46 @@ import { Shader as TextureShader } from "./textureShader"
  * Render OutputTexture to canvas (with transforms and in sRGB)
  */
 
-export interface LayersToCombine {
+export class LayersToCombine {
     readonly above: null | Layers.CollectedLayer[]
     readonly below: null | Layers.CollectedLayer[]
     readonly current: null | Layers.CollectedLayer
-}
+    readonly anyChange: boolean
+    private nominal: void
 
-export function getLayersToCombine(
-    prevLayers: Layers.SplitLayers,
-    nextLayers: Layers.SplitLayers
-): LayersToCombine {
-    const nextAbove = nextLayers.above
-    const nextBelow = nextLayers.below
+    constructor(prevLayers: Layers.SplitLayers, nextLayers: Layers.SplitLayers) {
+        const nextAbove = nextLayers.above
+        const nextBelow = nextLayers.below
 
-    let above: null | Layers.CollectedLayer[] = null
-    let below: null | Layers.CollectedLayer[] = null
+        let above: null | Layers.CollectedLayer[] = null
+        let below: null | Layers.CollectedLayer[] = null
 
-    if (layersAreDifferent(prevLayers.above, nextAbove)) {
-        above = []
-        for (let i = 0; i < nextAbove.length; i++) {
-            const layer = nextAbove[i]
-            if (layer.opacity !== 0) {
-                above.push(layer)
+        if (layersAreDifferent(prevLayers.above, nextAbove)) {
+            above = []
+            for (let i = 0; i < nextAbove.length; i++) {
+                const layer = nextAbove[i]
+                if (layer.opacity !== 0) {
+                    above.push(layer)
+                }
             }
         }
-    }
 
-    if (layersAreDifferent(prevLayers.below, nextBelow)) {
-        below = []
-        for (let i = nextBelow.length - 1; i >= 0; i--) {
-            const layer = nextBelow[i]
-            if (layer.opacity !== 0) {
-                below.push(layer)
+        if (layersAreDifferent(prevLayers.below, nextBelow)) {
+            below = []
+            for (let i = nextBelow.length - 1; i >= 0; i--) {
+                const layer = nextBelow[i]
+                if (layer.opacity !== 0) {
+                    below.push(layer)
+                }
             }
         }
-    }
 
-    return { above, below, current: nextLayers.current }
+        this.above = above
+        this.below = below
+        this.current = nextLayers.current
+        this.anyChange =
+            prevLayers.current !== nextLayers.current || above !== null || below !== null
+    }
 }
 
 function layersAreDifferent(

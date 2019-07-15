@@ -286,6 +286,11 @@ export class Context {
             outputTexture,
         } = this
 
+        const layersToCombine = new Render.LayersToCombine(prevLayers, nextLayers)
+
+        if (layersToCombine.anyChange) {
+            renderBlocks.fillAll(resolution)
+        }
         const frameBlocks = renderBlocks.getFrameBlocks()
         if (frameBlocks.length === 0) {
             return
@@ -328,7 +333,6 @@ export class Context {
             }
         }
 
-        const layersToCombine = Render.getLayersToCombine(prevLayers, nextLayers)
         Render.combineLayers({
             gl,
             resolution,
@@ -344,10 +348,6 @@ export class Context {
 
         // render to outputTexture
         const outFramebuffer = outputTexture.framebuffer
-
-        if (outFramebuffer == null) {
-            throw "Out framebuffer should exist"
-        }
 
         gl.bindFramebuffer(gl.FRAMEBUFFER, outFramebuffer)
 
