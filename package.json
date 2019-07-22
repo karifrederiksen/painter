@@ -1,6 +1,7 @@
 {
     "name": "painter",
     "version": "0.1.0",
+    "license": "UNLICENSED",
     "scripts": {
         "start": "yarn webpack-serve --config webpack.dev.js --port 6789 --host localhost --compress --live-reload --wait-for-build --open --static dist/development",
         "start-css": "yarn tcm src --camelCase --watch",
