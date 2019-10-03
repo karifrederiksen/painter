@@ -20,12 +20,6 @@ export interface RenderArgs {
     readonly nextLayers: Layers.SplitLayers
 }
 
-declare global {
-    interface WebGLContextAttributes {
-        readonly desynchronized: boolean
-    }
-}
-
 export function create(
     canvas: HTMLCanvasElement
 ): Result<readonly [Context, WebGLRenderingContext], string> {

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-const CleanPlugin = require("clean-webpack-plugin")
+const { CleanWebpackPlugin } = require("clean-webpack-plugin")
 const HtmlPlugin = require("html-webpack-plugin")
 const ForkTsCheckerPlugin = require("fork-ts-checker-webpack-plugin")
 const TerserPlugin = require("terser-webpack-plugin")
@@ -24,7 +24,6 @@ function create(env) {
                 ? []
                 : [
                       new TerserPlugin({
-                          parallel: true,
                           terserOptions: {
                               compress: {
                                   drop_console: true,
@@ -83,7 +82,7 @@ function create(env) {
                 filename: isDev ? "[name].css" : "[name]-[hash].css",
             }),
             new HtmlPlugin({ template: resolve(__dirname, "src", "index.html") }),
-            new CleanPlugin(["dist/" + env]),
+            new CleanWebpackPlugin(),
         ],
     }
 }
