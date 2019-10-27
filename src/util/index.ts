@@ -11,6 +11,7 @@ import * as Signals from "./signals"
 export { Signals }
 export * from "./frameStream"
 export * from "./perfTracker"
+export * from "./canvasPool"
 
 export class Lazy<a> {
     private __value: a | null = null

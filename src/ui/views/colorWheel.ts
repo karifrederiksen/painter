@@ -17,7 +17,7 @@ import { div, canvas } from "ivi-html"
 import * as styles from "./colorWheel.scss"
 import * as Color from "color"
 import { DEFINE_TAU, createProgram, DEFINE_hsluv_etc, DEFINE_hsvToRgb } from "../../webgl"
-import { ColorMode, clamp } from "../../util"
+import { ColorMode, clamp, CanvasPool } from "../../util"
 
 export interface ColorWheelProps {
     readonly color: Color.Hsluv
@@ -41,7 +41,7 @@ function noOp() {}
 
 export const ColorWheel = component<ColorWheelProps>(c => {
     const containerRef = box<OpState<HTMLDivElement> | null>(null)
-    const canvasRef = box<OpState<HTMLCanvasElement> | null>(null)
+    const canvasContainerRef = box<OpState<HTMLCanvasElement> | null>(null)
     let glState: GlState | null = null
     let pointerState = PointerState.Default
     let color = new Color.Hsluv(0, 0, 0)
@@ -104,15 +104,19 @@ export const ColorWheel = component<ColorWheelProps>(c => {
     }
 
     const initializeCanvas = useMutationEffect(c, () => {
-        const canvas = findDOMNode<HTMLCanvasElement>(canvasRef)
-        if (canvas == null) {
-            throw { "canvas ref not fonud": canvasRef }
+        const canvasContainer = findDOMNode<HTMLDivElement>(canvasContainerRef)
+        if (canvasContainer == null) {
+            throw { "canvas container ref not found": canvasContainerRef }
         }
+
+        const canvas = CanvasPool.getCanvas({ width: 160, height: 160 })
+        canvasContainer.appendChild(canvas)
 
         glState = new GlState(canvas)
 
         scheduleMicrotask(() => invalidate(c, 1 as UpdateFlags.RequestSyncUpdate))
         return () => {
+            canvasContainer.removeChild(canvas)
             if (glState) {
                 glState.dispose()
             }
@@ -186,17 +190,8 @@ export const ColorWheel = component<ColorWheelProps>(c => {
         colorMode = props.colorType
         colorHandler = props.onChange
 
-        const canvasNode = findDOMNode<HTMLCanvasElement>(canvasRef)
         const thumbData =
-            glState === null
-                ? null
-                : canvasNode === null
-                ? null
-                : glState.getThumbPositions(
-                      props.colorType,
-                      props.color,
-                      canvasNode.getBoundingClientRect()
-                  )
+            glState === null ? null : glState.getThumbPositions(props.colorType, props.color)
 
         return Events(
             onMouseDown(onDown),
@@ -206,7 +201,7 @@ export const ColorWheel = component<ColorWheelProps>(c => {
                     styles.container,
                     _,
                     div(_, _, [
-                        Ref(canvasRef, canvas(_, { width: 160, height: 160 })),
+                        Ref(canvasContainerRef, div()),
                         div(
                             styles.cicleThumb,
                             thumbData === null
@@ -250,7 +245,7 @@ class GlState {
     private readonly ringRenderer: RingRenderer
     private readonly satValRenderer: SatValRenderer
 
-    constructor(canvas: HTMLCanvasElement) {
+    constructor(readonly canvas: HTMLCanvasElement) {
         const gl = canvas.getContext("webgl")
         if (gl === null) {
             throw "Failed to init webgl"
@@ -272,7 +267,9 @@ class GlState {
         this.satValRenderer.render(colorMode, color)
     }
 
-    getThumbPositions(colorType: ColorMode, color: Color.Hsluv, canvasRect: ClientRect | DOMRect) {
+    getThumbPositions(colorType: ColorMode, color: Color.Hsluv) {
+        const canvasRect = this.canvas.getBoundingClientRect()
+
         let angle: number
         let xPct: number
         let yPct: number
@@ -324,6 +321,7 @@ class GlState {
     dispose() {
         this.ringRenderer.dispose()
         this.satValRenderer.dispose()
+        CanvasPool.recycle(this.canvas)
     }
 }
 
