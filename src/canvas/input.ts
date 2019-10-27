@@ -1,15 +1,3 @@
-declare global {
-    interface PointerEvent {
-        // According to mozzila, this method is deprecated, but I can't find a source on that.
-        // https://developer.mozilla.org/en-US/docs/Web/API/PointerEvent
-        getCoalescedEvents(): PointerEvent[]
-    }
-
-    interface Window {
-        PointerEvent: typeof PointerEvent
-    }
-}
-
 export interface PointerInput {
     readonly x: number
     readonly y: number
@@ -59,10 +47,7 @@ const uncoalesce = (() => {
     if (PointerEvent.prototype.getCoalescedEvents === undefined) {
         return (ev: PointerEvent) => [ev]
     }
-    return (ev: PointerEvent) => {
-        const coalescedEvents = ev.getCoalescedEvents()
-        return coalescedEvents
-    }
+    return (ev: PointerEvent) => ev.getCoalescedEvents()
 })()
 
 function localizePointer(
@@ -109,11 +94,9 @@ function listenForPointers(canvas: HTMLCanvasElement, listeners: Listeners): Rem
     const pointerMove = (ev: PointerEvent) => {
         const time = performance.now()
         listeners.move(uncoalesceAndLocalize(time, ev))
-        // listeners.move([localizePointer(bounds, time, ev)])
 
         if (ev.pressure > 0) {
             listeners.drag(uncoalesceAndLocalize(time, ev))
-            // listeners.drag([localizePointer(bounds, time, ev)])
         }
     }
 

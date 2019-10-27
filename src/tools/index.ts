@@ -14,24 +14,24 @@ export const enum ToolMsgType {
 
 export type ToolMsg = SetToolMsg | BrushMsg | EraserMsg | CameraMsg
 
-class SetToolMsg {
-    readonly type: ToolMsgType.SetToolMsg = ToolMsgType.SetToolMsg
-    private nominal: void
+export class SetToolMsg {
+    readonly type = ToolMsgType.SetToolMsg as const
+    private _: void
     constructor(readonly subType: ToolType) {}
 }
-class BrushMsg {
-    readonly type: ToolMsgType.BrushMsg = ToolMsgType.BrushMsg
-    private nominal: void
+export class BrushMsg {
+    readonly type = ToolMsgType.BrushMsg as const
+    private _: void
     constructor(readonly msg: Brush.Msg) {}
 }
-class EraserMsg {
-    readonly type: ToolMsgType.EraserMsg = ToolMsgType.EraserMsg
-    private nominal: void
+export class EraserMsg {
+    readonly type = ToolMsgType.EraserMsg as const
+    private _: void
     constructor(readonly msg: Eraser.Msg) {}
 }
-class CameraMsg {
-    readonly type: ToolMsgType.CameraMsg = ToolMsgType.CameraMsg
-    private nominal: void
+export class CameraMsg {
+    readonly type = ToolMsgType.CameraMsg as const
+    private _: void
     constructor(readonly msg: Camera.Msg) {}
 }
 
@@ -60,28 +60,28 @@ export const enum ToolType {
 }
 
 class BrushState {
-    readonly type: ToolType.Brush = ToolType.Brush
-    private nominal: void
+    readonly type = ToolType.Brush as const
+    private _: void
     constructor(readonly state: Brush.State) {}
 }
 class EraserState {
-    readonly type: ToolType.Eraser = ToolType.Eraser
-    private nominal: void
+    readonly type = ToolType.Eraser as const
+    private _: void
     constructor(readonly state: Eraser.State) {}
 }
 class MoveState {
-    readonly type: ToolType.Move = ToolType.Move
-    private nominal: void
+    readonly type = ToolType.Move as const
+    private _: void
     constructor(readonly state: Camera.DragState | null) {}
 }
 class ZoomState {
-    readonly type: ToolType.Zoom = ToolType.Zoom
-    private nominal: void
+    readonly type = ToolType.Zoom as const
+    private _: void
     constructor(readonly state: Camera.DragState | null) {}
 }
 class RotateState {
-    readonly type: ToolType.Rotate = ToolType.Rotate
-    private nominal: void
+    readonly type = ToolType.Rotate as const
+    private _: void
     constructor(readonly state: Camera.DragState | null) {}
 }
 

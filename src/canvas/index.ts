@@ -1,11 +1,13 @@
 import * as Layers from "./layers"
 import * as Tools from "../tools"
 import * as Input from "./input"
+import * as keymapping from "./keymapping"
 import * as Camera from "../tools/camera"
 import * as Rng from "../rng"
 import * as Theme from "../ui/theme"
 import * as Context from "./context"
 import { BrushPoint } from "./brushShader"
+import { Stack } from "../collections"
 import { Vec2, PerfTracker, turn } from "../util"
 
 export type CanvasMsg =
@@ -13,6 +15,7 @@ export type CanvasMsg =
     | OnClick
     | OnRelease
     | OnDrag
+    | OnKeyboard
     | RandomizeTheme
     | ToolMsg
     | LayersMsg
@@ -22,75 +25,93 @@ export const enum CanvasMsgType {
     OnClick,
     OnRelease,
     OnDrag,
+    OnKeyboard,
     RandomizeTheme,
     ToolMsg,
     LayersMsg,
 }
 
 class OnFrame {
-    readonly type: CanvasMsgType.OnFrame = CanvasMsgType.OnFrame
-    private nominal: void
+    readonly type = CanvasMsgType.OnFrame as const
+    private _: void
     constructor(readonly ms: number) {}
 }
 class OnClick {
-    readonly type: CanvasMsgType.OnClick = CanvasMsgType.OnClick
-    private nominal: void
+    readonly type = CanvasMsgType.OnClick as const
+    private _: void
     constructor(readonly input: Input.PointerInput) {}
 }
 class OnRelease {
-    readonly type: CanvasMsgType.OnRelease = CanvasMsgType.OnRelease
-    private nominal: void
+    readonly type = CanvasMsgType.OnRelease as const
+    private _: void
     constructor(readonly input: Input.PointerInput) {}
 }
 class OnDrag {
-    readonly type: CanvasMsgType.OnDrag = CanvasMsgType.OnDrag
-    private nominal: void
+    readonly type = CanvasMsgType.OnDrag as const
+    private _: void
     constructor(readonly inputs: readonly Input.PointerInput[]) {}
 }
+class OnKeyboard {
+    readonly type = CanvasMsgType.OnKeyboard as const
+    private _: void
+    constructor(readonly input: keymapping.KeyInput) {}
+}
 class RandomizeTheme {
-    readonly type: CanvasMsgType.RandomizeTheme = CanvasMsgType.RandomizeTheme
-    private nominal: void
+    readonly type = CanvasMsgType.RandomizeTheme as const
+    private _: void
     constructor() {}
 }
 class ToolMsg {
     readonly type: CanvasMsgType.ToolMsg = CanvasMsgType.ToolMsg
-    private nominal: void
+    private _: void
     constructor(readonly msg: Tools.ToolMsg) {}
 }
 class LayersMsg {
     readonly type: CanvasMsgType.LayersMsg = CanvasMsgType.LayersMsg
-    private nominal: void
+    private _: void
     constructor(readonly msg: Layers.Msg) {}
 }
 
 export const enum EffectType {
-    NoOpEffect,
-    FrameEffect,
-    BrushPointsEffect,
-    ReleaseEffect,
+    NoOp,
+    Batch,
+    RenderFrame,
+    AddBrushPoints,
+    EndStroke,
 }
-export type Effect = NoOpEffect | FrameEffect | BrushPointsEffect | ReleaseEffect
+export type Effect =
+    | NoOpEffect
+    | BatchEffect
+    | RenderFrameEffect
+    | AddBrushPointsEffect
+    | EndStrokeEffect
 
 class NoOpEffect {
     static readonly value = new NoOpEffect()
-    readonly type: EffectType.NoOpEffect = EffectType.NoOpEffect
-    private nominal: void
+    readonly type = EffectType.NoOp as const
+    private _: void
     private constructor() {}
 }
 
-class FrameEffect {
-    readonly type: EffectType.FrameEffect = EffectType.FrameEffect
-    private nominal: void
+class BatchEffect {
+    readonly type = EffectType.Batch as const
+    private _: void
+    constructor(readonly effects: readonly Effect[]) {}
+}
+
+class RenderFrameEffect {
+    readonly type = EffectType.RenderFrame as const
+    private _: void
     constructor(readonly brushPoints: readonly BrushPoint[], readonly config: Config) {}
 }
-class BrushPointsEffect {
-    readonly type: EffectType.BrushPointsEffect = EffectType.BrushPointsEffect
-    private nominal: void
+class AddBrushPointsEffect {
+    readonly type = EffectType.AddBrushPoints as const
+    private _: void
     constructor(readonly brushPoints: readonly BrushPoint[]) {}
 }
-class ReleaseEffect {
-    readonly type: EffectType.ReleaseEffect = EffectType.ReleaseEffect
-    private nominal: void
+class EndStrokeEffect {
+    readonly type = EffectType.EndStroke as const
+    private _: void
     constructor(readonly brushPoints: readonly BrushPoint[]) {}
 }
 
@@ -115,6 +136,9 @@ export class MsgSender {
         }
         this.sendMessage(new OnDrag(inputs))
     }
+    readonly onKeyboard = (input: keymapping.KeyInput): void => {
+        this.sendMessage(new OnKeyboard(input))
+    }
     readonly randomizeTheme = (): void => {
         this.sendMessage(new RandomizeTheme())
     }
@@ -129,6 +153,7 @@ export interface Config {
     readonly theme: Theme.Theme
     readonly tool: Tools.Config
     readonly layers: Layers.State
+    readonly keyboard: keymapping.KeyBindingSystem<CanvasMsg>
 }
 
 export interface State {
@@ -140,10 +165,36 @@ export interface State {
 export function initState(): [Config, State] {
     const [theme, themeRng] = Theme.random(Rng.XorshiftSeed.create(145264772))
 
+    const createKey = keymapping.KeyInput.createKey
+
     const config: Config = {
         theme,
         tool: Tools.init,
         layers: Layers.State.init(),
+        keyboard: {
+            layers: Stack.empty<keymapping.KeyBindLayer<CanvasMsg>>().cons({
+                [createKey({ code: "KeyB" })]: {
+                    msg: new ToolMsg(new Tools.SetToolMsg(Tools.ToolType.Brush)),
+                    passive: false,
+                },
+                [createKey({ code: "KeyE" })]: {
+                    msg: new ToolMsg(new Tools.SetToolMsg(Tools.ToolType.Eraser)),
+                    passive: false,
+                },
+                [createKey({ code: "KeyZ" })]: {
+                    msg: new ToolMsg(new Tools.SetToolMsg(Tools.ToolType.Zoom)),
+                    passive: false,
+                },
+                [createKey({ code: "KeyM" })]: {
+                    msg: new ToolMsg(new Tools.SetToolMsg(Tools.ToolType.Move)),
+                    passive: false,
+                },
+                [createKey({ code: "KeyR" })]: {
+                    msg: new ToolMsg(new Tools.SetToolMsg(Tools.ToolType.Rotate)),
+                    passive: false,
+                },
+            }),
+        },
     }
     const state: State = {
         themeRng,
@@ -205,68 +256,87 @@ function pointersToBrushInputs(
 export function update(
     canvasInfo: CanvasInfo,
     config: Config,
-    ephemeral: State,
+    state: State,
     msg: CanvasMsg
 ): readonly [Config, State, Effect] {
     switch (msg.type) {
         case CanvasMsgType.OnFrame: {
-            const [nextToolEphemeral, brushPoints] = Tools.onFrame(
-                config.tool,
-                ephemeral.tool,
-                msg.ms
-            )
-            const effect = new FrameEffect(brushPoints, config)
-            return [config, { ...ephemeral, tool: nextToolEphemeral }, effect]
+            const [nextToolEphemeral, brushPoints] = Tools.onFrame(config.tool, state.tool, msg.ms)
+            const effect = new RenderFrameEffect(brushPoints, config)
+            return [config, { ...state, tool: nextToolEphemeral }, effect]
         }
         case CanvasMsgType.OnClick: {
             const [nextTool, nextToolEphemeral, brushPoints] = Tools.onClick(
                 config.tool,
-                ephemeral.tool,
+                state.tool,
                 pointerToBrushInput(canvasInfo, config.tool.camera, msg.input)
             )
-            const nextState = { ...config, tool: nextTool }
-            const nextEphemeral = { ...ephemeral, hasPressedDown: true, tool: nextToolEphemeral }
-            const effect = new BrushPointsEffect(brushPoints)
-            return [nextState, nextEphemeral, effect]
+            const nextConfig: Config = { ...config, tool: nextTool }
+            const nextState: State = { ...state, hasPressedDown: true, tool: nextToolEphemeral }
+            const effect = new AddBrushPointsEffect(brushPoints)
+            return [nextConfig, nextState, effect]
         }
         case CanvasMsgType.OnRelease: {
             const [nextTool, nextToolEphemeral, brushPoints] = Tools.onRelease(
                 config.tool,
-                ephemeral.tool,
+                state.tool,
                 pointerToBrushInput(canvasInfo, config.tool.camera, msg.input)
             )
-            const nextConfig = { ...config, tool: nextTool }
-            const nextEphemeral = { ...ephemeral, hasPressedDown: false, tool: nextToolEphemeral }
-            const effect = new ReleaseEffect(brushPoints)
-            return [nextConfig, nextEphemeral, effect]
+            const nextConfig: Config = { ...config, tool: nextTool }
+            const nextState: State = { ...state, hasPressedDown: false, tool: nextToolEphemeral }
+            const effect = new EndStrokeEffect(brushPoints)
+            return [nextConfig, nextState, effect]
         }
         case CanvasMsgType.OnDrag: {
-            if (!ephemeral.hasPressedDown) {
-                return [config, ephemeral, NoOpEffect.value]
+            if (!state.hasPressedDown) {
+                return [config, state, NoOpEffect.value]
             }
             const [nextTool, nextToolEphemeral, brushPoints] = Tools.onDrag(
                 config.tool,
-                ephemeral.tool,
+                state.tool,
                 pointersToBrushInputs(canvasInfo, config.tool.camera, msg.inputs)
             )
-            const nextConfig = { ...config, tool: nextTool }
-            const nextEphemeral = { ...ephemeral, tool: nextToolEphemeral }
-            const effect = new BrushPointsEffect(brushPoints)
-            return [nextConfig, nextEphemeral, effect]
+            const nextConfig: Config = { ...config, tool: nextTool }
+            const nextState: State = { ...state, tool: nextToolEphemeral }
+            const effect = new AddBrushPointsEffect(brushPoints)
+            return [nextConfig, nextState, effect]
+        }
+        case CanvasMsgType.OnKeyboard: {
+            const msgs = keymapping.handleKeyCode(config.keyboard, msg.input)
+
+            const effects: Effect[] = []
+            let effect: Effect = NoOpEffect.value
+            let nextConfig: Config = config
+            let nextState: State = state
+            for (let i = 0; i < msgs.length; i++) {
+                ;[nextConfig, nextState, effect] = update(
+                    canvasInfo,
+                    nextConfig,
+                    nextState,
+                    msgs[i]
+                )
+                if (effect.type !== EffectType.NoOp) {
+                    effects.push(effect)
+                }
+            }
+            if (effects.length > 0) {
+                effect = new BatchEffect(effects)
+            }
+            return [nextConfig, nextState, effect]
         }
         case CanvasMsgType.RandomizeTheme: {
-            const [theme, themeRng] = Theme.random(ephemeral.themeRng)
-            const nextConfig = { ...config, theme }
-            const nextState = { ...ephemeral, themeRng }
+            const [theme, themeRng] = Theme.random(state.themeRng)
+            const nextConfig: Config = { ...config, theme }
+            const nextState: State = { ...state, themeRng }
             return [nextConfig, nextState, NoOpEffect.value]
         }
         case CanvasMsgType.ToolMsg: {
-            const nextConfig = { ...config, tool: Tools.update(config.tool, msg.msg) }
-            return [nextConfig, ephemeral, NoOpEffect.value]
+            const nextConfig: Config = { ...config, tool: Tools.update(config.tool, msg.msg) }
+            return [nextConfig, state, NoOpEffect.value]
         }
         case CanvasMsgType.LayersMsg: {
-            const nextConfig = { ...config, layers: config.layers.update(msg.msg) }
-            return [nextConfig, ephemeral, NoOpEffect.value]
+            const nextConfig: Config = { ...config, layers: config.layers.update(msg.msg) }
+            return [nextConfig, state, NoOpEffect.value]
         }
         default:
             const never: never = msg
@@ -309,9 +379,16 @@ export class Canvas {
 
     handle(eff: Effect): void {
         switch (eff.type) {
-            case EffectType.NoOpEffect:
+            case EffectType.NoOp:
                 return
-            case EffectType.FrameEffect: {
+            case EffectType.Batch: {
+                const { effects } = eff
+                for (let i = 0; i < effects.length; i++) {
+                    this.handle(effects[i])
+                }
+                return
+            }
+            case EffectType.RenderFrame: {
                 this.perfTracker.start()
                 this.context.addBrushPoints(eff.brushPoints)
                 this.context.render({
@@ -323,11 +400,11 @@ export class Canvas {
                 this.perfTracker.end()
                 return
             }
-            case EffectType.BrushPointsEffect: {
+            case EffectType.AddBrushPoints: {
                 this.context.addBrushPoints(eff.brushPoints)
                 return
             }
-            case EffectType.ReleaseEffect: {
+            case EffectType.EndStroke: {
                 this.context.addBrushPoints(eff.brushPoints)
                 this.context.endStroke()
                 return

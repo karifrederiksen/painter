@@ -19,16 +19,22 @@ import * as Camera from "../tools/camera"
 import * as Theme from "./theme"
 import * as Layers from "./layers"
 import * as Input from "../canvas/input"
+import * as Keymapping from "../canvas/keymapping"
 import * as Canvas from "../canvas"
 import * as Setup from "./setup"
-import { SetOnce, FrameStream, CancelFrameStream, Store, PerfTracker, Vec2, Signals } from "../util"
+import {
+    SetOnce,
+    FrameStream,
+    CancelFrameStream,
+    Store,
+    PerfTracker,
+    Vec2,
+    Signals,
+    PushOnlyArray,
+} from "../util"
 import { PrimaryButton, Surface } from "./views"
 import * as Debugging from "./debugging"
 import { MiniMapDetails } from "./miniMap"
-
-function getDocumentResolution(): Vec2 {
-    return new Vec2(document.documentElement.clientWidth, document.documentElement.clientHeight)
-}
 
 function getCanvasOffset(canvas: HTMLCanvasElement): Vec2 {
     return new Vec2(canvas.offsetLeft, canvas.offsetTop)
@@ -48,10 +54,10 @@ function getCanvasInfo({
     }
 }
 
+interface Disposals extends PushOnlyArray<() => void> {}
+
 const App = component(c => {
     const [initialState, initialEphemeral] = Canvas.initState()
-    const removeInputListeners = new SetOnce<Input.RemoveListeners>()
-    const cancelFrameStream = new SetOnce<CancelFrameStream>()
     const canvasModel = new SetOnce<Canvas.Canvas>()
     const debuggingGl = new SetOnce<WebGLRenderingContext>()
     const perfTrackerData = Signals.create<readonly PerfTracker.Sample[]>([])
@@ -59,7 +65,6 @@ const App = component(c => {
 
     const canvasResolution = new Vec2(800, 800)
 
-    let documentResolution: Vec2 = getDocumentResolution()
     let canvasInfo: Canvas.CanvasInfo = getCanvasInfo({
         canvasOffset: new Vec2(initialState.tool.camera.offsetX, initialState.tool.camera.offsetY),
         canvasResolution,
@@ -81,7 +86,6 @@ const App = component(c => {
 
     {
         function onResize() {
-            documentResolution = getDocumentResolution()
             canvasInfo = getCanvasInfo({
                 canvasOffset: getCanvasOffset(findDOMNode(canvasRef) as HTMLCanvasElement),
                 canvasResolution,
@@ -106,6 +110,7 @@ const App = component(c => {
     })
 
     const setupCanvas = useLayoutEffect(c, () => {
+        const disposals: Disposals = []
         console.log("Painter mounted")
         const htmlCanvas = findDOMNode<HTMLCanvasElement>(canvasRef)
         if (htmlCanvas == null) {
@@ -133,7 +138,7 @@ const App = component(c => {
             canvasModel.set(canvas)
         }
 
-        removeInputListeners.set(
+        disposals.push(
             Input.listen(htmlCanvas, {
                 click: sender.onClick,
                 release: sender.onRelease,
@@ -143,7 +148,13 @@ const App = component(c => {
                 drag: sender.onDrag,
             })
         )
-        cancelFrameStream.set(FrameStream.make(sender.onFrame))
+        disposals.push(
+            Keymapping.listen({
+                handle: sender.onKeyboard,
+            })
+        )
+        disposals.push(FrameStream.make(sender.onFrame))
+        disposals.push(() => canvasModel.value.dispose())
 
         if (process.env.NODE_ENV !== "production") {
             Setup.setup(htmlCanvas, () => store.getState(), sender).then(() => {
@@ -152,9 +163,9 @@ const App = component(c => {
         }
 
         return () => {
-            removeInputListeners.value()
-            cancelFrameStream.value()
-            canvasModel.value.dispose()
+            for (let i = 0; i < disposals.length; i++) {
+                disposals[i]()
+            }
             console.log("Painter unmounted")
         }
     })
