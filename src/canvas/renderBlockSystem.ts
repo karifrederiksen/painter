@@ -28,6 +28,15 @@ export class Block {
         hash = (hash << 5) - hash + this.y0
         return hash
     }
+
+    contains(position: Vec2): boolean {
+        return (
+            position.x >= this.x0 &&
+            position.x <= this.x1 &&
+            position.y >= this.y0 &&
+            position.y <= this.y1
+        )
+    }
 }
 
 export interface RenderBlockSystemArgs {
@@ -197,11 +206,6 @@ export class RenderBlockSystem {
      * Call this after the stroke has ended, but before rendering the frame.
      */
     strokeEnded(): void {
-        // const currentTime: number = performance.now()
-        // this._highlightBlocks.length = 0
-        // for (let i = 0; i < this._strokeBlocks.length; i++) {
-        //     this._highlightBlocks.push({ drawTimeMs: currentTime, block: this._strokeBlocks[i] })
-        // }
         this._strokeBlocks.length = 0
     }
 }
