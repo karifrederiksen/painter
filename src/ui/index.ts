@@ -7,10 +7,10 @@ import {
     box,
     findDOMNode,
     OpState,
-    useEffect,
     Ref,
     useLayoutEffect,
     useUnmount,
+    Component,
 } from "ivi"
 import { div, canvas } from "ivi-html"
 import * as styles from "./index.scss"
@@ -22,16 +22,7 @@ import * as Input from "../canvas/input"
 import * as Keymapping from "../canvas/keymapping"
 import * as Canvas from "../canvas"
 import * as Setup from "./setup"
-import {
-    SetOnce,
-    FrameStream,
-    CancelFrameStream,
-    Store,
-    PerfTracker,
-    Vec2,
-    Signals,
-    PushOnlyArray,
-} from "../util"
+import { SetOnce, FrameStream, Store, PerfTracker, Vec2, Signals, PushOnlyArray } from "../util"
 import { PrimaryButton, Surface } from "./views"
 import * as Debugging from "./debugging"
 import { MiniMapDetails } from "./miniMap"
@@ -52,6 +43,29 @@ function getCanvasInfo({
         halfResoution: canvasResolution.multiplyScalar(0.5),
         offset: canvasOffset,
     }
+}
+
+function useUnloadPromptEffect(c: Component) {
+    function handle(e: BeforeUnloadEvent) {
+        e.preventDefault()
+        e.returnValue = ""
+    }
+    window.addEventListener("beforeunload", handle)
+    useUnmount(c, () => {
+        window.removeEventListener("beforeunload", handle)
+    })
+}
+
+function createUpdateThemeEffect(c: Component) {
+    let prevTheme: Theme.Theme | null = null
+    return useLayoutEffect<Theme.Theme>(c, nextTheme => {
+        if (prevTheme === null) {
+            Theme.updateAll(nextTheme)
+        } else {
+            Theme.updateDiff(prevTheme, nextTheme)
+        }
+        prevTheme = nextTheme
+    })
 }
 
 interface Disposals extends PushOnlyArray<() => void> {}
@@ -98,16 +112,6 @@ const App = component(c => {
     }
 
     const sender = new Canvas.MsgSender(store.send)
-
-    let prevTheme: Theme.Theme | null = null
-    const updateTheme = useEffect<Theme.Theme>(c, nextTheme => {
-        if (prevTheme === null) {
-            Theme.updateAll(nextTheme)
-        } else {
-            Theme.updateDiff(prevTheme, nextTheme)
-        }
-        prevTheme = nextTheme
-    })
 
     const setupCanvas = useLayoutEffect(c, () => {
         const disposals: Disposals = []
@@ -175,6 +179,12 @@ const App = component(c => {
         const rotate = "rotate(" + cam.rotateTurns + "turn) "
         const scale = "scale(" + cam.zoomPct + ", " + cam.zoomPct + ")"
         return translate + rotate + scale
+    }
+
+    const updateTheme = createUpdateThemeEffect(c)
+
+    if (process.env.NODE_ENV === "development") {
+        useUnloadPromptEffect(c)
     }
 
     return (): Op => {
