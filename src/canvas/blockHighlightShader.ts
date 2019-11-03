@@ -1,12 +1,15 @@
 import * as WebGL from "../webgl"
-import { Block } from "./renderBlockSystem"
+import { HighlightBlock } from "./renderBlockSystem"
 
 const VERT_SRC = `
 precision highp float;
 
 attribute vec2 a_position;
+attribute float a_opacity;
 
 uniform vec2 u_resolution;
+
+varying float v_opacity;
 
 void main() {
     vec2 pos = a_position / u_resolution;
@@ -14,21 +17,26 @@ void main() {
     pos = pos * 2.0;
     pos = pos - 1.0;
     gl_Position = vec4(pos, 0.0, 1.0);
+
+    v_opacity = a_opacity;
 }
 `
 
 const FRAG_SRC = `
 precision highp float;
 
+varying float v_opacity;
+
 uniform vec4 u_rgba;
 
 void main() {
-    gl_FragColor = u_rgba;
+    gl_FragColor = u_rgba * v_opacity;
 }
 `
 
 const AttributesInfo = new WebGL.AttributesInfo([
     { name: "a_position", size: 2, type: WebGL.AttribType.Float },
+    { name: "a_opacity", size: 1, type: WebGL.AttribType.Float },
 ])
 
 const Uniforms = {
@@ -39,7 +47,7 @@ const Uniforms = {
 export interface Args {
     readonly uniforms: WebGL.UniformArgs<typeof Uniforms>
     readonly framebuffer: WebGLFramebuffer
-    readonly blocks: readonly Block[]
+    readonly blockHighlights: readonly HighlightBlock[]
 }
 
 export class Shader {
@@ -80,29 +88,37 @@ export class Shader {
         gl.blendFunc(sfact, dfact)
         gl.useProgram(this.program)
         gl.bindFramebuffer(gl.FRAMEBUFFER, args.framebuffer)
-        if (this.capacity < args.blocks.length) {
-            this.capacity = args.blocks.length
+        if (this.capacity < args.blockHighlights.length) {
+            this.capacity = args.blockHighlights.length
             this.array = new Float32Array(AttributesInfo.size * 6 * this.capacity)
         }
 
         const array = this.array
 
         let offset = 0
-        for (let i = 0; i < args.blocks.length; i++) {
-            const { x0, y0, x1, y1 } = args.blocks[i]
+        for (let i = 0; i < args.blockHighlights.length; i++) {
+            const { block, opacity } = args.blockHighlights[i]
+            const { x0, y0, x1, y1 } = block
+
             array[offset++] = x0
             array[offset++] = y0
+            array[offset++] = opacity
             array[offset++] = x0
             array[offset++] = y1
+            array[offset++] = opacity
             array[offset++] = x1
             array[offset++] = y0
+            array[offset++] = opacity
 
             array[offset++] = x0
             array[offset++] = y1
+            array[offset++] = opacity
             array[offset++] = x1
             array[offset++] = y0
+            array[offset++] = opacity
             array[offset++] = x1
             array[offset++] = y1
+            array[offset++] = opacity
         }
 
         // buffer data
@@ -113,7 +129,7 @@ export class Shader {
 
         AttributesInfo.vertexAttrib(gl)
 
-        gl.drawArrays(WebGLRenderingContext.TRIANGLES, 0, 6 * args.blocks.length)
+        gl.drawArrays(WebGLRenderingContext.TRIANGLES, 0, 6 * args.blockHighlights.length)
     }
 
     dispose(gl: WebGLRenderingContext): void {

@@ -72,6 +72,10 @@ export function clamp(min: number, max: number, n: number): number {
     return n < min ? min : n > max ? max : n
 }
 
+export function newClamp(n: number, min: number, max: number) {
+    return clamp(min, max, n)
+}
+
 export function delay(ms: number): Promise<void> {
     return new Promise(res => {
         setTimeout(res, ms)

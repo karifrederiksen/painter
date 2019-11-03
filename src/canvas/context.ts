@@ -2,23 +2,15 @@ import * as OutputShader from "./outputShader"
 import * as BrushTextureShader from "./brushTextureGenerator"
 import * as TextureShader from "./textureShader"
 import * as ClearBlocksShader from "./clearBlocksShader"
+import * as BlockHighlightShader from "./blockHighlightShader"
 import * as BrushShader from "./brushShader"
 import * as Layers from "./layers"
-import * as BlockRender from "./blockRender"
+import * as BlockRender from "./renderBlockSystem"
 import { Blend } from "../webgl"
 import { Result, Ok, Err, Vec2, Vec4 } from "../util"
 import { RgbLinear } from "color"
 import { Texture, TextureId, createTextureWithFramebuffer, ensureTextureIsBound } from "./texture"
 import * as Render from "./render"
-
-export interface RenderArgs {
-    readonly resolution: Vec2
-    readonly blendMode: Blend.Mode
-    readonly brush: {
-        readonly softness: number
-    }
-    readonly nextLayers: Layers.SplitLayers
-}
 
 export function create(
     canvas: HTMLCanvasElement
@@ -97,6 +89,13 @@ export function create(
         return new Err(msg)
     }
 
+    const blockHighlightShader = BlockHighlightShader.Shader.create(gl)
+    if (blockHighlightShader === null) {
+        const msg = "Failed to initialize BlockHighlightShader"
+        console.error(msg)
+        return new Err(msg)
+    }
+
     gl.viewport(0, 0, canvas.width, canvas.height)
 
     const context = new Context({
@@ -106,6 +105,7 @@ export function create(
         outputRenderer,
         textureRenderer,
         clearBlocksRenderer,
+        blockHighlightShader,
         resolution: new Vec2(canvas.width, canvas.height),
     })
     return new Ok([context, gl] as const)
@@ -116,9 +116,21 @@ interface CreationArgs {
     readonly brushTextureGenerator: BrushTextureShader.Generator
     readonly textureRenderer: TextureShader.Shader
     readonly clearBlocksRenderer: ClearBlocksShader.Shader
+    readonly blockHighlightShader: BlockHighlightShader.Shader
     readonly outputRenderer: OutputShader.Shader
     readonly drawpointBatch: BrushShader.Shader
     readonly resolution: Vec2
+}
+
+export interface RenderArgs {
+    readonly currentTime: number
+    readonly resolution: Vec2
+    readonly blendMode: Blend.Mode
+    readonly brush: {
+        readonly softness: number
+    }
+    readonly nextLayers: Layers.SplitLayers
+    readonly highlightRenderBlocks: boolean
 }
 
 export class Context {
@@ -126,6 +138,7 @@ export class Context {
     private readonly brushTextureGenerator: BrushTextureShader.Generator
     private readonly textureRenderer: TextureShader.Shader
     private readonly clearBlocksRenderer: ClearBlocksShader.Shader
+    private readonly blockHighlightShader: BlockHighlightShader.Shader
     private readonly outputRenderer: OutputShader.Shader
     private readonly drawpointBatch: BrushShader.Shader
     private readonly allTextures: Texture[]
@@ -133,7 +146,7 @@ export class Context {
     private readonly layerTextureMap: Map<Layers.Id, Texture>
     private internalCanvasSize: Vec2
     private stroke: Texture | null
-    private renderBlocks: BlockRender.BlockTracker
+    private renderBlockSystem: BlockRender.RenderBlockSystem
     private prevLayers: Layers.SplitLayers
     private readonly brushTexture: Texture
     private readonly outputTexture: Texture
@@ -148,6 +161,7 @@ export class Context {
         this.brushTextureGenerator = args.brushTextureGenerator
         this.textureRenderer = args.textureRenderer
         this.clearBlocksRenderer = args.clearBlocksRenderer
+        this.blockHighlightShader = args.blockHighlightShader
         this.outputRenderer = args.outputRenderer
         this.drawpointBatch = args.drawpointBatch
         this.allTextures = []
@@ -155,7 +169,7 @@ export class Context {
         this.layerTextureMap = new Map()
         this.internalCanvasSize = args.resolution
         this.stroke = null
-        this.renderBlocks = new BlockRender.BlockTracker()
+        this.renderBlockSystem = new BlockRender.RenderBlockSystem(500)
         this.prevLayers = {
             above: [],
             below: [],
@@ -228,7 +242,7 @@ export class Context {
 
     addBrushPoints(brushPoints: readonly BrushShader.BrushPoint[]) {
         this.drawpointBatch.addPoints(brushPoints)
-        this.renderBlocks.addPoints(brushPoints)
+        this.renderBlockSystem.addBrushPoints(brushPoints)
     }
 
     endStroke() {
@@ -239,7 +253,7 @@ export class Context {
             internalCanvasSize,
             textureRenderer,
             combinedLayers,
-            renderBlocks,
+            renderBlockSystem,
             textureBindings,
         } = this
         if (stroke === null || prevLayers.current === null) {
@@ -254,20 +268,20 @@ export class Context {
                 u_resolution: internalCanvasSize,
                 u_texture: ensureTextureIsBound(gl, textureBindings, stroke),
             },
-            blocks: renderBlocks.getStrokeBlocks(),
+            blocks: renderBlockSystem.getStrokeBlocks(),
         })
 
         gl.bindFramebuffer(gl.FRAMEBUFFER, stroke.framebuffer)
         gl.clearColor(0, 0, 0, 0)
         gl.clear(gl.COLOR_BUFFER_BIT)
-        renderBlocks.strokeEnded()
+        renderBlockSystem.strokeEnded()
     }
 
     render(args: RenderArgs) {
         const { blendMode, nextLayers, resolution, brush } = args
         const {
             gl,
-            renderBlocks,
+            renderBlockSystem,
             drawpointBatch,
             layerTextureMap,
             allTextures,
@@ -283,9 +297,12 @@ export class Context {
         const layersToCombine = new Render.LayersToCombine(prevLayers, nextLayers)
 
         if (layersToCombine.anyChange) {
-            renderBlocks.fillAll(resolution)
+            renderBlockSystem.fillAll(args.currentTime, resolution)
         }
-        const frameBlocks = renderBlocks.getFrameBlocks()
+
+        renderBlockSystem.update(args.currentTime)
+
+        const frameBlocks = renderBlockSystem.getFrameBlocks()
         if (frameBlocks.length === 0) {
             return
         }
@@ -347,16 +364,11 @@ export class Context {
 
         {
             // need to clear the render blocks...
-            const bgColor = new RgbLinear(
-                process.env.NODE_ENV === "development" ? 0.9 : 0.6,
-                0.6,
-                0.6
-            )
             this.clearBlocksRenderer.render(gl, {
                 framebuffer: outFramebuffer,
                 uniforms: {
                     u_resolution: resolution,
-                    u_rgba: Vec4.fromRgba(bgColor, 1),
+                    u_rgba: Vec4.fromRgba(new RgbLinear(0.6, 0.6, 0.6), 1),
                 },
                 blocks: frameBlocks,
             })
@@ -372,6 +384,17 @@ export class Context {
             },
             blocks: frameBlocks,
         })
+        if (args.highlightRenderBlocks) {
+            const blockHighlights = renderBlockSystem.getHighlights()
+            this.blockHighlightShader.render(gl, {
+                framebuffer: outFramebuffer,
+                uniforms: {
+                    u_resolution: resolution,
+                    u_rgba: Vec4.fromRgba(new RgbLinear(0, 0, 1), 1),
+                },
+                blockHighlights,
+            })
+        }
         if (nextLayers.current !== null) {
             // CURRENT
             this.textureRenderer.render(gl, {
@@ -407,7 +430,6 @@ export class Context {
 
         gl.flush()
         //gl.finish()
-        renderBlocks.afterFrame()
         this.prevLayers = nextLayers
     }
 

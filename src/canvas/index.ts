@@ -17,6 +17,7 @@ export type CanvasMsg =
     | OnDrag
     | OnKeyboard
     | RandomizeTheme
+    | ToggleHighlightRenderBlocks
     | ToolMsg
     | LayersMsg
 
@@ -27,6 +28,7 @@ export const enum CanvasMsgType {
     OnDrag,
     OnKeyboard,
     RandomizeTheme,
+    ToggleHighlightRenderBlocks,
     ToolMsg,
     LayersMsg,
 }
@@ -58,6 +60,11 @@ class OnKeyboard {
 }
 class RandomizeTheme {
     readonly type = CanvasMsgType.RandomizeTheme as const
+    private _: void
+    constructor() {}
+}
+class ToggleHighlightRenderBlocks {
+    readonly type = CanvasMsgType.ToggleHighlightRenderBlocks as const
     private _: void
     constructor() {}
 }
@@ -143,6 +150,10 @@ export class MsgSender {
         this.sendMessage(new RandomizeTheme())
     }
 
+    readonly toggleHighlightRenderBlocks = (): void => {
+        this.sendMessage(new ToggleHighlightRenderBlocks())
+    }
+
     constructor(private sendMessage: (msg: CanvasMsg) => void) {
         this.tool = new Tools.MsgSender(msg => sendMessage(new ToolMsg(msg)))
         this.layer = new Layers.MsgSender(msg => sendMessage(new LayersMsg(msg)))
@@ -153,6 +164,7 @@ export interface Config {
     readonly theme: Theme.Theme
     readonly tool: Tools.Config
     readonly layers: Layers.State
+    readonly highlightRenderBlocks: boolean
     readonly keyboard: keymapping.KeyBindingSystem<CanvasMsg>
 }
 
@@ -171,6 +183,7 @@ export function initState(): [Config, State] {
         theme,
         tool: Tools.init,
         layers: Layers.State.init(),
+        highlightRenderBlocks: false,
         keyboard: {
             layers: Stack.empty<keymapping.KeyBindLayer<CanvasMsg>>().cons({
                 [createKey({ code: "KeyB" })]: {
@@ -191,6 +204,10 @@ export function initState(): [Config, State] {
                 },
                 [createKey({ code: "KeyR" })]: {
                     msg: new ToolMsg(new Tools.SetToolMsg(Tools.ToolType.Rotate)),
+                    passive: false,
+                },
+                [createKey({ code: "KeyP" })]: {
+                    msg: new ToggleHighlightRenderBlocks(),
                     passive: false,
                 },
             }),
@@ -330,6 +347,13 @@ export function update(
             const nextState: State = { ...state, themeRng }
             return [nextConfig, nextState, NoOpEffect.value]
         }
+        case CanvasMsgType.ToggleHighlightRenderBlocks: {
+            const nextConfig: Config = {
+                ...config,
+                highlightRenderBlocks: !config.highlightRenderBlocks,
+            }
+            return [nextConfig, state, NoOpEffect.value]
+        }
         case CanvasMsgType.ToolMsg: {
             const nextConfig: Config = { ...config, tool: Tools.update(config.tool, msg.msg) }
             return [nextConfig, state, NoOpEffect.value]
@@ -396,6 +420,8 @@ export class Canvas {
                     nextLayers: eff.config.layers.split(),
                     resolution: this.resolution,
                     brush: { softness: Tools.getSoftness(eff.config.tool) },
+                    currentTime: performance.now(),
+                    highlightRenderBlocks: eff.config.highlightRenderBlocks,
                 })
                 this.perfTracker.end()
                 return

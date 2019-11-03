@@ -53,6 +53,7 @@ export async function setup(
     sender.tool.brush.setDiameter(15)
     sender.tool.brush.setColorMode(ColorMode.Hsv)
     forceRender()
+    sender.toggleHighlightRenderBlocks()
     // sender.tool.setTool(ToolType.Zoom)
     // forceRender()
 }
