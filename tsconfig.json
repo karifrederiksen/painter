@@ -6,6 +6,7 @@
         "module": "esnext",
         "outDir": ".cache/js",
         "sourceMap": true,
+        "experimentalDecorators": true,
 
         /* Strict Type-Checking Options */
         "strict": true,

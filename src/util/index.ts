@@ -12,6 +12,8 @@ export { Signals }
 export * from "./frameStream"
 export * from "./perfTracker"
 export * from "./canvasPool"
+export * from "./debug"
+export * from "./bloomFilter"
 
 export class Lazy<a> {
     private __value: a | null = null
