@@ -1,5 +1,5 @@
 import { BrushPoint } from "./brushShader"
-import { Vec2, newClamp } from "../util"
+import { Vec2, clamp } from "../util"
 
 export const PX_PER_BLOCK_X = 32
 export const PX_PER_BLOCK_Y = 32
@@ -88,7 +88,7 @@ export class RenderBlockSystem {
             const x = renderBlocks[i]
             const dt = lastUpdateMs - x.drawTimeMs
             output[i] = {
-                opacity: newClamp(1 - dt / debugHighlightTimeMs, 0, 1),
+                opacity: clamp(1 - dt / debugHighlightTimeMs, 0, 1),
                 block: x.block,
             }
         }

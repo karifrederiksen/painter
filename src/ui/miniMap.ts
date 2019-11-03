@@ -51,7 +51,7 @@ export const MiniMapDetails = statelessComponent<MiniMapDetailsProps>(({ camera,
             value: camera.offsetX,
             fromString: stringToFloat,
             toString: toFixed0,
-            percentage: clamp(-5000, 5000, (camera.offsetX + 2500) / 5000),
+            percentage: clamp((camera.offsetX + 2500) / 5000, -5000, 5000),
             onChange: pct => {
                 sender.setOffset(pct * 5000 - 2500, camera.offsetY)
             },
@@ -62,7 +62,7 @@ export const MiniMapDetails = statelessComponent<MiniMapDetailsProps>(({ camera,
             value: camera.offsetY,
             fromString: stringToFloat,
             toString: toFixed0,
-            percentage: clamp(-5000, 5000, (camera.offsetY + 2500) / 5000),
+            percentage: clamp((camera.offsetY + 2500) / 5000, -5000, 5000),
             onChange: pct => {
                 sender.setOffset(camera.offsetX, pct * 5000 - 2500)
             },

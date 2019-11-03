@@ -122,16 +122,16 @@ export const init: Config = {
 export function update(state: Config, msg: Msg): Config {
     switch (msg.type) {
         case MsgType.SetDiameterMsg:
-            return { ...state, diameterPx: clamp(0.1, 500, msg.diameterPx) }
+            return { ...state, diameterPx: clamp(msg.diameterPx, 0.1, 500) }
 
         case MsgType.SetSoftnessMsg:
-            return { ...state, softness: clamp(0, 1, msg.softnessPct) }
+            return { ...state, softness: clamp(msg.softnessPct, 0, 1) }
 
         case MsgType.SetOpacityMsg:
-            return { ...state, flowPct: clamp(0.01, 1, msg.opacityPct) }
+            return { ...state, flowPct: clamp(msg.opacityPct, 0.01, 1) }
 
         case MsgType.SetSpacingMsg:
-            return { ...state, spacingPct: clamp(0.01, 1, msg.spacingPct) }
+            return { ...state, spacingPct: clamp(msg.spacingPct, 0.01, 1) }
 
         case MsgType.SetPressureAffectsOpacityMsg:
             return { ...state, pressureAffectsOpacity: msg.pressureAffectsOpacity }
@@ -140,7 +140,7 @@ export function update(state: Config, msg: Msg): Config {
             return { ...state, pressureAffectsSize: msg.pressureAffectsSize }
 
         case MsgType.SetDelayMsg:
-            return { ...state, delay: BrushDelay.delay(clamp(0, 500, msg.delayMs)) }
+            return { ...state, delay: BrushDelay.delay(clamp(msg.delayMs, 0, 500)) }
 
         default:
             const never: never = msg

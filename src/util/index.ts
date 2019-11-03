@@ -68,12 +68,8 @@ export function smoothstep(x: number): number {
     return x * x * (3 - x + x)
 }
 
-export function clamp(min: number, max: number, n: number): number {
-    return n < min ? min : n > max ? max : n
-}
-
-export function newClamp(n: number, min: number, max: number) {
-    return clamp(min, max, n)
+export function clamp(value: number, min: number, max: number) {
+    return value < min ? min : value > max ? max : value
 }
 
 export function delay(ms: number): Promise<void> {

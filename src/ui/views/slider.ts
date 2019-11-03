@@ -39,7 +39,7 @@ export const Slider = component<SliderProps>(c => {
         const dotWidth = Rem * 0.75
         const width = bounds.width - dotWidth
 
-        const localX = clamp(0, width, ev.clientX - bounds.left - dotWidth / 2)
+        const localX = clamp(ev.clientX - bounds.left - dotWidth / 2, 0, width)
 
         handler(localX / width)
     }

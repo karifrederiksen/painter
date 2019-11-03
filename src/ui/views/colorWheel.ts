@@ -82,8 +82,8 @@ export const ColorWheel = component<ColorWheelProps>(c => {
         const width = bounds.width - marginX * 2
         const height = bounds.height - marginY * 2
 
-        const x = clamp(0, width, ev.clientX - bounds.left - marginX)
-        const y = clamp(0, height, ev.clientY - bounds.top - marginY)
+        const x = clamp(ev.clientX - bounds.left - marginX, 0, width)
+        const y = clamp(ev.clientY - bounds.top - marginY, 0, height)
 
         const pctX = x / width
         const pctY = 1 - y / height
@@ -162,8 +162,8 @@ export const ColorWheel = component<ColorWheelProps>(c => {
 
     function onDown(ev: WithClientXY) {
         const bounds = findDOMNode<HTMLDivElement>(containerRef)!.getBoundingClientRect()
-        const x = clamp(0, bounds.width, ev.clientX - bounds.left)
-        const y = clamp(0, bounds.height, ev.clientY - bounds.top)
+        const x = clamp(ev.clientX - bounds.left, 0, bounds.width)
+        const y = clamp(ev.clientY - bounds.top, 0, bounds.height)
 
         const marginX = bounds.width * MARGIN
         const marginY = bounds.height * MARGIN
