@@ -41,7 +41,7 @@
         "jsverify": "0.8.4",
         "material-design-icons": "3.0.1",
         "mini-css-extract-plugin": "0.8.0",
-        "node-sass": "4.12.0",
+        "node-sass": "4.13.1",
         "ordered-collections": "git+https://github.com/karifrederiksen/ordered-collections.git",
         "sass-loader": "8.0.0",
         "terser-webpack-plugin": "2.1.2",
