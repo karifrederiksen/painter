@@ -1,2 +1,2 @@
 export * from "./rng"
-export { Generators } from "./generators"
+export * as Generators from "./generators"

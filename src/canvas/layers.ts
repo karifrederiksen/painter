@@ -1,8 +1,8 @@
 import { orDefault, arrUpdate, arrInsert, arrRemove } from "../util"
 import { Stack, PushArray } from "../collections"
 
-export declare class Id {
-    private nominal: void
+export interface Id {
+    __nominal: "Id"
 }
 
 export interface CollectedLayer {
@@ -216,27 +216,22 @@ export const enum MsgType {
 
 class NewLayerMsg {
     readonly type: MsgType.NewLayerMsg = MsgType.NewLayerMsg
-    private nominal: void
     constructor(readonly id: Id) {}
 }
 class RemoveMsg {
     readonly type: MsgType.RemoveMsg = MsgType.RemoveMsg
-    private nominal: void
     constructor(readonly id: Id) {}
 }
 class SelectMsg {
     readonly type: MsgType.SelectMsg = MsgType.SelectMsg
-    private nominal: void
     constructor(readonly id: Id) {}
 }
 class SetOpacityMsg {
     readonly type: MsgType.SetOpacityMsg = MsgType.SetOpacityMsg
-    private nominal: void
     constructor(readonly id: Id, readonly opacity: number) {}
 }
 class SetHiddenMsg {
     readonly type: MsgType.SetHiddenMsg = MsgType.SetHiddenMsg
-    private nominal: void
     constructor(readonly id: Id, readonly isHidden: boolean) {}
 }
 export class MsgSender {
@@ -293,13 +288,13 @@ export class State {
                 const { id, opacity } = msg
                 const current = this.current()
 
-                return current.id === id ? this.updateCurrent(x => x.with({ opacity })) : this
+                return current.id === id ? this.updateCurrent((x) => x.with({ opacity })) : this
             }
             case MsgType.SetHiddenMsg: {
                 const { id, isHidden } = msg
                 const current = this.current()
 
-                return current.id === id ? this.updateCurrent(x => x.with({ isHidden })) : this
+                return current.id === id ? this.updateCurrent((x) => x.with({ isHidden })) : this
             }
             default:
                 const never: never = msg

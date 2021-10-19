@@ -1,6 +1,7 @@
 import { Vec2, Vec3, Vec4 } from "../util"
 
 export * from "./glsl"
+export * as Blend from "./blend"
 
 export function createProgram(
     gl: WebGLRenderingContext,
@@ -103,7 +104,6 @@ export type UniformNames<a> = { readonly [key in keyof a]: UniformType }
 export type UniformsInfo<a extends UniformNames<a>> = { readonly [key in keyof a]: Uniform }
 
 export class Uniform {
-    private nominal: void
     constructor(readonly location: WebGLUniformLocation, readonly type: UniformType) {}
 }
 
@@ -276,36 +276,5 @@ export class AttributesInfo {
 
     getDrawCount(offset: number): number {
         return offset / this.size
-    }
-}
-
-export namespace Blend {
-    export const enum Mode {
-        Normal,
-        Erase,
-    }
-
-    export interface Factors {
-        readonly sfact: number
-        readonly dfact: number
-    }
-
-    export const factorsNormal = {
-        sfact: WebGLRenderingContext.ONE,
-        dfact: WebGLRenderingContext.ONE_MINUS_SRC_ALPHA,
-    }
-
-    export const factorsErase = {
-        sfact: WebGLRenderingContext.ZERO,
-        dfact: WebGLRenderingContext.ONE_MINUS_SRC_ALPHA,
-    }
-
-    export function getFactors(mode: Mode): Factors {
-        switch (mode) {
-            case Mode.Normal:
-                return factorsNormal
-            case Mode.Erase:
-                return factorsErase
-        }
     }
 }

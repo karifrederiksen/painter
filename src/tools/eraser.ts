@@ -27,37 +27,30 @@ export const enum MsgType {
 
 class SetDiameterMsg {
     readonly type: MsgType.SetDiameterMsg = MsgType.SetDiameterMsg
-    private nominal: void
     constructor(readonly diameterPx: number) {}
 }
 class SetSoftnessMsg {
     readonly type: MsgType.SetSoftnessMsg = MsgType.SetSoftnessMsg
-    private nominal: void
     constructor(readonly softnessPct: number) {}
 }
 class SetOpacityMsg {
     readonly type: MsgType.SetOpacityMsg = MsgType.SetOpacityMsg
-    private nominal: void
     constructor(readonly opacityPct: number) {}
 }
 class SetSpacingMsg {
     readonly type: MsgType.SetSpacingMsg = MsgType.SetSpacingMsg
-    private nominal: void
     constructor(readonly spacingPct: number) {}
 }
 class SetPressureAffectsOpacityMsg {
     readonly type: MsgType.SetPressureAffectsOpacityMsg = MsgType.SetPressureAffectsOpacityMsg
-    private nominal: void
     constructor(readonly pressureAffectsOpacity: boolean) {}
 }
 class SetPressureAffectsSizeMsg {
     readonly type: MsgType.SetPressureAffectsSizeMsg = MsgType.SetPressureAffectsSizeMsg
-    private nominal: void
     constructor(readonly pressureAffectsSize: boolean) {}
 }
 class SetDelayMsg {
     readonly type: MsgType.SetDelayMsg = MsgType.SetDelayMsg
-    private nominal: void
     constructor(readonly delayMs: number) {}
 }
 

@@ -34,52 +34,42 @@ export type Msg =
 
 class SetDiameterMsg {
     readonly type: MsgType.SetDiameterMsg = MsgType.SetDiameterMsg
-    private nominal: void
     constructor(readonly diameterPx: number) {}
 }
 class SetSoftnessMsg {
     readonly type: MsgType.SetSoftnessMsg = MsgType.SetSoftnessMsg
-    private nominal: void
     constructor(readonly softnessPct: number) {}
 }
 class SetOpacityMsg {
     readonly type: MsgType.SetOpacityMsg = MsgType.SetOpacityMsg
-    private nominal: void
     constructor(readonly opacityPct: number) {}
 }
 class SetColorMsg {
     readonly type: MsgType.SetColorMsg = MsgType.SetColorMsg
-    private nominal: void
     constructor(readonly color: Color.Hsluv) {}
 }
 class SetColorModeMsg {
     readonly type: MsgType.SetColorModeMsg = MsgType.SetColorModeMsg
-    private nominal: void
     constructor(readonly mode: ColorMode) {}
 }
 class SetSpacingMsg {
     readonly type: MsgType.SetSpacingMsg = MsgType.SetSpacingMsg
-    private nominal: void
     constructor(readonly spacingPct: number) {}
 }
 class SetPressureAffectsOpacityMsg {
     readonly type: MsgType.SetPressureAffectsOpacityMsg = MsgType.SetPressureAffectsOpacityMsg
-    private nominal: void
     constructor(readonly pressureAffectsOpacity: boolean) {}
 }
 class SetPressureAffectsSizeMsg {
     readonly type: MsgType.SetPressureAffectsSizeMsg = MsgType.SetPressureAffectsSizeMsg
-    private nominal: void
     constructor(readonly pressureAffectsSize: boolean) {}
 }
 class SwapColorMsg {
     readonly type: MsgType.SwapColorMsg = MsgType.SwapColorMsg
-    private nominal: void
     constructor() {}
 }
 class SetDelayMsg {
     readonly type: MsgType.SetDelayMsg = MsgType.SetDelayMsg
-    private nominal: void
     constructor(readonly delayMs: number) {}
 }
 
@@ -166,7 +156,7 @@ export function update(state: Config, msg: Msg): Config {
         case MsgType.SetColorMsg:
             return { ...state, color: msg.color }
         case MsgType.SetColorModeMsg:
-            return { ...state, colorMode: state.colorMode.focusf(x => x === msg.mode) }
+            return { ...state, colorMode: state.colorMode.focusf((x) => x === msg.mode) }
         case MsgType.SetSpacingMsg:
             return { ...state, spacingPct: clamp(msg.spacingPct, 0.01, 1) }
         case MsgType.SetPressureAffectsOpacityMsg:

@@ -12,13 +12,13 @@ abstract class ResultBase<a, error> {
 }
 
 export class Ok<a, error> extends ResultBase<a, error> {
-    private nominal: void
     readonly value: a
     readonly error: null
 
     constructor(value: a) {
         super()
         this.value = value
+        this.error = null
     }
 
     isOk(): this is Ok<a, error> {
@@ -43,12 +43,12 @@ export class Ok<a, error> extends ResultBase<a, error> {
 }
 
 export class Err<a, error> extends ResultBase<a, error> {
-    private nominal: void
     readonly value: null
     readonly error: error
 
     constructor(error: error) {
         super()
+        this.value = null
         this.error = error
     }
 

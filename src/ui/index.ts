@@ -1,3 +1,4 @@
+import "regenerator-runtime/runtime"
 import {
     Op,
     component,
@@ -26,6 +27,8 @@ import { SetOnce, FrameStream, Store, PerfTracker, Vec2, Signals, PushOnlyArray 
 import { PrimaryButton, Surface } from "./views"
 import * as Debugging from "./debugging"
 import { MiniMapDetails } from "./miniMap"
+
+console.error({ styles })
 
 function getCanvasOffset(canvas: HTMLCanvasElement): Vec2 {
     return new Vec2(canvas.offsetLeft, canvas.offsetTop)
@@ -58,7 +61,7 @@ function useUnloadPromptEffect(c: Component) {
 
 function createUpdateThemeEffect(c: Component) {
     let prevTheme: Theme.Theme | null = null
-    return useLayoutEffect<Theme.Theme>(c, nextTheme => {
+    return useLayoutEffect<Theme.Theme>(c, (nextTheme) => {
         if (prevTheme === null) {
             Theme.updateAll(nextTheme)
         } else {
@@ -70,7 +73,7 @@ function createUpdateThemeEffect(c: Component) {
 
 interface Disposals extends PushOnlyArray<() => void> {}
 
-const App = component(c => {
+const App = component((c) => {
     const [initialState, initialEphemeral] = Canvas.initState()
     const canvasModel = new SetOnce<Canvas.Canvas>()
     const debuggingGl = new SetOnce<WebGLRenderingContext>()
@@ -128,10 +131,10 @@ const App = component(c => {
 
         {
             const canvas = Canvas.Canvas.create(htmlCanvas, {
-                onStats: stats => {
+                onStats: (stats) => {
                     perfTrackerData.push(stats)
                 },
-                onWebglContextCreated: gl => {
+                onWebglContextCreated: (gl) => {
                     debuggingGl.set(gl)
                 },
             })
@@ -146,7 +149,7 @@ const App = component(c => {
             Input.listen(htmlCanvas, {
                 click: sender.onClick,
                 release: sender.onRelease,
-                move: x => {
+                move: (x) => {
                     /**/
                 },
                 drag: sender.onDrag,
@@ -157,7 +160,7 @@ const App = component(c => {
                 handle: sender.onKeyboard,
             })
         )
-        disposals.push(FrameStream.make(sender.onFrame))
+        disposals.push(FrameStream.FrameStream.make(sender.onFrame))
         disposals.push(() => canvasModel.value.dispose())
 
         if (process.env.NODE_ENV !== "production") {

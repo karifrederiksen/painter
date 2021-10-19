@@ -1,14 +1,12 @@
 import { Vec2, PushOnlyArray } from "../util"
 
-export declare class TextureId {
-    private nominal: void
+export interface TextureId {
+    __nominal: "TextureId"
 }
 
 let nextTextureId = 1
 
 export class Texture {
-    private nominal: void
-
     readonly id: TextureId
     readonly texture: WebGLTexture
     readonly framebuffer: WebGLFramebuffer

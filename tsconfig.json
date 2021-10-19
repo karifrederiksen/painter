@@ -2,11 +2,10 @@
     "compilerOptions": {
         /* Basic Options */
         "incremental": true,
-        "target": "es2016",
-        "module": "esnext",
+        "target": "ESNext",
+        "module": "ESNext",
         "outDir": ".cache/js",
         "sourceMap": true,
-        "experimentalDecorators": true,
 
         /* Strict Type-Checking Options */
         "strict": true,
@@ -15,8 +14,6 @@
         "moduleResolution": "node",
         "esModuleInterop": true,
         "resolveJsonModule": true,
-        "preserveConstEnums": false,
         "types": ["node"]
-    },
-    "include": ["src/**/*.ts"]
+    }
 }

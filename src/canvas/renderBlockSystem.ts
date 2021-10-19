@@ -10,7 +10,6 @@ export class Block {
     readonly x1: number
     readonly y1: number
 
-    private _: void
     constructor(x: number, y: number) {
         this.x0 = x * PX_PER_BLOCK_X
         this.y0 = y * PX_PER_BLOCK_Y

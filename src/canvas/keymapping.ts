@@ -1,22 +1,21 @@
 import { Stack } from "../collections"
 
-export namespace Modifiers {
-    export declare class T {
-        private nominal: void
-    }
+export interface ModifiersT {
+    __nominal: "ModifiersT"
+}
 
-    /* eslint-disable @typescript-eslint/no-explicit-any */
-    function toNumber(x: T): number {
-        return x as any
-    }
-    function fromNumber(x: number): T {
-        return x as any
-    }
-    /* eslint-enable */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function toNumber(x: ModifiersT): number {
+    return x as any
+}
+function fromNumber(x: number): ModifiersT {
+    return x as any
+}
+/* eslint-enable */
 
-    export const None = fromNumber(0)
-
-    export function create(shift: boolean, alt: boolean, ctrl: boolean): T {
+export const Modifiers = {
+    None: fromNumber(0),
+    create(shift: boolean, alt: boolean, ctrl: boolean): ModifiersT {
         let x = 0
 
         if (shift) {
@@ -30,61 +29,53 @@ export namespace Modifiers {
         }
 
         return fromNumber(x)
-    }
-
-    export function hasModifiers(self: T, other: T): boolean {
+    },
+    hasModifiers(self: ModifiersT, other: ModifiersT): boolean {
         return (toNumber(self) & toNumber(other)) > 0
-    }
-
-    export function hasShift(x: T): boolean {
+    },
+    hasShift(x: ModifiersT): boolean {
         return (toNumber(x) & 1) > 0
-    }
-
-    export function hasAlt(x: T): boolean {
+    },
+    hasAlt(x: ModifiersT): boolean {
         return (toNumber(x) & 2) > 0
-    }
-
-    export function hasCtrl(x: T): boolean {
+    },
+    hasCtrl(x: ModifiersT): boolean {
         return (toNumber(x) & 4) > 0
-    }
-
-    export function toString(x: T): string {
+    },
+    toString(x: ModifiersT): string {
         return toNumber(x).toString()
-    }
-
-    export function fromString(text: string): T | null {
+    },
+    fromString(text: string): ModifiersT | null {
         const x = parseInt(text, 10)
         return isNaN(x) ? null : fromNumber(x)
-    }
+    },
 }
 
 const ModifierKeyCodes = [/*Shift*/ 16, /*Ctrl*/ 17, /*Alt*/ 18, /*OS*/ 91] as const
 
 export interface KeyInput {
     readonly code: string
-    readonly modifiers: Modifiers.T
+    readonly modifiers: ModifiersT
 }
 
-export namespace KeyInput {
-    export function toString(x: KeyInput): string {
+export interface CreateKeyArgs {
+    readonly code: string
+    readonly shift?: boolean
+    readonly alt?: boolean
+    readonly ctrl?: boolean
+}
+
+export const KeyInput = {
+    toString(x: KeyInput): string {
         return Modifiers.toString(x.modifiers) + "|" + x.code
-    }
-
-    export interface CreateKeyArgs {
-        readonly code: string
-        readonly shift?: boolean
-        readonly alt?: boolean
-        readonly ctrl?: boolean
-    }
-
-    export function createKey(args: CreateKeyArgs): string {
-        return toString({
+    },
+    createKey(args: CreateKeyArgs): string {
+        return KeyInput.toString({
             code: args.code,
             modifiers: Modifiers.create(!!args.shift, !!args.alt, !!args.ctrl),
         })
-    }
-
-    export function fromString(text: string): KeyInput | null {
+    },
+    fromString(text: string): KeyInput | null {
         const parts = text.split("|")
         if (parts.length !== 2) {
             return null
@@ -96,15 +87,14 @@ export namespace KeyInput {
             return null
         }
         return { code, modifiers }
-    }
-
-    export function fromKeyboardEvent(ev: KeyboardEvent): KeyInput {
+    },
+    fromKeyboardEvent(ev: KeyboardEvent): KeyInput {
         console.log(ev)
         return {
             code: ev.code,
             modifiers: Modifiers.create(ev.shiftKey, ev.altKey, ev.ctrlKey),
         }
-    }
+    },
 }
 
 export interface KeyBinding<msg> {

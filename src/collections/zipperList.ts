@@ -1,4 +1,4 @@
-import { Stack } from "./stack"
+import * as Stack from "./stack"
 
 export class ZipperList<a> {
     static singleton<a>(value: a): ZipperList<a> {

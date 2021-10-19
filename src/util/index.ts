@@ -1,7 +1,7 @@
 import { Vec2 } from "./vec2"
 
-export { Store } from "./store"
-export { Decode } from "./decode"
+export * as Store from "./store"
+export * as Decode from "./decode"
 export * from "./maybe"
 export * from "./result"
 export * from "./vec2"
@@ -9,11 +9,11 @@ export * from "./vec3"
 export * from "./vec4"
 import * as Signals from "./signals"
 export { Signals }
-export * from "./frameStream"
-export * from "./perfTracker"
-export * from "./canvasPool"
-export * from "./debug"
-export * from "./bloomFilter"
+export * as FrameStream from "./frameStream"
+export * as PerfTracker from "./perfTracker"
+export * as CanvasPool from "./canvasPool"
+export * as Debug from "./debug"
+export * as Bloomfilter from "./bloomFilter"
 
 export class Lazy<a> {
     private __value: a | null = null
@@ -73,7 +73,7 @@ export function clamp(value: number, min: number, max: number) {
 }
 
 export function delay(ms: number): Promise<void> {
-    return new Promise(res => {
+    return new Promise((res) => {
         setTimeout(res, ms)
     })
 }
@@ -130,32 +130,30 @@ export function colorModeToString(type: ColorMode): string {
     }
 }
 
-export declare class Degrees {
-    private nominal: void
+export const Degrees = {
+    fromNumber(x: number): Degrees {
+        return x as any
+    },
+    toNumber(x: Degrees): number {
+        return x as any
+    },
 }
 
-export namespace Degrees {
-    export function fromNumber(x: number): Degrees {
-        return x as any
-    }
-
-    export function toNumber(x: Degrees): number {
-        return x as any
-    }
+export interface Degrees {
+    __nominal: void
 }
 
-export declare class Turns {
-    private nominal: void
+export interface Turns {
+    __nominal: void
 }
 
-export namespace Turns {
-    export function fromNumber(x: number): Turns {
+export const Turns = {
+    fromNumber(x: number): Turns {
         return x as any
-    }
-
-    export function toNumber(x: Turns): number {
+    },
+    toNumber(x: Turns): number {
         return x as any
-    }
+    },
 }
 
 export function turnsToDegrees(turns: Turns): Degrees {
@@ -179,53 +177,49 @@ export function turn(turns: number, center: Vec2, point: Vec2): Vec2 {
     return new Vec2(x, y)
 }
 
-export declare class Pct {
-    private nominal: void
+export interface Pct {
+    __nominal: void
 }
 
-export namespace Pct {
-    export function fromNumber(x: number): Pct {
+export const Pct = {
+    fromNumber(x: number): Pct {
         return x as any
-    }
-    export function toNumber(pct: Pct): number {
+    },
+    toNumber(pct: Pct): number {
         return pct as any
-    }
+    },
 }
 
-export declare class Px {
-    private nominal: void
+export interface Px {
+    __nominal: void
 }
 
-export namespace Px {
-    export function fromNumber(x: number): Px {
+export const Px = {
+    fromNumber(x: number): Px {
         return x as any
-    }
-
-    export function toNumber(px: Px): number {
+    },
+    toNumber(px: Px): number {
         return px as any
-    }
+    },
 }
 
-export declare class Ms {
-    private nominal: void
+export interface Ms {
+    __nominal: void
 }
 
-export namespace Ms {
-    export function fromNumber(x: number): Px {
+export const Ms = {
+    fromNumber(x: number): Px {
         return x as any
-    }
-
-    export function toNumber(px: Px): number {
+    },
+    toNumber(px: Px): number {
         return px as any
-    }
+    },
 }
 
 export class Position {
-    private nominal: void
     constructor(readonly x: Px, readonly y: Px) {}
 }
 
 export class Size {
-    private nominal: void
     constructor(readonly width: Px, readonly height: Px) {}
 }

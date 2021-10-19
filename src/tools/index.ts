@@ -16,22 +16,18 @@ export type ToolMsg = SetToolMsg | BrushMsg | EraserMsg | CameraMsg
 
 export class SetToolMsg {
     readonly type = ToolMsgType.SetToolMsg as const
-    private _: void
     constructor(readonly subType: ToolType) {}
 }
 export class BrushMsg {
     readonly type = ToolMsgType.BrushMsg as const
-    private _: void
     constructor(readonly msg: Brush.Msg) {}
 }
 export class EraserMsg {
     readonly type = ToolMsgType.EraserMsg as const
-    private _: void
     constructor(readonly msg: Eraser.Msg) {}
 }
 export class CameraMsg {
     readonly type = ToolMsgType.CameraMsg as const
-    private _: void
     constructor(readonly msg: Camera.Msg) {}
 }
 
@@ -45,9 +41,9 @@ export class MsgSender {
     }
 
     constructor(private sendMessage: (msg: ToolMsg) => void) {
-        this.brush = new Brush.MsgSender(msg => sendMessage(new BrushMsg(msg)))
-        this.eraser = new Eraser.MsgSender(msg => sendMessage(new EraserMsg(msg)))
-        this.camera = new Camera.MsgSender(msg => sendMessage(new CameraMsg(msg)))
+        this.brush = new Brush.MsgSender((msg) => sendMessage(new BrushMsg(msg)))
+        this.eraser = new Eraser.MsgSender((msg) => sendMessage(new EraserMsg(msg)))
+        this.camera = new Camera.MsgSender((msg) => sendMessage(new CameraMsg(msg)))
     }
 }
 
@@ -61,27 +57,22 @@ export const enum ToolType {
 
 class BrushState {
     readonly type = ToolType.Brush as const
-    private _: void
     constructor(readonly state: Brush.State) {}
 }
 class EraserState {
     readonly type = ToolType.Eraser as const
-    private _: void
     constructor(readonly state: Eraser.State) {}
 }
 class MoveState {
     readonly type = ToolType.Move as const
-    private _: void
     constructor(readonly state: Camera.DragState | null) {}
 }
 class ZoomState {
     readonly type = ToolType.Zoom as const
-    private _: void
     constructor(readonly state: Camera.DragState | null) {}
 }
 class RotateState {
     readonly type = ToolType.Rotate as const
-    private _: void
     constructor(readonly state: Camera.DragState | null) {}
 }
 

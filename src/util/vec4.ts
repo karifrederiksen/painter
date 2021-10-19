@@ -6,14 +6,12 @@ export class Vec4 {
     eq(other: Vec4): boolean {
         return Vec4.eq(this, other)
     }
-}
 
-export namespace Vec4 {
-    export function fromRgba(rgb: RgbLinear, alpha: number): Vec4 {
+    static fromRgba(rgb: RgbLinear, alpha: number): Vec4 {
         return new Vec4(rgb.r * alpha, rgb.g * alpha, rgb.b * alpha, alpha)
     }
 
-    export function eq(l: Vec4, r: Vec4): boolean {
+    static eq(l: Vec4, r: Vec4): boolean {
         return l.x === r.x && l.y === r.y && l.z === r.z && l.w === r.w
     }
 }

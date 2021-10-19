@@ -16,17 +16,14 @@ export const enum MsgType {
 
 class SetZoomMsg {
     readonly type: MsgType.SetZoomMsg = MsgType.SetZoomMsg
-    private nominal: void
     constructor(readonly zoomPct: number) {}
 }
 class SetOffsetMsg {
     readonly type: MsgType.SetOffsetMsg = MsgType.SetOffsetMsg
-    private nominal: void
     constructor(readonly offsetX: number, readonly offsetY: number) {}
 }
 class SetRotationMsg {
     readonly type: MsgType.SetRotationMsg = MsgType.SetRotationMsg
-    private nominal: void
     constructor(readonly rotationTurns: number) {}
 }
 

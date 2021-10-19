@@ -1,20 +1,18 @@
-export namespace PerfTracker {
-    export interface Sample {
-        readonly startMs: number
-        readonly endMs: number
-    }
+export interface Sample {
+    readonly startMs: number
+    readonly endMs: number
 }
 
 export class PerfTracker {
     private readonly maxSamples: number
-    private readonly onSamples: (stats: readonly PerfTracker.Sample[]) => void
-    private samples: PerfTracker.Sample[]
+    private readonly onSamples: (stats: readonly Sample[]) => void
+    private samples: Sample[]
     private nextIdx: number
     private startTimeMs: number | null
 
     constructor(args: {
         readonly maxSamples: number
-        readonly onSamples: (stats: readonly PerfTracker.Sample[]) => void
+        readonly onSamples: (stats: readonly Sample[]) => void
     }) {
         this.maxSamples = args.maxSamples
         this.onSamples = args.onSamples

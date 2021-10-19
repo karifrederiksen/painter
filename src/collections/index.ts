@@ -1,4 +1,4 @@
-export * from "./stack"
+export * as Stack from "./stack"
 
 export interface PushArray<T> extends ReadonlyArray<T> {
     push(...items: T[]): void

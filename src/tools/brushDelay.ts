@@ -18,8 +18,6 @@ export function delay(duration: number): Config {
 }
 
 export class Input {
-    private nominal: void
-
     constructor(readonly x: number, readonly y: number, readonly pressure: number) {}
 
     lerp(pct: number, end: Input): Input {

@@ -35,47 +35,38 @@ export const enum CanvasMsgType {
 
 class OnFrame {
     readonly type = CanvasMsgType.OnFrame as const
-    private _: void
     constructor(readonly ms: number) {}
 }
 class OnClick {
     readonly type = CanvasMsgType.OnClick as const
-    private _: void
     constructor(readonly input: Input.PointerInput) {}
 }
 class OnRelease {
     readonly type = CanvasMsgType.OnRelease as const
-    private _: void
     constructor(readonly input: Input.PointerInput) {}
 }
 class OnDrag {
     readonly type = CanvasMsgType.OnDrag as const
-    private _: void
     constructor(readonly inputs: readonly Input.PointerInput[]) {}
 }
 class OnKeyboard {
     readonly type = CanvasMsgType.OnKeyboard as const
-    private _: void
     constructor(readonly input: keymapping.KeyInput) {}
 }
 class RandomizeTheme {
     readonly type = CanvasMsgType.RandomizeTheme as const
-    private _: void
     constructor() {}
 }
 class ToggleHighlightRenderBlocks {
     readonly type = CanvasMsgType.ToggleHighlightRenderBlocks as const
-    private _: void
     constructor() {}
 }
 class ToolMsg {
     readonly type: CanvasMsgType.ToolMsg = CanvasMsgType.ToolMsg
-    private _: void
     constructor(readonly msg: Tools.ToolMsg) {}
 }
 class LayersMsg {
     readonly type: CanvasMsgType.LayersMsg = CanvasMsgType.LayersMsg
-    private _: void
     constructor(readonly msg: Layers.Msg) {}
 }
 
@@ -96,29 +87,24 @@ export type Effect =
 class NoOpEffect {
     static readonly value = new NoOpEffect()
     readonly type = EffectType.NoOp as const
-    private _: void
     private constructor() {}
 }
 
 class BatchEffect {
     readonly type = EffectType.Batch as const
-    private _: void
     constructor(readonly effects: readonly Effect[]) {}
 }
 
 class RenderFrameEffect {
     readonly type = EffectType.RenderFrame as const
-    private _: void
     constructor(readonly brushPoints: readonly BrushPoint[], readonly config: Config) {}
 }
 class AddBrushPointsEffect {
     readonly type = EffectType.AddBrushPoints as const
-    private _: void
     constructor(readonly brushPoints: readonly BrushPoint[]) {}
 }
 class EndStrokeEffect {
     readonly type = EffectType.EndStroke as const
-    private _: void
     constructor(readonly brushPoints: readonly BrushPoint[]) {}
 }
 
@@ -155,8 +141,8 @@ export class MsgSender {
     }
 
     constructor(private sendMessage: (msg: CanvasMsg) => void) {
-        this.tool = new Tools.MsgSender(msg => sendMessage(new ToolMsg(msg)))
-        this.layer = new Layers.MsgSender(msg => sendMessage(new LayersMsg(msg)))
+        this.tool = new Tools.MsgSender((msg) => sendMessage(new ToolMsg(msg)))
+        this.layer = new Layers.MsgSender((msg) => sendMessage(new LayersMsg(msg)))
     }
 }
 
@@ -388,14 +374,14 @@ export class Canvas {
         return null
     }
 
-    private readonly perfTracker: PerfTracker
+    private readonly perfTracker: PerfTracker.PerfTracker
 
     private constructor(
         private readonly resolution: Vec2,
         private readonly hooks: Hooks,
         private readonly context: Context.Context
     ) {
-        this.perfTracker = new PerfTracker({
+        this.perfTracker = new PerfTracker.PerfTracker({
             maxSamples: 50,
             onSamples: this.hooks.onStats,
         })

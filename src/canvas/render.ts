@@ -20,7 +20,6 @@ export class LayersToCombine {
     readonly below: null | Layers.CollectedLayer[]
     readonly current: null | Layers.CollectedLayer
     readonly anyChange: boolean
-    private nominal: void
 
     constructor(prevLayers: Layers.SplitLayers, nextLayers: Layers.SplitLayers) {
         const nextAbove = nextLayers.above

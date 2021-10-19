@@ -2,10 +2,11 @@
     "name": "painter",
     "version": "0.1.0",
     "license": "UNLICENSED",
+    "browserslist": "> 0.5%, last 2 versions, not dead",
     "scripts": {
-        "start": "webpack-serve --config webpack.dev.js --port 6789 --host localhost --compress --live-reload --wait-for-build --open --static dist/development",
-        "build-dev": "webpack-cli --config webpack.dev.js",
-        "build-prod": "webpack-cli --config webpack.prod.js",
+        "start": "parcel src/index.html",
+        "build-dev": "echo 'error'",
+        "build-prod": "echo 'error'",
         "typecheck": "tsc --project tsconfig.json --noEmit --incremental false",
         "test": "ava",
         "generate-css": "tsm src --nameFormat \"camel\""
@@ -27,30 +28,29 @@
         ]
     },
     "dependencies": {
-        "@types/node": "12.7.11",
-        "ava": "2.4.0",
-        "clean-webpack-plugin": "3.0.0",
+        "@parcel/packager-ts": "^2.0.0",
+        "@parcel/transformer-sass": "2.0.0",
+        "@parcel/transformer-typescript-tsc": "2.0.0",
+        "@parcel/transformer-typescript-types": "2.0.0",
+        "@types/node": "16.11.1",
+        "ava": "3.15.0",
         "color": "git+https://github.com/karifrederiksen/color.git",
-        "css-loader": "3.2.0",
         "esm": "3.2.25",
-        "fork-ts-checker-webpack-plugin": "1.5",
-        "html-webpack-plugin": "3.2.0",
+        "html-webpack-plugin": "5.4.0",
         "ivi": "0.27.1",
         "ivi-html": "0.27.0",
         "ivi-svg": "0.27.0",
         "jsverify": "0.8.4",
-        "material-design-icons": "3.0.1",
-        "mini-css-extract-plugin": "0.8.0",
-        "node-sass": "4.12.0",
         "ordered-collections": "git+https://github.com/karifrederiksen/ordered-collections.git",
-        "sass-loader": "8.0.0",
-        "terser-webpack-plugin": "2.1.2",
-        "ts-loader": "6.2.0",
-        "ts-node": "8.4.1",
-        "typed-scss-modules": "0.0.12",
-        "typescript": "3.7.0-beta",
-        "webpack": "4.41.0",
-        "webpack-cli": "3.3.9",
-        "webpack-serve": "3.2.0"
+        "parcel": "2.0.0",
+        "ts-loader": "9.2.6",
+        "ts-node": "10.3.0",
+        "typed-scss-modules": "4.1.1"
+    },
+    "devDependencies": {
+        "autoprefixer": "10.3.7",
+        "postcss": "8.3.9",
+        "precss": "4.0.0",
+        "sass": "1.43.2"
     }
 }

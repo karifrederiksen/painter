@@ -39,7 +39,7 @@ type WithClientXY = Readonly<{
 
 function noOp() {}
 
-export const ColorWheel = component<ColorWheelProps>(c => {
+export const ColorWheel = component<ColorWheelProps>((c) => {
     const containerRef = box<OpState<HTMLDivElement> | null>(null)
     const canvasContainerRef = box<OpState<HTMLCanvasElement> | null>(null)
     let glState: GlState | null = null
@@ -125,7 +125,7 @@ export const ColorWheel = component<ColorWheelProps>(c => {
 
     const renderCanvas = useMutationEffect<{ colorMode: ColorMode; color: Color.Hsluv }>(
         c,
-        args => {
+        (args) => {
             if (!glState) {
                 return
             }
@@ -181,7 +181,7 @@ export const ColorWheel = component<ColorWheelProps>(c => {
         }
     }
 
-    return props => {
+    return (props) => {
         listenToMouse()
         initializeCanvas()
         renderCanvas({ colorMode: props.colorType, color: props.color })
