@@ -1,7 +1,7 @@
-node_modules
-.vscode
-.parcel-cache
-dist
-TODO
-yarn-error.log
+/node_modules
+/.vscode
+/.cache
+/.parcel-cache
+/dist
+/TODO
 *.scss.d.ts

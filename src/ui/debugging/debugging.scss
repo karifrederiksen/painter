@@ -1,0 +1,23 @@
+@import "../theme.scss";
+
+.container {
+    z-index: 100;
+    display: flex;
+    padding: 0.5rem 1rem;
+}
+
+.contentContainer {
+    padding-left: 1rem;
+}
+
+.monospaced {
+    font-family: $fonts-monospace;
+}
+
+.codeInput {
+    font-family: "Courier New", Courier, monospace;
+    background-color: $color-primary;
+    color: $color-onPrimary;
+    border-radius: 0.25rem;
+    padding: 0.25rem;
+}
