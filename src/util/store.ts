@@ -25,13 +25,19 @@ export function create<state, ephemeral, msg, effects>(
     let ephemeral = initialEphemeral
 
     function handleMsg(msg: msg): void {
-        const [nextState, nextEphemeral, effect] = update(state, ephemeral, msg)
-        if (state !== nextState) {
-            forceRender()
-            state = nextState
+        const startState = state
+        try {
+            const [nextState, nextEphemeral, effect] = update(state, ephemeral, msg)
+            if (state !== nextState) {
+                forceRender()
+                state = nextState
+            }
+            effectsHandler(effect)
+            ephemeral = nextEphemeral
+        } catch (ex) {
+            state = startState
+            console.error("[ERROR][Store.send]", msg, ex)
         }
-        effectsHandler(effect)
-        ephemeral = nextEphemeral
     }
 
     return {

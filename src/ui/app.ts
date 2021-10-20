@@ -92,7 +92,7 @@ export const App = component((c) => {
             try {
                 canvasModel.value.handle(ef)
             } catch (ex) {
-                console.error(ef, ex)
+                console.error("[ERROR][Store.effectsHandler]", ef, ex)
             }
         },
         forceRender: () => invalidate(c),
