@@ -2,12 +2,11 @@ import * as Canvas from "../canvas"
 import * as Input from "../canvas/input"
 import * as Color from "color"
 import { delay, ColorMode } from "../util"
-import { ToolType } from "../tools"
 
 export async function setup(
     canvas: HTMLCanvasElement,
     getState: () => Canvas.Config,
-    sender: Canvas.MsgSender
+    sender: Canvas.Sender
 ): Promise<void> {
     const forceRender = () => sender.onFrame(performance.now())
 

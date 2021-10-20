@@ -12,30 +12,30 @@ export interface TransientState {
 }
 
 export interface ToolbarProps {
-    readonly msgSender: Tools.MsgSender
+    readonly sender: Tools.Sender
     readonly tool: Tools.Config
     readonly transientState: TransientState
 }
 
 export const Toolbar = statelessComponent<ToolbarProps>((props) => {
     const currentToolType = props.tool.current
-    const setTool = props.msgSender.setTool
+    const setTool = props.sender.setTool
 
     return div(styles.toolBarContainer, { style: { "z-index": 1 } }, [
         div(surfaceLook + " " + styles.leftBar, _, [
             SinkableButton({
-                isDown: currentToolType === Tools.ToolType.Brush,
-                onClick: () => setTool(Tools.ToolType.Brush),
+                isDown: currentToolType === "Brush",
+                onClick: () => setTool("Brush"),
                 children: Icons.brush24px,
             }),
             SinkableButton({
-                isDown: currentToolType === Tools.ToolType.Eraser,
-                onClick: () => setTool(Tools.ToolType.Eraser),
+                isDown: currentToolType === "Eraser",
+                onClick: () => setTool("Eraser"),
                 children: Icons.edit24px,
             }),
             SinkableButton({
-                isDown: currentToolType === Tools.ToolType.Zoom,
-                onClick: () => setTool(Tools.ToolType.Zoom),
+                isDown: currentToolType === "Zoom",
+                onClick: () => setTool("Zoom"),
                 children: Icons.search24px,
             }),
         ]),
@@ -43,14 +43,14 @@ export const Toolbar = statelessComponent<ToolbarProps>((props) => {
             ? null
             : (() => {
                   switch (currentToolType) {
-                      case Tools.ToolType.Brush:
+                      case "Brush":
                           return Brush.Details({
-                              messageSender: props.msgSender.brush,
+                              sender: props.sender.brush,
                               tool: props.tool.brush,
                           })
-                      case Tools.ToolType.Eraser:
+                      case "Eraser":
                           return Eraser.Details({
-                              messageSender: props.msgSender.eraser,
+                              sender: props.sender.eraser,
                               tool: props.tool.eraser,
                           })
                       default:

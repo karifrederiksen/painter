@@ -25,12 +25,12 @@ function toFixed0(ms: number): string {
 }
 
 export interface DetailsProps {
-    readonly messageSender: Brush.MsgSender
+    readonly sender: Brush.Sender
     readonly tool: Brush.Config
 }
 
 export const Details = statelessComponent<DetailsProps>((props) => {
-    const sender = props.messageSender
+    const sender = props.sender
     const brush = props.tool
 
     function onColorText(text: string) {
@@ -143,7 +143,7 @@ function ColorSliders({
     color,
     colorType,
 }: {
-    readonly sender: Brush.MsgSender
+    readonly sender: Brush.Sender
     readonly colorType: ColorMode
     readonly color: Color.Hsluv
 }): Op {
@@ -158,7 +158,7 @@ function ColorSliders({
     }
 }
 
-function HsluvSliders(sender: Brush.MsgSender, color: Color.Hsluv): Op {
+function HsluvSliders(sender: Brush.Sender, color: Color.Hsluv): Op {
     return [
         LabeledSlider({
             label: "Hue",
@@ -187,7 +187,7 @@ function HsluvSliders(sender: Brush.MsgSender, color: Color.Hsluv): Op {
     ]
 }
 
-function HsvSliders(sender: Brush.MsgSender, color: Color.Hsv): Op {
+function HsvSliders(sender: Brush.Sender, color: Color.Hsv): Op {
     return [
         LabeledSlider({
             label: "Hue",

@@ -4,7 +4,7 @@ import * as Camera from "../../tools/camera"
 
 interface DetailsProps {
     readonly camera: Camera.Config
-    readonly sender: Camera.MsgSender
+    readonly sender: Camera.Sender
 }
 
 export const Details = statelessComponent<DetailsProps>((props) => {

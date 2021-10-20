@@ -3,7 +3,6 @@ import {
     component,
     _,
     invalidate,
-    render,
     box,
     findDOMNode,
     OpState,
@@ -113,7 +112,7 @@ export const App = component((c) => {
         })
     }
 
-    const sender = new Canvas.MsgSender(store.send)
+    const sender = new Canvas.Sender(store.send)
 
     const setupCanvas = useLayoutEffect(c, () => {
         const disposals: Disposals = []
@@ -198,7 +197,7 @@ export const App = component((c) => {
         return div(styles.appContainer, _, [
             div(styles.wrapper, _, [
                 Toolbar.Toolbar({
-                    msgSender: sender.tool,
+                    sender: sender.tool,
                     tool: state.tool,
                     transientState: { isDetailsExpanded: true },
                 }),

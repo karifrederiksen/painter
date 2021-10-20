@@ -17,7 +17,7 @@ function toFixed0(px: number): string {
 
 export interface MiniMapDetailsProps {
     readonly camera: Camera.Config
-    readonly sender: Camera.MsgSender
+    readonly sender: Camera.Sender
 }
 
 export const MiniMapDetails = statelessComponent<MiniMapDetailsProps>(({ camera, sender }) => {

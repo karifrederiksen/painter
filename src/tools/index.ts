@@ -1,119 +1,70 @@
 import * as Brush from "./brush"
-import * as Eraser from "./eraser"
 import * as Camera from "./camera"
 import * as BrushShader from "../canvas/brushShader"
 import { Blend } from "../webgl"
 import { TransformedPointerInput } from "../canvas"
+import { Tagged, tagged } from "../util"
 
-export const enum ToolMsgType {
-    SetToolMsg,
-    BrushMsg,
-    EraserMsg,
-    CameraMsg,
-}
+export type ToolMsg =
+    | Tagged<"SetToolMsg", ToolType>
+    | Tagged<"BrushMsg", Brush.Msg>
+    | Tagged<"EraserMsg", Brush.Msg>
+    | Tagged<"CameraMsg", Camera.Msg>
 
-export type ToolMsg = SetToolMsg | BrushMsg | EraserMsg | CameraMsg
-
-export class SetToolMsg {
-    readonly type = ToolMsgType.SetToolMsg as const
-    constructor(readonly subType: ToolType) {}
-}
-export class BrushMsg {
-    readonly type = ToolMsgType.BrushMsg as const
-    constructor(readonly msg: Brush.Msg) {}
-}
-export class EraserMsg {
-    readonly type = ToolMsgType.EraserMsg as const
-    constructor(readonly msg: Eraser.Msg) {}
-}
-export class CameraMsg {
-    readonly type = ToolMsgType.CameraMsg as const
-    constructor(readonly msg: Camera.Msg) {}
-}
-
-export class MsgSender {
-    readonly brush: Brush.MsgSender
-    readonly eraser: Eraser.MsgSender
-    readonly camera: Camera.MsgSender
-
-    readonly setTool = (type: ToolType) => {
-        this.sendMessage(new SetToolMsg(type))
-    }
+export class Sender {
+    readonly brush: Brush.Sender
+    readonly eraser: Brush.Sender
+    readonly camera: Camera.Sender
 
     constructor(private sendMessage: (msg: ToolMsg) => void) {
-        this.brush = new Brush.MsgSender((msg) => sendMessage(new BrushMsg(msg)))
-        this.eraser = new Eraser.MsgSender((msg) => sendMessage(new EraserMsg(msg)))
-        this.camera = new Camera.MsgSender((msg) => sendMessage(new CameraMsg(msg)))
+        this.brush = new Brush.Sender((msg) => sendMessage(tagged("BrushMsg", msg)))
+        this.eraser = new Brush.Sender((msg) => sendMessage(tagged("EraserMsg", msg)))
+        this.camera = new Camera.Sender((msg) => sendMessage(tagged("CameraMsg", msg)))
     }
+
+    setTool = (type: ToolType) => this.sendMessage(tagged("SetToolMsg", type))
 }
 
-export const enum ToolType {
-    Brush,
-    Eraser,
-    Move,
-    Zoom,
-    Rotate,
-}
-
-class BrushState {
-    readonly type = ToolType.Brush as const
-    constructor(readonly state: Brush.State) {}
-}
-class EraserState {
-    readonly type = ToolType.Eraser as const
-    constructor(readonly state: Eraser.State) {}
-}
-class MoveState {
-    readonly type = ToolType.Move as const
-    constructor(readonly state: Camera.DragState | null) {}
-}
-class ZoomState {
-    readonly type = ToolType.Zoom as const
-    constructor(readonly state: Camera.DragState | null) {}
-}
-class RotateState {
-    readonly type = ToolType.Rotate as const
-    constructor(readonly state: Camera.DragState | null) {}
-}
+export type ToolType = "Brush" | "Eraser" | "Move" | "Zoom" | "Rotate"
 
 export interface Config {
     readonly brush: Brush.Config
-    readonly eraser: Eraser.Config
+    readonly eraser: Brush.Config
     readonly camera: Camera.Config
     readonly current: ToolType
 }
 
 export const init: Config = {
     brush: Brush.init,
-    eraser: Eraser.init,
+    eraser: Brush.init,
     camera: Camera.init,
-    current: ToolType.Brush,
+    current: "Brush",
 }
 
 export function update(tool: Config, msg: ToolMsg): Config {
-    switch (msg.type) {
-        case ToolMsgType.SetToolMsg:
-            switch (msg.subType) {
-                case ToolType.Brush:
-                    return { ...tool, current: ToolType.Brush }
-                case ToolType.Eraser:
-                    return { ...tool, current: ToolType.Eraser }
-                case ToolType.Move:
-                    return { ...tool, current: ToolType.Move }
-                case ToolType.Zoom:
-                    return { ...tool, current: ToolType.Zoom }
-                case ToolType.Rotate:
-                    return { ...tool, current: ToolType.Rotate }
+    switch (msg.tag) {
+        case "SetToolMsg":
+            switch (msg.val) {
+                case "Brush":
+                    return { ...tool, current: "Brush" }
+                case "Eraser":
+                    return { ...tool, current: "Eraser" }
+                case "Move":
+                    return { ...tool, current: "Move" }
+                case "Zoom":
+                    return { ...tool, current: "Zoom" }
+                case "Rotate":
+                    return { ...tool, current: "Rotate" }
                 default:
-                    const never: never = msg.subType
-                    throw { "unexpected tool type: ": msg.type }
+                    const never: never = msg
+                    throw { "unexpected tool type: ": msg }
             }
-        case ToolMsgType.BrushMsg:
-            return { ...tool, brush: Brush.update(tool.brush, msg.msg) }
-        case ToolMsgType.EraserMsg:
-            return { ...tool, eraser: Eraser.update(tool.eraser, msg.msg) }
-        case ToolMsgType.CameraMsg:
-            return { ...tool, camera: Camera.update(tool.camera, msg.msg) }
+        case "BrushMsg":
+            return { ...tool, brush: Brush.update(tool.brush, msg.val) }
+        case "EraserMsg":
+            return { ...tool, eraser: Brush.update(tool.eraser, msg.val) }
+        case "CameraMsg":
+            return { ...tool, camera: Camera.update(tool.camera, msg.val) }
         default:
             const never: never = msg
             throw { "unexpected msg": msg }
@@ -127,17 +78,17 @@ export function onClick(
 ): readonly [Config, State, readonly BrushShader.BrushPoint[]] {
     const ephemeral = syncEphemeral(tool, ephemeral_)
 
-    switch (ephemeral.type) {
-        case ToolType.Brush: {
+    switch (ephemeral.tag) {
+        case "Brush": {
             const [value, brushPoint] = Brush.onClick(tool.brush, tool.camera, pointer)
-            return [tool, new BrushState(value), [brushPoint]]
+            return [tool, tagged("Brush", value), [brushPoint]]
         }
-        case ToolType.Eraser: {
-            const [value, brushPoint] = Eraser.onClick(tool.eraser, tool.camera, pointer)
-            return [tool, new EraserState(value), [brushPoint]]
+        case "Eraser": {
+            const [value, brushPoint] = Brush.onClick(tool.eraser, tool.camera, pointer)
+            return [tool, tagged("Eraser", value), [brushPoint]]
         }
-        case ToolType.Move: {
-            if (ephemeral.state !== null) {
+        case "Move": {
+            if (ephemeral.val !== null) {
                 return [tool, ephemeral, []]
             }
 
@@ -147,10 +98,10 @@ export function onClick(
                 originalScale: tool.camera.zoomPct,
             }
             const camera = Camera.moveUpdate(tool.camera, dragState, pointer)
-            return [{ ...tool, camera }, new MoveState(dragState), []]
+            return [{ ...tool, camera }, tagged("Move", dragState), []]
         }
-        case ToolType.Zoom: {
-            if (ephemeral.state !== null) {
+        case "Zoom": {
+            if (ephemeral.val !== null) {
                 return [tool, ephemeral, []]
             }
 
@@ -160,10 +111,10 @@ export function onClick(
                 originalScale: tool.camera.zoomPct,
             }
             const camera = Camera.zoomUpdate(tool.camera, dragState, pointer)
-            return [{ ...tool, camera }, new ZoomState(dragState), []]
+            return [{ ...tool, camera }, tagged("Zoom", dragState), []]
         }
-        case ToolType.Rotate: {
-            if (ephemeral.state !== null) {
+        case "Rotate": {
+            if (ephemeral.val !== null) {
                 return [tool, ephemeral, []]
             }
 
@@ -173,7 +124,7 @@ export function onClick(
                 originalScale: tool.camera.zoomPct,
             }
             const camera = Camera.rotateUpdate(tool.camera, dragState, pointer)
-            return [{ ...tool, camera }, new RotateState(dragState), []]
+            return [{ ...tool, camera }, tagged("Rotate", dragState), []]
         }
         default:
             const never: never = ephemeral
@@ -188,63 +139,63 @@ export function onDrag(
 ): readonly [Config, State, readonly BrushShader.BrushPoint[]] {
     const ephemeral = syncEphemeral(tool, ephemeral_)
 
-    switch (ephemeral.type) {
-        case ToolType.Brush: {
+    switch (ephemeral.tag) {
+        case "Brush": {
             const [value, brushPoints] = Brush.onDrag(
                 tool.brush,
                 tool.camera,
-                ephemeral.state,
+                ephemeral.val,
                 pointers
             )
-            return [tool, new BrushState(value), brushPoints]
+            return [tool, tagged("Brush", value), brushPoints]
         }
-        case ToolType.Eraser: {
-            const [value, brushPoints] = Eraser.onDrag(
+        case "Eraser": {
+            const [value, brushPoints] = Brush.onDrag(
                 tool.eraser,
                 tool.camera,
-                ephemeral.state,
+                ephemeral.val,
                 pointers
             )
-            return [tool, new EraserState(value), brushPoints]
+            return [tool, tagged("Eraser", value), brushPoints]
         }
-        case ToolType.Move: {
-            if (ephemeral.state === null) {
+        case "Move": {
+            if (ephemeral.val === null) {
                 return [tool, ephemeral, []]
             }
             const pointer = pointers[pointers.length - 1]
-            const camera = Camera.moveUpdate(tool.camera, ephemeral.state, pointer)
+            const camera = Camera.moveUpdate(tool.camera, ephemeral.val, pointer)
             const dragState: Camera.DragState = {
-                clickPoint: ephemeral.state.clickPoint,
+                clickPoint: ephemeral.val.clickPoint,
                 prevPoint: pointer,
-                originalScale: ephemeral.state.originalScale,
+                originalScale: ephemeral.val.originalScale,
             }
-            return [{ ...tool, camera }, new MoveState(dragState), []]
+            return [{ ...tool, camera }, tagged("Move", dragState), []]
         }
-        case ToolType.Zoom: {
-            if (ephemeral.state === null) {
+        case "Zoom": {
+            if (ephemeral.val === null) {
                 return [tool, ephemeral, []]
             }
             const pointer = pointers[pointers.length - 1]
-            const camera = Camera.zoomUpdate(tool.camera, ephemeral.state, pointer)
+            const camera = Camera.zoomUpdate(tool.camera, ephemeral.val, pointer)
             const dragState: Camera.DragState = {
-                clickPoint: ephemeral.state.clickPoint,
+                clickPoint: ephemeral.val.clickPoint,
                 prevPoint: pointer,
-                originalScale: ephemeral.state.originalScale,
+                originalScale: ephemeral.val.originalScale,
             }
-            return [{ ...tool, camera }, new ZoomState(dragState), []]
+            return [{ ...tool, camera }, tagged("Zoom", dragState), []]
         }
-        case ToolType.Rotate: {
-            if (ephemeral.state === null) {
+        case "Rotate": {
+            if (ephemeral.val === null) {
                 return [tool, ephemeral, []]
             }
             const pointer = pointers[pointers.length - 1]
-            const camera = Camera.rotateUpdate(tool.camera, ephemeral.state, pointer)
+            const camera = Camera.rotateUpdate(tool.camera, ephemeral.val, pointer)
             const dragState: Camera.DragState = {
-                clickPoint: ephemeral.state.clickPoint,
+                clickPoint: ephemeral.val.clickPoint,
                 prevPoint: pointer,
-                originalScale: ephemeral.state.originalScale,
+                originalScale: ephemeral.val.originalScale,
             }
-            return [{ ...tool, camera }, new RotateState(dragState), []]
+            return [{ ...tool, camera }, tagged("Rotate", dragState), []]
         }
         default:
             const never: never = ephemeral
@@ -259,38 +210,38 @@ export function onRelease(
 ): readonly [Config, State, readonly BrushShader.BrushPoint[]] {
     const ephemeral = syncEphemeral(tool, ephemeral_)
 
-    switch (ephemeral.type) {
-        case ToolType.Brush: {
+    switch (ephemeral.tag) {
+        case "Brush": {
             const [value, brushPoints] = Brush.onRelease()
-            return [tool, new BrushState(value), brushPoints]
+            return [tool, tagged("Brush", value), brushPoints]
         }
-        case ToolType.Eraser: {
-            const [value, brushPoints] = Eraser.onRelease()
-            return [tool, new EraserState(value), brushPoints]
+        case "Eraser": {
+            const [value, brushPoints] = Brush.onRelease()
+            return [tool, tagged("Eraser", value), brushPoints]
         }
-        case ToolType.Move: {
-            if (ephemeral.state === null) {
+        case "Move": {
+            if (ephemeral.val === null) {
                 return [tool, ephemeral, []]
             }
 
-            const camera = Camera.moveUpdate(tool.camera, ephemeral.state, pointer)
-            return [{ ...tool, camera }, new MoveState(null), []]
+            const camera = Camera.moveUpdate(tool.camera, ephemeral.val, pointer)
+            return [{ ...tool, camera }, tagged("Move", null), []]
         }
-        case ToolType.Zoom: {
-            if (ephemeral.state === null) {
+        case "Zoom": {
+            if (ephemeral.val === null) {
                 return [tool, ephemeral, []]
             }
 
-            const camera = Camera.zoomUpdate(tool.camera, ephemeral.state, pointer)
-            return [{ ...tool, camera }, new ZoomState(null), []]
+            const camera = Camera.zoomUpdate(tool.camera, ephemeral.val, pointer)
+            return [{ ...tool, camera }, tagged("Zoom", null), []]
         }
-        case ToolType.Rotate: {
-            if (ephemeral.state === null) {
+        case "Rotate": {
+            if (ephemeral.val === null) {
                 return [tool, ephemeral, []]
             }
 
-            const camera = Camera.rotateUpdate(tool.camera, ephemeral.state, pointer)
-            return [{ ...tool, camera }, new RotateState(null), []]
+            const camera = Camera.rotateUpdate(tool.camera, ephemeral.val, pointer)
+            return [{ ...tool, camera }, tagged("Rotate", null), []]
         }
         default:
             const never: never = ephemeral
@@ -305,21 +256,21 @@ export function onFrame(
 ): [State, readonly BrushShader.BrushPoint[]] {
     const ephemeral = syncEphemeral(tool, state)
 
-    switch (ephemeral.type) {
-        case ToolType.Brush: {
-            const [value, brushPoints] = Brush.onFrame(tool.brush, ephemeral.state, currentTime)
-            if (value === ephemeral.state && brushPoints.length === 0) {
+    switch (ephemeral.tag) {
+        case "Brush": {
+            const [value, brushPoints] = Brush.onFrame(tool.brush, ephemeral.val, currentTime)
+            if (value === ephemeral.val && brushPoints.length === 0) {
                 return [ephemeral, brushPoints]
             } else {
-                return [new BrushState(value), brushPoints]
+                return [tagged("Brush", value), brushPoints]
             }
         }
-        case ToolType.Eraser: {
-            const [value, brushPoints] = Eraser.onFrame(tool.eraser, ephemeral.state, currentTime)
-            if (value === ephemeral.state && brushPoints.length === 0) {
+        case "Eraser": {
+            const [value, brushPoints] = Brush.onFrame(tool.eraser, ephemeral.val, currentTime)
+            if (value === ephemeral.val && brushPoints.length === 0) {
                 return [ephemeral, brushPoints]
             } else {
-                return [new EraserState(value), brushPoints]
+                return [tagged("Eraser", value), brushPoints]
             }
         }
         default:
@@ -327,7 +278,12 @@ export function onFrame(
     }
 }
 
-export type State = BrushState | EraserState | MoveState | ZoomState | RotateState
+export type State =
+    | Tagged<"Brush", Brush.State>
+    | Tagged<"Eraser", Brush.State>
+    | Tagged<"Move", Camera.DragState | null>
+    | Tagged<"Zoom", Camera.DragState | null>
+    | Tagged<"Rotate", Camera.DragState | null>
 
 export const enum EphemeralStateType {
     BrushState,
@@ -338,24 +294,24 @@ export const enum EphemeralStateType {
 }
 
 export function initEphemeral(): State {
-    return new BrushState(Brush.initTempState())
+    return tagged("Brush", Brush.initTempState())
 }
 
 function syncEphemeral(tool: Config, ephemeral: State): State {
-    if (ephemeral.type === tool.current) {
+    if (ephemeral.tag === tool.current) {
         return ephemeral
     }
     switch (tool.current) {
-        case ToolType.Brush:
-            return new BrushState(Brush.initTempState())
-        case ToolType.Eraser:
-            return new EraserState(Eraser.initTempState())
-        case ToolType.Move:
-            return new MoveState(null)
-        case ToolType.Rotate:
-            return new RotateState(null)
-        case ToolType.Zoom:
-            return new ZoomState(null)
+        case "Brush":
+            return tagged("Brush", Brush.initTempState())
+        case "Eraser":
+            return tagged("Eraser", Brush.initTempState())
+        case "Move":
+            return tagged("Move", null)
+        case "Rotate":
+            return tagged("Rotate", null)
+        case "Zoom":
+            return tagged("Zoom", null)
         default:
             const never: never = tool.current
             throw { "Unknown tool type: ": tool.current }
@@ -364,9 +320,9 @@ function syncEphemeral(tool: Config, ephemeral: State): State {
 
 export function getBlendMode(tool: Config): Blend.Mode {
     switch (tool.current) {
-        case ToolType.Brush:
+        case "Brush":
             return Blend.Mode.Normal
-        case ToolType.Eraser:
+        case "Eraser":
             return Blend.Mode.Erase
         default:
             return Blend.Mode.Normal
@@ -375,9 +331,9 @@ export function getBlendMode(tool: Config): Blend.Mode {
 
 export function getSoftness(tool: Config): number {
     switch (tool.current) {
-        case ToolType.Brush:
+        case "Brush":
             return tool.brush.softness
-        case ToolType.Eraser:
+        case "Eraser":
             return tool.eraser.softness
         default:
             return 0

@@ -1,13 +1,13 @@
 import { Op, Events, onClick, _, shallowEqual, statelessComponent } from "ivi"
 import { div, span } from "ivi-html"
 import styles from "./layers.scss"
-import { State, MsgSender, Id, Layer } from "../../canvas/layers"
+import { State, Sender, Id, Layer } from "../../canvas/layers"
 import { Row, DefaultButton, Surface, LabeledSlider, LabeledSwitch } from "../components"
 import { stringToFloat } from "../../util"
 
 export interface LayersViewProps {
     readonly layers: State
-    readonly sender: MsgSender
+    readonly sender: Sender
 }
 
 function toFixed2(n: number): string {

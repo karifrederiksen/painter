@@ -234,7 +234,7 @@ class SetHiddenMsg {
     readonly type: MsgType.SetHiddenMsg = MsgType.SetHiddenMsg
     constructor(readonly id: Id, readonly isHidden: boolean) {}
 }
-export class MsgSender {
+export class Sender {
     constructor(private sendMessage: (msg: Msg) => void) {}
     readonly newLayer = (id: Id): void => {
         this.sendMessage(new NewLayerMsg(id))

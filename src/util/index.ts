@@ -7,13 +7,20 @@ export * from "./result"
 export * from "./vec2"
 export * from "./vec3"
 export * from "./vec4"
-import * as Signals from "./signals"
-export { Signals }
+export * as Signals from "./signals"
 export * as FrameStream from "./frameStream"
 export * as PerfTracker from "./perfTracker"
 export * as CanvasPool from "./canvasPool"
 export * as Debug from "./debug"
 export * as Bloomfilter from "./bloomFilter"
+
+export type Tagged<a, v = null> = { readonly tag: a; readonly val: v }
+
+export function tagged<a>(tag: a, val: void): Tagged<a, null>
+export function tagged<a, v>(tag: a, val: v): Tagged<a, v>
+export function tagged<a, v = null>(tag: a, val: v): Tagged<a, v> {
+    return { tag, val }
+}
 
 export class Lazy<a> {
     private __value: a | null = null

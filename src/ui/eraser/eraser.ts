@@ -2,7 +2,7 @@ import { _, shallowEqual, statelessComponent } from "ivi"
 import { div } from "ivi-html"
 import * as styles from "./eraser.scss"
 import { Surface, LabeledSlider, LabeledSwitch } from "../components"
-import * as Eraser from "../../tools/eraser"
+import * as Eraser from "../../tools/Brush"
 import { stringToFloat } from "../../util"
 
 function toFixed0(ms: number): string {
@@ -16,12 +16,12 @@ function toFixed2(pct: number): string {
 }
 
 export interface DetailsProps {
-    readonly messageSender: Eraser.MsgSender
+    readonly sender: Eraser.Sender
     readonly tool: Eraser.Config
 }
 
 export const Details = statelessComponent<DetailsProps>((props) => {
-    const sender = props.messageSender
+    const sender = props.sender
     const brush = props.tool
 
     return Surface(

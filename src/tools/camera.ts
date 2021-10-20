@@ -1,4 +1,5 @@
 import { TransformedPointerInput } from "../canvas"
+import { Tagged, tagged } from "../util"
 
 export interface DragState {
     readonly originalScale: number
@@ -6,39 +7,19 @@ export interface DragState {
     readonly prevPoint: TransformedPointerInput
 }
 
-export type Msg = SetZoomMsg | SetOffsetMsg | SetRotationMsg
+export type Msg =
+    | Tagged<"SetZoom", { zoomPct: number }>
+    | Tagged<"SetOffset", { offsetX: number; offsetY: number }>
+    | Tagged<"SetRotation", { rotationTurns: number }>
 
-export const enum MsgType {
-    SetZoomMsg,
-    SetOffsetMsg,
-    SetRotationMsg,
-}
-
-class SetZoomMsg {
-    readonly type: MsgType.SetZoomMsg = MsgType.SetZoomMsg
-    constructor(readonly zoomPct: number) {}
-}
-class SetOffsetMsg {
-    readonly type: MsgType.SetOffsetMsg = MsgType.SetOffsetMsg
-    constructor(readonly offsetX: number, readonly offsetY: number) {}
-}
-class SetRotationMsg {
-    readonly type: MsgType.SetRotationMsg = MsgType.SetRotationMsg
-    constructor(readonly rotationTurns: number) {}
-}
-
-export class MsgSender {
+export class Sender {
     constructor(private sendMessage: (msg: Msg) => void) {}
 
-    readonly setRotation = (pct: number) => {
-        this.sendMessage(new SetRotationMsg(pct))
-    }
-    readonly setOffset = (x: number, y: number) => {
-        this.sendMessage(new SetOffsetMsg(x, y))
-    }
-    readonly setZoom = (pct: number) => {
-        this.sendMessage(new SetZoomMsg(pct))
-    }
+    setRotation = (rotationTurns: number) =>
+        this.sendMessage(tagged("SetRotation", { rotationTurns: rotationTurns }))
+    setOffset = (offsetX: number, offsetY: number) =>
+        this.sendMessage(tagged("SetOffset", { offsetX, offsetY }))
+    setZoom = (zoomPct: number) => this.sendMessage(tagged("SetZoom", { zoomPct }))
 }
 
 export interface Config {
@@ -56,13 +37,13 @@ export const init: Config = {
 }
 
 export function update(state: Config, msg: Msg): Config {
-    switch (msg.type) {
-        case MsgType.SetZoomMsg:
-            return { ...state, zoomPct: Math.max(0.01, msg.zoomPct) }
-        case MsgType.SetOffsetMsg:
-            return { ...state, offsetX: msg.offsetX, offsetY: msg.offsetY }
-        case MsgType.SetRotationMsg:
-            return { ...state, rotateTurns: msg.rotationTurns }
+    switch (msg.tag) {
+        case "SetZoom":
+            return { ...state, zoomPct: Math.max(0.01, msg.val.zoomPct) }
+        case "SetOffset":
+            return { ...state, offsetX: msg.val.offsetX, offsetY: msg.val.offsetY }
+        case "SetRotation":
+            return { ...state, rotateTurns: msg.val.rotationTurns }
         default:
             const never: never = msg
             throw { "unexpected msg": msg }
