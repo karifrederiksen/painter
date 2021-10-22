@@ -384,17 +384,6 @@ export class Context {
             },
             blocks: frameBlocks,
         })
-        if (args.highlightRenderBlocks) {
-            const blockHighlights = renderBlockSystem.getHighlights()
-            this.blockHighlightShader.render(gl, {
-                framebuffer: outFramebuffer,
-                uniforms: {
-                    u_resolution: resolution,
-                    u_rgba: Vec4.fromRgba(new RgbLinear(0, 0, 1), 1),
-                },
-                blockHighlights,
-            })
-        }
         if (nextLayers.current !== null) {
             // CURRENT
             this.textureRenderer.render(gl, {
@@ -417,6 +406,17 @@ export class Context {
             },
             blocks: frameBlocks,
         })
+        if (args.highlightRenderBlocks) {
+            const blockHighlights = renderBlockSystem.getHighlights()
+            this.blockHighlightShader.render(gl, {
+                framebuffer: outFramebuffer,
+                uniforms: {
+                    u_resolution: resolution,
+                    u_rgba: Vec4.fromRgba(new RgbLinear(0, 0, 1), 1),
+                },
+                blockHighlights,
+            })
+        }
 
         // outputTexture -> canvas
         // I'm not sure if can use block rendering when rendering to canvas - unless there's something I'm missing, it seems that the canvas auto-clears itself before render
