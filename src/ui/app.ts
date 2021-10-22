@@ -88,13 +88,7 @@ export const App = component((c) => {
     const store = Store.create<Canvas.Config, Canvas.State, Canvas.CanvasMsg, Canvas.Effect>({
         initialState,
         initialEphemeral,
-        effectsHandler: (ef: Canvas.Effect) => {
-            try {
-                canvasModel.value.handle(ef)
-            } catch (ex) {
-                console.error("[ERROR][Store.effectsHandler]", ef, ex)
-            }
-        },
+        effectsHandler: (ef) => canvasModel.value.handle(ef),
         forceRender: () => invalidate(c),
         update: (state, ephState, msg) => Canvas.update(canvasInfo, state, ephState, msg),
     })
@@ -184,7 +178,7 @@ export const App = component((c) => {
 
     const updateTheme = createUpdateThemeEffect(c)
 
-    if (process.env.NODE_ENV === "development") {
+    if (process.env.NODE_ENV !== "development") {
         useUnloadPromptEffect(c)
     }
 
