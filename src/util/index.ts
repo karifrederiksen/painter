@@ -23,28 +23,31 @@ export function tagged<a, v = null>(tag: a, val: v): Tagged<a, v> {
 }
 
 export class Lazy<a> {
+    private __isSet: boolean = false
     private __value: a | null = null
     constructor(private readonly __fn: () => a) {}
 
-    get value(): a {
-        if (this.__value === null) {
+    force(): a {
+        if (!this.__isSet) {
             this.__value = this.__fn()
+            this.__isSet = true
         }
-        return this.__value
+        return this.__value as a
     }
 }
 
 export class SetOnce<a> {
+    private __isSet: boolean = false
     private __value: a | null = null
 
     set(value: a): void {
-        if (this.__value !== null) throw "Attempted to re-set a SetOnce"
+        if (this.__isSet) throw "Attempted to re-set a SetOnce"
         this.__value = value
     }
 
     get value(): a {
-        if (this.__value === null) throw "Attempted to get the value of a SetOnce before it was set"
-        return this.__value
+        if (!this.__isSet) throw "Attempted to get the value of a SetOnce before it was set"
+        return this.__value as a
     }
 }
 

@@ -1,4 +1,5 @@
-export interface Subscription {
+export interface Subscription<a> {
+    initialValue: a
     dispose(): void
 }
 
@@ -12,8 +13,7 @@ export interface SignalPipe<a, b> {
 
 export interface Signal<a> {
     pipe<b>(f: SignalPipe<a, b>): Signal<b>
-    value(): a
-    subscribe(handler: ChangeHandler<a>): Subscription
+    subscribe(handler: ChangeHandler<a>): Subscription<a>
 }
 
 export interface PushableSignal<a> extends Signal<a> {
@@ -22,22 +22,60 @@ export interface PushableSignal<a> extends Signal<a> {
     push(value: a): void
 }
 
+export function on<k extends keyof HTMLElementEventMap>(
+    element: HTMLElement,
+    type: k,
+    passive: boolean
+): Subscription<Signal<HTMLElementEventMap[k] | null>>
+export function on<k extends keyof HTMLElementEventMap, a>(
+    element: HTMLElement,
+    type: k,
+    passive: boolean,
+    initialValue: a,
+    map: (e: HTMLElementEventMap[k]) => a
+): Subscription<Signal<a>>
+export function on<k extends keyof HTMLElementEventMap, a>(
+    element: HTMLElement,
+    type: k,
+    passive: boolean,
+    initialValue?: a | undefined,
+    map?: ((e: HTMLElementEventMap[k]) => a) | undefined
+): Subscription<Signal<a>> {
+    const signal = new SignalWithPush<any>(initialValue ?? null)
+
+    const mappedHandler =
+        map == null
+            ? (e: HTMLElementEventMap[k]) => {
+                  signal.push(e)
+              }
+            : (e: HTMLElementEventMap[k]) => {
+                  signal.push(map(e))
+              }
+    element.addEventListener(type, mappedHandler, passive ? { passive: true } : undefined)
+    return {
+        initialValue: signal,
+        dispose() {
+            element.removeEventListener(type, mappedHandler)
+        },
+    }
+}
+
 export function create<a>(initialValue: a): PushableSignal<a> {
     return new SignalWithPush(initialValue)
 }
 
 class SignalWithPush<a> implements PushableSignal<a> {
-    private readonly handlers: ChangeHandler<a>[] = []
+    private handler: ChangeHandler<a> | null = null
     private currentValue: a
 
     /**
-     * Immutable wrapper for the pushable signal.
+     * Immutable, broadcastable, wrapper for the pushable signal.
      */
     readonly signal: Signal<a>
 
     constructor(initialValue: a) {
         this.currentValue = initialValue
-        this.signal = new SignalWrapper(this)
+        this.signal = new SignalBroadcast(this)
     }
 
     pipe<b>(f: SignalPipe<a, b>): Signal<b> {
@@ -46,22 +84,57 @@ class SignalWithPush<a> implements PushableSignal<a> {
 
     push(value: a): void {
         this.currentValue = value
+        this.handler?.(value)
+    }
 
-        const handlers = this.handlers
-        for (let i = 0; i < handlers.length; i++) {
-            handlers[i](value)
+    subscribe(handler: ChangeHandler<a>): Subscription<a> {
+        const { currentValue } = this
+        if (this.handler != null) {
+            throw new Error("Handler already exists")
+        }
+        this.handler = handler
+        return {
+            initialValue: currentValue,
+            dispose: () => {
+                if (this.handler == null) {
+                    throw new Error("Handler does not exist")
+                }
+                this.handler = null
+            },
         }
     }
+}
 
-    value(): a {
-        return this.currentValue
+// Caches the results of the underlying stream, allowing multiple subscribers without creating multiple
+// subscriptions on the underlying signal.
+// The subscription to the underlying signal is disposed when there is no active subscription. It is reestablished
+// when there are subscribers again.
+export function broadcast<a>(): SignalPipe<a, a> {
+    return (signal) => new SignalBroadcast(signal)
+}
+
+class SignalBroadcast<a> implements Signal<a> {
+    private readonly handlers: ChangeHandler<a>[] = []
+    private sourceSub: Subscription<a> | null = null
+    private currentValue: a | null = null
+    constructor(private readonly source: Signal<a>) {}
+
+    pipe<b>(f: SignalPipe<a, b>): Signal<b> {
+        return f(this)
     }
 
-    subscribe(handler: ChangeHandler<a>): Subscription {
-        const handlers = this.handlers
+    subscribe(handler: ChangeHandler<a>): Subscription<a> {
+        const { handlers } = this
+        if (this.sourceSub == null) {
+            this.sourceSub = this.source.subscribe((nextVal) => {
+                this.currentValue = nextVal
+            })
+            this.currentValue = this.sourceSub.initialValue
+        }
         handlers.push(handler)
         return {
-            dispose() {
+            initialValue: this.currentValue!,
+            dispose: () => {
                 let idx = -1
                 for (let i = 0; i < handlers.length; i++) {
                     if (handlers[i] === handler) {
@@ -72,24 +145,13 @@ class SignalWithPush<a> implements PushableSignal<a> {
                 if (idx !== -1) {
                     handlers.splice(idx, 1)
                 }
+                if (handlers.length === 0) {
+                    this.sourceSub?.dispose()
+                    this.sourceSub = null
+                    this.currentValue = null
+                }
             },
         }
-    }
-}
-
-class SignalWrapper<a> implements Signal<a> {
-    constructor(private readonly baseSignal: Signal<a>) {}
-
-    pipe<b>(f: SignalPipe<a, b>): Signal<b> {
-        return f(this)
-    }
-
-    value(): a {
-        return this.baseSignal.value()
-    }
-
-    subscribe(handler: ChangeHandler<a>) {
-        return this.baseSignal.subscribe(handler)
     }
 }
 
@@ -98,25 +160,22 @@ export function map<a, b>(transform: (value: a) => b): SignalPipe<a, b> {
 }
 
 class SignalMap<a, b> implements Signal<b> {
-    constructor(
-        private readonly baseSignal: Signal<a>,
-        private readonly transform: (val: a) => b
-    ) {}
+    constructor(private readonly source: Signal<a>, private readonly transform: (val: a) => b) {}
 
     pipe<c>(f: SignalPipe<b, c>): Signal<c> {
         return f(this)
     }
 
-    value(): b {
-        return this.transform(this.baseSignal.value())
-    }
-
-    subscribe(handler: ChangeHandler<b>) {
+    subscribe(handler: ChangeHandler<b>): Subscription<b> {
+        const { source, transform } = this
         const mappedHandler = (val: a) => {
-            handler(this.transform(val))
+            handler(transform(val))
         }
-
-        return this.baseSignal.subscribe(mappedHandler)
+        const sub = source.subscribe(mappedHandler)
+        return {
+            initialValue: transform(sub.initialValue),
+            dispose: sub.dispose,
+        }
     }
 }
 
@@ -125,36 +184,31 @@ export function filter<a>(defaultValue: a, filter: (value: a) => boolean): Signa
 }
 
 class SignalFilter<a> implements Signal<a> {
-    private currentValue: a
     constructor(
-        private readonly baseSignal: Signal<a>,
+        private readonly source: Signal<a>,
         private readonly filter: (val: a) => boolean,
-        defaultValue: a
+        private readonly defaultValue: a
     ) {
         this.filter = filter
-        const baseValue = baseSignal.value()
-        this.currentValue = filter(baseValue) ? baseValue : defaultValue
     }
 
     pipe<b>(f: SignalPipe<a, b>): Signal<b> {
         return f(this)
     }
 
-    value(): a {
-        return this.currentValue
-    }
-
-    subscribe(handler: ChangeHandler<a>) {
-        const filter = this.filter
+    subscribe(handler: ChangeHandler<a>): Subscription<a> {
+        const { filter, source, defaultValue } = this
 
         const filteredHandler = (val: a) => {
             if (filter(val)) {
-                this.currentValue = val
                 handler(val)
             }
         }
-
-        return this.baseSignal.subscribe(filteredHandler)
+        const sub = source.subscribe(filteredHandler)
+        return {
+            initialValue: filter(sub.initialValue) ? sub.initialValue : defaultValue,
+            dispose: sub.dispose,
+        }
     }
 }
 
@@ -163,34 +217,66 @@ export function flatMap<a, b>(transform: (value: a) => Signal<b>): SignalPipe<a,
 }
 
 class SignalFlatMap<a, b> implements Signal<b> {
-    private currentValue: Signal<b>
     constructor(
-        private readonly baseSignal: Signal<a>,
+        private readonly sourceSignal: Signal<a>,
         private readonly transform: (val: a) => Signal<b>
-    ) {
-        this.currentValue = transform(baseSignal.value())
-    }
+    ) {}
 
     pipe<c>(f: SignalPipe<b, c>): Signal<c> {
         return f(this)
     }
 
-    value(): b {
-        return this.currentValue.value()
-    }
+    subscribe(f: ChangeHandler<b>): Subscription<b> {
+        const { sourceSignal, transform } = this
 
-    subscribe(handler: ChangeHandler<b>) {
-        let sub: Subscription | undefined = undefined
-        const flatMappedHandler = (val: a) => {
-            const nextValue = this.transform(val)
-            if (nextValue != this.currentValue) {
-                sub?.dispose()
-                sub = nextValue.subscribe(handler)
-                this.currentValue = nextValue
-            }
+        let nextSub: Subscription<b>
+        const sourceSub = sourceSignal.subscribe((nextSourceValue) => {
+            const oldSub = nextSub
+            nextSub = transform(nextSourceValue).subscribe(f)
+            // we dispose after creating a new subscription because broadcast signals
+            // unsubscribe from their sources when they have 0 active subscriptions.
+            oldSub.dispose()
+        })
+        nextSub = transform(sourceSub.initialValue).subscribe(f)
+
+        return {
+            initialValue: nextSub.initialValue,
+            dispose() {
+                nextSub.dispose()
+                sourceSub.dispose()
+            },
         }
+    }
+}
 
-        return this.baseSignal.subscribe(flatMappedHandler)
+export function reducing<a, b>(
+    initial: (v: a) => b,
+    reduce: (cur: b, next: a) => b
+): SignalPipe<a, b> {
+    return (signal) => new Reducing(signal, initial, reduce)
+}
+
+class Reducing<a, b> implements Signal<b> {
+    constructor(
+        private readonly source: Signal<a>,
+        private readonly initial: (v: a) => b,
+        private readonly reduce: (curr: b, next: a) => b
+    ) {}
+    pipe<c>(f: SignalPipe<b, c>): Signal<c> {
+        return f(this)
+    }
+    subscribe(handler: ChangeHandler<b>): Subscription<b> {
+        let curVal: b
+        const sub = this.source.subscribe((sourceVal) => {
+            let nextVal = this.reduce(curVal, sourceVal)
+            curVal = nextVal
+            handler(nextVal)
+        })
+        curVal = this.initial(sub.initialValue)
+        return {
+            initialValue: curVal,
+            dispose: sub.dispose,
+        }
     }
 }
 
@@ -201,37 +287,29 @@ export function combine<a>(signals: SignalRecord<a>): Signal<a> {
 export type SignalRecord<a> = { readonly [x in keyof a]: Signal<a[x]> }
 
 class SignalCombine<a> implements Signal<a> {
-    private currentValue: a
-    constructor(private readonly signals: SignalRecord<a>) {
-        const val: any = {}
-        for (const key in signals) {
-            val[key] = signals[key].value()
-        }
-        this.currentValue = val
-    }
+    constructor(private readonly sources: SignalRecord<a>) {}
 
     pipe<b>(f: SignalPipe<a, b>): Signal<b> {
         return f(this)
     }
 
-    value(): a {
-        return this.currentValue
-    }
+    subscribe(handler: ChangeHandler<a>): Subscription<a> {
+        const { sources } = this
+        const subs: Subscription<a[keyof a]>[] = []
+        let currentValue: any = {}
 
-    subscribe(handler: ChangeHandler<a>): Subscription {
-        const signals = this.signals
-        const subs: Subscription[] = []
-
-        for (const key in signals) {
-            const sub = signals[key].subscribe((val) => {
-                const nextValue = { ...this.currentValue, [key]: val }
-                this.currentValue = nextValue
+        for (const key in sources) {
+            const sub = sources[key].subscribe((val) => {
+                const nextValue = { ...currentValue, [key]: val }
+                currentValue = nextValue
                 handler(nextValue)
             })
+            currentValue[key] = sub.initialValue
             subs.push(sub)
         }
 
         return {
+            initialValue: currentValue,
             dispose() {
                 for (let i = 0; i < subs.length; i++) {
                     subs[i].dispose()
