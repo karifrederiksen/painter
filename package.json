@@ -43,6 +43,7 @@
         "jsverify": "0.8.4",
         "ordered-collections": "git+https://github.com/karifrederiksen/ordered-collections.git",
         "parcel": "2.0.0",
+        "rxjs": "7.4.0",
         "ts-loader": "9.2.6",
         "ts-node": "10.3.0",
         "typed-scss-modules": "4.1.1"

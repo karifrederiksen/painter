@@ -13,28 +13,26 @@ import {
 } from "ivi"
 import { div, ul, li, span, textarea, CONTENT } from "ivi-html"
 import * as styles from "./debugging.scss"
-import { SetOnce, PerfTracker, Signals } from "../../util"
+import { SetOnce, PerfTracker } from "../../util"
 import { Surface, DefaultButton } from "../components"
 import { Seed } from "../../rng"
+import { Observable } from "rxjs"
 
 interface PerformanceProps {
-    readonly samplesSignal: Signals.Signal<readonly PerfTracker.Sample[]>
+    readonly samplesSignal: Observable<readonly PerfTracker.Sample[]>
 }
 
 const Performance = component<PerformanceProps>((c) => {
     let samples = SamplesOverTime.empty
 
-    const subscribe = useEffect<Signals.Signal<readonly PerfTracker.Sample[]>>(
-        c,
-        (samplesSignal) => {
-            const { dispose } = samplesSignal.subscribe((nextSamples) => {
-                samples = samples.update(nextSamples)
-                invalidate(c)
-            })
+    const subscribe = useEffect<Observable<readonly PerfTracker.Sample[]>>(c, (samplesSignal) => {
+        const sub = samplesSignal.subscribe((nextSamples) => {
+            samples = samples.update(nextSamples)
+            invalidate(c)
+        })
 
-            return dispose
-        }
-    )
+        return () => sub.unsubscribe()
+    })
 
     return (props): Op => {
         subscribe(props.samplesSignal)
@@ -159,7 +157,7 @@ const Scripting = component<ScriptingProps>((c) => {
 interface DebugWindowProps {
     readonly themeRng: Seed
     readonly gl: SetOnce<WebGLRenderingContext>
-    readonly perfSamplesSignal: Signals.Signal<readonly PerfTracker.Sample[]>
+    readonly perfSamplesSignal: Observable<readonly PerfTracker.Sample[]>
 }
 
 // let's get the webgl context in here somehow!

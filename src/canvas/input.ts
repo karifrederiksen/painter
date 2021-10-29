@@ -1,4 +1,6 @@
-export interface PointerInput {
+import { Observable, fromEvent, map, mergeMap, takeUntil } from "rxjs"
+
+export interface PointerData {
     readonly x: number
     readonly y: number
     readonly pressure: number
@@ -8,21 +10,19 @@ export interface PointerInput {
     readonly time: number
 }
 
-export interface Listeners {
-    click(input: PointerInput): void
-    move(input: readonly PointerInput[]): void
-    drag(input: readonly PointerInput[]): void
-    release(input: PointerInput): void
+export interface Observables {
+    readonly click: Observable<PointerData>
+    readonly move: Observable<readonly PointerData[]>
+    readonly drag: Observable<readonly PointerData[]>
+    readonly release: Observable<PointerData>
 }
 
-export type RemoveListeners = () => void
-
-export function listen(canvas: HTMLCanvasElement, listeners: Listeners): RemoveListeners {
+export function listen(canvas: HTMLCanvasElement): Observables {
     if (window.PointerEvent !== undefined) {
-        return listenForPointers(canvas, listeners)
+        return listenForPointers(canvas)
     } else {
         // Add touch as well?
-        return listenForMouse(canvas, listeners)
+        return listenForMouse(canvas)
     }
 }
 
@@ -55,7 +55,7 @@ function localizePointer(
     event: PointerEvent,
     // we get the pressure off of the original event because firefox's coalesced events have a bug which causes them to always be 0
     originalEvent: PointerEvent
-): PointerInput {
+): PointerData {
     return {
         x: event.x,
         y: event.y,
@@ -67,9 +67,9 @@ function localizePointer(
     }
 }
 
-function uncoalesceAndLocalize(time: number, originalEvent: PointerEvent): PointerInput[] {
+function uncoalesceAndLocalize(time: number, originalEvent: PointerEvent): PointerData[] {
     const events = uncoalesce(originalEvent)
-    const result = new Array<PointerInput>(events.length)
+    const result = new Array<PointerData>(events.length)
     for (let i = 0; i < events.length; i++) {
         // we need to deal with pressure
         result[i] = localizePointer(time, events[i], originalEvent)
@@ -77,80 +77,51 @@ function uncoalesceAndLocalize(time: number, originalEvent: PointerEvent): Point
     return result
 }
 
-function listenForPointers(canvas: HTMLCanvasElement, listeners: Listeners): RemoveListeners {
-    const pointerDown = (ev: PointerEvent) => {
-        if (ev.button === 1 || ev.button === 2) {
-            return
-        }
-        const time = performance.now()
-        listeners.click(localizePointer(time, ev, ev))
-    }
-
-    const pointerUp = (ev: PointerEvent) => {
-        const time = performance.now()
-        listeners.release(localizePointer(time, ev, ev))
-    }
-
-    const pointerMove = (ev: PointerEvent) => {
-        const time = performance.now()
-        listeners.move(uncoalesceAndLocalize(time, ev))
-
-        if (ev.pressure > 0) {
-            listeners.drag(uncoalesceAndLocalize(time, ev))
-        }
-    }
-
-    window.addEventListener("pointerdown", checkPressureSupport)
-    canvas.addEventListener("pointerdown", pointerDown)
-    window.addEventListener("pointerup", pointerUp)
-    window.addEventListener("pointermove", pointerMove)
-
-    return () => {
-        window.removeEventListener("pointerdown", checkPressureSupport)
-        canvas.removeEventListener("pointerdown", pointerDown)
-        window.removeEventListener("pointerup", pointerUp)
-        window.removeEventListener("pointermove", pointerMove)
+function listenForPointers(canvas: HTMLCanvasElement): Observables {
+    const click = fromEvent<PointerEvent>(canvas, "pointerdown", { passive: true }).pipe(
+        map((ev) => {
+            checkPressureSupport(ev)
+            return localizePointer(performance.now(), ev, ev)
+        })
+    )
+    const move = fromEvent<PointerEvent>(window, "pointermove", { passive: true }).pipe(
+        map((ev) => {
+            checkPressureSupport(ev)
+            return uncoalesceAndLocalize(performance.now(), ev)
+        })
+    )
+    const release = fromEvent<PointerEvent>(window, "pointerup", { passive: true }).pipe(
+        map((ev) => localizePointer(performance.now(), ev, ev))
+    )
+    const drag = click.pipe(mergeMap((_) => move.pipe(takeUntil(release))))
+    return {
+        click,
+        move,
+        drag,
+        release,
     }
 }
 
-function listenForMouse(canvas: HTMLCanvasElement, listeners: Listeners): RemoveListeners {
-    let isDown = false
-
-    const mouseDown = (ev: MouseEvent) => {
-        if (ev.button === 1 || ev.button === 2) {
-            return
-        }
-        const time = performance.now()
-        listeners.click(localizeMouse(time, ev, false))
-        isDown = true
-    }
-
-    const mouseUp = (ev: MouseEvent) => {
-        const time = performance.now()
-        listeners.release(localizeMouse(time, ev, true))
-        isDown = false
-    }
-    const mouseMove = (ev: MouseEvent) => {
-        const time = performance.now()
-        listeners.move([localizeMouse(time, ev, false)])
-
-        if (isDown) {
-            listeners.drag([localizeMouse(time, ev, false)])
-        }
-    }
-
-    canvas.addEventListener("mousedown", mouseDown)
-    window.addEventListener("mouseup", mouseUp)
-    window.addEventListener("mousemove", mouseMove)
-
-    return () => {
-        canvas.removeEventListener("mousedown", mouseDown)
-        window.removeEventListener("mouseup", mouseUp)
-        window.removeEventListener("mousemove", mouseMove)
+function listenForMouse(canvas: HTMLCanvasElement): Observables {
+    const click = fromEvent<MouseEvent>(canvas, "mousedown", { passive: true }).pipe(
+        map((ev) => localizeMouse(performance.now(), ev, false))
+    )
+    const move = fromEvent<MouseEvent>(window, "mousemove", { passive: true }).pipe(
+        map((ev) => [localizeMouse(performance.now(), ev, false)])
+    )
+    const release = fromEvent<MouseEvent>(window, "mouseup", { passive: true }).pipe(
+        map((ev) => localizeMouse(performance.now(), ev, true))
+    )
+    const drag = click.pipe(mergeMap((_) => move.pipe(takeUntil(release))))
+    return {
+        click,
+        move,
+        drag,
+        release,
     }
 }
 
-function localizeMouse(time: number, ev: MouseEvent, isRelease: boolean): PointerInput {
+function localizeMouse(time: number, ev: MouseEvent, isRelease: boolean): PointerData {
     return {
         x: ev.x,
         y: ev.y,

@@ -12,9 +12,9 @@ import { Vec2, PerfTracker, turn, Tagged, tagged } from "../util"
 
 export type CanvasMsg =
     | Tagged<"OnFrame", number>
-    | Tagged<"OnClick", Input.PointerInput>
-    | Tagged<"OnRelease", Input.PointerInput>
-    | Tagged<"OnDrag", readonly Input.PointerInput[]>
+    | Tagged<"OnClick", Input.PointerData>
+    | Tagged<"OnRelease", Input.PointerData>
+    | Tagged<"OnDrag", readonly Input.PointerData[]>
     | Tagged<"OnKeyboard", keymapping.KeyInput>
     | Tagged<"RandomizeTheme">
     | Tagged<"ToggleHighlightRenderBlocks">
@@ -39,9 +39,9 @@ export class Sender {
         this.layer = new Layers.Sender((msg) => sendMessage(tagged("LayersMsg", msg)))
     }
     onFrame = (timeMs: number) => this.sendMessage(tagged("OnFrame", timeMs))
-    onClick = (input: Input.PointerInput) => this.sendMessage(tagged("OnClick", input))
-    onRelease = (input: Input.PointerInput) => this.sendMessage(tagged("OnRelease", input))
-    onDrag = (inputs: readonly Input.PointerInput[]) => {
+    onClick = (input: Input.PointerData) => this.sendMessage(tagged("OnClick", input))
+    onRelease = (input: Input.PointerData) => this.sendMessage(tagged("OnRelease", input))
+    onDrag = (inputs: readonly Input.PointerData[]) => {
         if (inputs.length === 0) {
             const errorMsg = "Expected inputs be be 1 or greater"
             console.error(errorMsg, inputs)
@@ -133,7 +133,7 @@ export interface TransformedPointerInput {
 function pointerToBrushInput(
     canvasInfo: CanvasInfo,
     camera: Camera.Config,
-    input: Input.PointerInput
+    input: Input.PointerData
 ): TransformedPointerInput {
     const point = new Vec2(input.x, input.y)
         .subtract(canvasInfo.offset)
@@ -155,7 +155,7 @@ function pointerToBrushInput(
 function pointersToBrushInputs(
     canvasInfo: CanvasInfo,
     camera: Camera.Config,
-    inputs: readonly Input.PointerInput[]
+    inputs: readonly Input.PointerData[]
 ): TransformedPointerInput[] {
     const arr = new Array<TransformedPointerInput>(inputs.length)
     for (let i = 0; i < inputs.length; i++) {

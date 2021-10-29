@@ -10,7 +10,7 @@ export async function setup(
 ): Promise<void> {
     const forceRender = () => sender.onFrame(performance.now())
 
-    const mkPt = (x: number, y: number, p: number): Input.PointerInput => ({
+    const mkPt = (x: number, y: number, p: number): Input.PointerData => ({
         alt: false,
         ctrl: false,
         shift: false,
@@ -20,9 +20,7 @@ export async function setup(
         y: y + canvas.offsetTop,
     })
 
-    const mkPts = (x: number, y: number, p: number): readonly Input.PointerInput[] => [
-        mkPt(x, y, p),
-    ]
+    const mkPts = (x: number, y: number, p: number): readonly Input.PointerData[] => [mkPt(x, y, p)]
 
     sender.tool.camera.setRotation(0.125)
     sender.tool.camera.setOffset(150, 0)

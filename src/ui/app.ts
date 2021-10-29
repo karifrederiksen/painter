@@ -21,10 +21,11 @@ import * as Input from "../canvas/input"
 import * as Keymapping from "../canvas/keymapping"
 import * as Canvas from "../canvas"
 import * as Setup from "./setup"
-import { SetOnce, FrameStream, Store, PerfTracker, Vec2, Signals, PushOnlyArray } from "../util"
+import { SetOnce, FrameStream, Store, PerfTracker, Vec2, PushOnlyArray } from "../util"
 import { PrimaryButton, Surface } from "./components"
 import * as Debugging from "./debugging"
 import { MiniMapDetails } from "./miniMap"
+import { Subject, Subscription as RxSubscription } from "rxjs"
 
 console.error({ styles })
 
@@ -69,13 +70,13 @@ function createUpdateThemeEffect(c: Component) {
     })
 }
 
-interface Disposals extends PushOnlyArray<() => void> {}
+interface Disposals extends PushOnlyArray<(() => void) | RxSubscription> {}
 
 export const App = component((c) => {
     const [initialState, initialEphemeral] = Canvas.initState()
     const canvasModel = new SetOnce<Canvas.Canvas>()
     const debuggingGl = new SetOnce<WebGLRenderingContext>()
-    const perfTrackerData = Signals.create<readonly PerfTracker.Sample[]>([])
+    const perfTrackerData = new Subject<readonly PerfTracker.Sample[]>()
     const canvasRef = box<OpState | null>(null)
 
     const canvasResolution = new Vec2(800, 800)
@@ -124,7 +125,7 @@ export const App = component((c) => {
         {
             const canvas = Canvas.Canvas.create(htmlCanvas, {
                 onStats: (stats) => {
-                    perfTrackerData.push(stats)
+                    perfTrackerData.next(stats)
                 },
                 onWebglContextCreated: (gl) => {
                     debuggingGl.set(gl)
@@ -137,16 +138,11 @@ export const App = component((c) => {
             canvasModel.set(canvas)
         }
 
-        disposals.push(
-            Input.listen(htmlCanvas, {
-                click: sender.onClick,
-                release: sender.onRelease,
-                move: (x) => {
-                    /**/
-                },
-                drag: sender.onDrag,
-            })
-        )
+        const canvasObs = Input.listen(htmlCanvas)
+        disposals.push(canvasObs.click.subscribe(sender.onClick))
+        disposals.push(canvasObs.release.subscribe(sender.onRelease))
+        disposals.push(canvasObs.move.subscribe(() => {}))
+        disposals.push(canvasObs.drag.subscribe(sender.onDrag))
         disposals.push(
             Keymapping.listen({
                 handle: sender.onKeyboard,
@@ -162,8 +158,12 @@ export const App = component((c) => {
         }
 
         return () => {
-            for (let i = 0; i < disposals.length; i++) {
-                disposals[i]()
+            for (const d of disposals) {
+                if (d instanceof RxSubscription) {
+                    d.unsubscribe()
+                } else {
+                    d()
+                }
             }
             console.log("Painter unmounted")
         }
@@ -234,7 +234,7 @@ export const App = component((c) => {
                       Debugging.DebugWindow({
                           gl: debuggingGl,
                           themeRng: store.getEphemeral().themeRng,
-                          perfSamplesSignal: perfTrackerData.signal,
+                          perfSamplesSignal: perfTrackerData.asObservable(),
                       })
                   ),
         ])
