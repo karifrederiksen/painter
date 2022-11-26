@@ -1,7 +1,8 @@
-/node_modules
-/.vscode
-/.cache
-/.parcel-cache
-/dist
-/TODO
-*.scss.d.ts
+.DS_Store
+node_modules
+/build
+/.svelte-kit
+/package
+.env
+.env.*
+!.env.example
