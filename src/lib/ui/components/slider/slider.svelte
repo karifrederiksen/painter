@@ -2,15 +2,17 @@
     import type { Hsv } from "color";
     import { clamp } from "../../../util";
     import { onMount } from "svelte";
+    import { createEventDispatcher } from "svelte";
 
     export let percentage: number;
-    export let onChange: (pct: number) => void;
     export let color: Hsv | undefined = undefined;
+
+    const dispatch = createEventDispatcher<{ change: number }>();
 
     let containerRef: HTMLDivElement | null = null;
     let isDown = false;
 
-    function signal(ev: MouseEvent): void {
+    const signal = (ev: MouseEvent): void => {
         if (!containerRef) return;
         const bounds = containerRef.getBoundingClientRect();
         const Rem = 16;
@@ -19,23 +21,23 @@
 
         const localX = clamp(ev.clientX - bounds.left - dotWidth / 2, 0, width);
 
-        onChange(localX / width);
-    }
+        dispatch("change", localX / width);
+    };
 
-    function onDown(ev: MouseEvent) {
+    const onDown = (ev: MouseEvent) => {
         signal(ev);
         isDown = true;
-    }
+    };
 
-    function onUp() {
+    const onUp = () => {
         isDown = false;
-    }
+    };
 
-    function onMove(ev: MouseEvent) {
+    const onMove = (ev: MouseEvent) => {
         if (isDown) {
             signal(ev);
         }
-    }
+    };
 
     onMount(() => {
         document.body.addEventListener("mouseup", onUp, { passive: true });

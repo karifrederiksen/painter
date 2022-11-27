@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { afterUpdate } from "svelte";
+
     export let isOpen: boolean;
     export let onClose: () => void;
 
@@ -10,13 +12,13 @@
         }
     };
 
-    $: {
+    afterUpdate(() => {
         if (isOpen) {
             document.body.style.overflow = "hidden";
         } else {
             document.body.style.overflow = "";
         }
-    }
+    });
 </script>
 
 {#if isOpen}

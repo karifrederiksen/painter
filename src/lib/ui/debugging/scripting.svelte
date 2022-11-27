@@ -1,10 +1,6 @@
 <script lang="ts">
-    import type { SetOnce } from "$lib/util";
     import { onMount } from "svelte";
-
-    export let gl: SetOnce<WebGLRenderingContext>;
-
-    $: gl_ = gl;
+    import { debuggingGl } from "$lib/ui/state";
 
     let code = "";
 
@@ -13,9 +9,9 @@
             ev.preventDefault();
             try {
                 /* eslint-disable-next-line no-eval */
-                console.log(`Evaluating {| ${code} |}`);
-                const gl = gl_.value;
-                console.log(eval(code));
+                console.debug(`Evaluating {| ${code} |}`);
+                const gl = $debuggingGl;
+                console.debug(eval(code));
             } catch (err) {
                 console.error("Error: ", err);
             }

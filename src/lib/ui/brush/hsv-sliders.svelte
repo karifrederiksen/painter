@@ -18,7 +18,7 @@
     fromString={stringToFloat}
     toString={toFixed2}
     percentage={color.h}
-    onChange={(pct) => sender.setColor(rgbToHsluv(color.with({ h: pct }).toRgb()))}
+    on:change={(ev) => sender.setColor(rgbToHsluv(color.with({ h: ev.detail }).toRgb()))}
 />
 <LabeledSlider
     label="Saturation"
@@ -26,7 +26,7 @@
     fromString={stringToFloat}
     toString={toFixed2}
     percentage={color.s}
-    onChange={(pct) => sender.setColor(rgbToHsluv(color.with({ s: pct }).toRgb()))}
+    on:change={(ev) => sender.setColor(rgbToHsluv(color.with({ s: ev.detail }).toRgb()))}
 />
 <LabeledSlider
     label="Value"
@@ -34,5 +34,5 @@
     fromString={stringToFloat}
     toString={toFixed2}
     percentage={color.v}
-    onChange={(pct) => sender.setColor(rgbToHsluv(color.with({ v: pct }).toRgb()))}
+    on:change={(ev) => sender.setColor(rgbToHsluv(color.with({ v: ev.detail }).toRgb()))}
 />

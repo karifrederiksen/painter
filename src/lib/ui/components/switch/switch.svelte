@@ -1,9 +1,12 @@
 <script lang="ts">
+    import { createEventDispatcher } from "svelte";
+
     export let checked: boolean;
-    export let onCheck: (checked: boolean) => void;
+
+    const dispatch = createEventDispatcher<{ change: boolean }>();
 
     function handler() {
-        onCheck(!checked);
+        dispatch("change", !checked);
     }
 </script>
 

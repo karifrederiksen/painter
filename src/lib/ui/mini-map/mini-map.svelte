@@ -25,8 +25,8 @@
         fromString={stringToFloat}
         toString={zoomToString}
         percentage={camera.zoomPct / 4}
-        onChange={(pct) => {
-            sender.setZoom(pct * 4);
+        on:change={(ev) => {
+            sender.setZoom(ev.detail * 4);
         }}
     />
     <LabeledSlider
@@ -36,8 +36,8 @@
         fromString={stringToFloat}
         toString={rotateToString}
         percentage={camera.rotateTurns}
-        onChange={(pct) => {
-            sender.setRotation(pct);
+        on:change={(ev) => {
+            sender.setRotation(ev.detail);
         }}
     />
     <LabeledSlider
@@ -47,8 +47,8 @@
         fromString={stringToFloat}
         toString={toFixed0}
         percentage={clamp((camera.offsetX + 2500) / 5000, -5000, 5000)}
-        onChange={(pct) => {
-            sender.setOffset(pct * 5000 - 2500, camera.offsetY);
+        on:change={(ev) => {
+            sender.setOffset(ev.detail * 5000 - 2500, camera.offsetY);
         }}
     />
     <LabeledSlider
@@ -58,8 +58,8 @@
         fromString={stringToFloat}
         toString={toFixed0}
         percentage={clamp((camera.offsetY + 2500) / 5000, -5000, 5000)}
-        onChange={(pct) => {
-            sender.setOffset(camera.offsetX, pct * 5000 - 2500);
+        on:change={(ev) => {
+            sender.setOffset(camera.offsetX, ev.detail * 5000 - 2500);
         }}
     />
 </div>

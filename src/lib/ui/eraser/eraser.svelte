@@ -26,7 +26,7 @@
             fromString={stringToFloat}
             toString={toFixed1}
             percentage={brush.diameterPx / 500}
-            onChange={(pct) => sender.setDiameter(pct * 500)}
+            on:change={(ev) => sender.setDiameter(ev.detail * 500)}
         />
         <LabeledSlider
             label="Softness"
@@ -34,7 +34,7 @@
             fromString={stringToFloat}
             toString={toFixed2}
             percentage={brush.softness}
-            onChange={sender.setSoftness}
+            on:change={(ev) => sender.setSoftness(ev.detail)}
         />
         <LabeledSlider
             label="Flow"
@@ -42,7 +42,7 @@
             fromString={stringToFloat}
             toString={toFixed2}
             percentage={brush.flowPct}
-            onChange={sender.setOpacity}
+            on:change={(ev) => sender.setOpacity(ev.detail)}
         />
         <LabeledSlider
             label="Spacing"
@@ -51,17 +51,17 @@
             fromString={stringToFloat}
             toString={toFixed2}
             percentage={brush.spacingPct}
-            onChange={sender.setSpacing}
+            on:change={(ev) => sender.setSpacing(ev.detail)}
         />
         <LabeledSwitch
             label="Pressure-Opacity"
             checked={brush.pressureAffectsOpacity}
-            onCheck={sender.setPressureAffectsOpacity}
+            on:change={(ev) => sender.setPressureAffectsOpacity(ev.detail)}
         />
         <LabeledSwitch
             label="Pressure-Size"
             checked={brush.pressureAffectsSize}
-            onCheck={sender.setPressureAffectsSize}
+            on:change={(ev) => sender.setPressureAffectsSize(ev.detail)}
         />
         <LabeledSlider
             label="Delay"
@@ -70,7 +70,7 @@
             fromString={stringToFloat}
             toString={toFixed0}
             percentage={brush.delay.duration / 500}
-            onChange={(pct) => sender.setDelay(pct * 500)}
+            on:change={(ev) => sender.setDelay(ev.detail * 500)}
         />
     </div>
 </Surface>

@@ -2,7 +2,7 @@
     import * as Color from "color";
     import { onMount } from "svelte";
     import { ColorMode, clamp, CanvasPool } from "../../../util";
-    import { GlState, type ThumbPositions } from "./color-wheel-logic";
+    import { GlState } from "./color-wheel-logic";
 
     export let color: Color.Hsluv;
     export let colorType: ColorMode; // = ColorMode.Hsluv;
@@ -22,9 +22,9 @@
 
     let containerRef: HTMLDivElement | undefined;
     let canvasContainerRef: HTMLDivElement | undefined;
-    let glState: GlState | null = null;
+    let glState: GlState | undefined;
     let pointerState = PointerState.Default;
-    let thumbData: ThumbPositions | null = null;
+    $: thumbData = glState?.getThumbPositions(colorType, color);
 
     function signalOuter(ev: WithClientXY) {
         if (!containerRef) {
@@ -108,35 +108,40 @@
         };
     });
 
-    {
-        function onUp(_ev: WithClientXY) {
-            pointerState = PointerState.Default;
-        }
+    $: if (glState) {
+        glState.render(colorType, color);
+    }
 
-        function onMove(ev: WithClientXY) {
+    onMount(() => {
+        const onUp = (ev: MouseEvent) => {
+            ev.preventDefault();
+            pointerState = PointerState.Default;
+        };
+
+        const onMove = (ev: MouseEvent) => {
             switch (pointerState) {
                 case PointerState.Default:
                     break;
                 case PointerState.DownOnInner:
+                    ev.preventDefault();
                     signalInner(ev);
                     break;
                 case PointerState.DownOnOuter:
+                    ev.preventDefault();
                     signalOuter(ev);
                     break;
             }
-        }
-
-        onMount(() => {
-            window.addEventListener("mouseup", onUp);
-            window.addEventListener("mouseleave", onUp);
-            window.addEventListener("mousemove", onMove, { passive: true });
-            return () => {
-                window.removeEventListener("mouseup", onUp);
-                window.removeEventListener("mouseleave", onUp);
-                window.removeEventListener("mousemove", onMove);
-            };
-        });
-    }
+        };
+        window.addEventListener("mouseup", onUp);
+        window.addEventListener("mouseleave", onUp);
+        window.addEventListener("mousemove", onMove);
+        return () => {
+            pointerState = PointerState.Default;
+            window.removeEventListener("mouseup", onUp);
+            window.removeEventListener("mouseleave", onUp);
+            window.removeEventListener("mousemove", onMove);
+        };
+    });
 
     function isInclusive(n: number, min: number, max: number): boolean {
         return n >= min && n <= max;
@@ -172,7 +177,7 @@
         <div bind:this={canvasContainerRef} />
         <div
             class="circleThumb"
-            style={thumbData === null
+            style={thumbData == null
                 ? undefined
                 : `left: ${thumbData.circleThumbX}px; top: ${
                       thumbData.circleThumbY
@@ -182,7 +187,7 @@
         />
         <div
             class="areaThumb"
-            style={thumbData === null
+            style={thumbData == null
                 ? undefined
                 : `left: ${thumbData.areaThumbX}px; top: ${
                       thumbData.areaThumbY

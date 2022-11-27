@@ -13,7 +13,7 @@ export interface Args<state, ephemeral, msg, effects> {
         msg: msg,
     ) => readonly [state, ephemeral, effects];
     readonly effectsHandler: (eff: effects) => void;
-    readonly forceRender: () => void;
+    readonly forceRender: (state: state, eph: ephemeral) => void;
 }
 
 export function create<state, ephemeral, msg, effects>(
@@ -30,8 +30,8 @@ export function create<state, ephemeral, msg, effects>(
         try {
             const [nextState, nextEphemeral, effect_] = update(state, ephemeral, msg);
             if (state !== nextState) {
-                forceRender();
                 state = nextState;
+                forceRender(nextState, nextEphemeral);
             }
             effect = effect_;
             ephemeral = nextEphemeral;

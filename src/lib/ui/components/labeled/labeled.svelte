@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { createEventDispatcher } from "svelte";
     import { Dialog } from "../dialog";
     import { PrimaryButton } from "..";
     import { Row } from "../row";
@@ -12,7 +13,8 @@
     export let value: a;
     export let toString: (value: a) => string;
     export let fromString: (text: string) => a | null;
-    export let onChange: (val: a) => void;
+
+    const dispatch = createEventDispatcher<{ change: a }>();
 
     let isEditing = false;
     $: inputValue = toString(value);
@@ -29,20 +31,20 @@
         isEditing = false;
     };
 
-    const handleUpdate = () => {
-        const value = fromString(inputValue);
-        console.debug("value", value);
+    const handleUpdate = (text: string) => {
+        const value = fromString(text);
+        console.debug("update value", value);
         if (value === null) {
             // unable to parse - show error?
         } else {
-            onChange(value);
+            dispatch("change", value);
             isEditing = false;
         }
     };
 
     const handleUpdateWithText = (text: string) => {
         handleInput(text);
-        handleUpdate();
+        handleUpdate(text);
     };
 </script>
 
@@ -53,7 +55,7 @@
         <p class="label" on:click={startEditing}>{toString(value)}{valuePostfix ?? ""}</p>
     </div>
     <Dialog isOpen={isEditing} onClose={stopEditing}>
-        <slot name="body">
+        <svelte:fragment slot="body">
             <div class="title-text">{label}</div>
             <TextInput
                 initialValue={inputValue}
@@ -61,13 +63,11 @@
                 onEnter={handleUpdateWithText}
                 autoFocus={true}
             />
-        </slot>
-        <slot name="footer">
-            <Row spacing={0.5}>
-                <DefaultButton onClick={stopEditing}>Cancel</DefaultButton>
-                <PrimaryButton onClick={handleUpdate}>Update</PrimaryButton>
-            </Row>
-        </slot>
+        </svelte:fragment>
+        <Row spacing={0.5} slot="footer">
+            <DefaultButton onClick={stopEditing}>Cancel</DefaultButton>
+            <PrimaryButton onClick={() => handleUpdate(inputValue)}>Update</PrimaryButton>
+        </Row>
     </Dialog>
     <div class="content">
         <slot />

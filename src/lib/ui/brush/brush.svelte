@@ -19,23 +19,23 @@
 
     $: colorType = brush.colorMode.focus;
 
-    function toFixed2(pct: number): string {
+    const toFixed2 = (pct: number): string => {
         return pct.toFixed(2);
-    }
-    function toFixed1(px: number): string {
+    };
+    const toFixed1 = (px: number): string => {
         return px.toFixed(1);
-    }
-    function toFixed0(ms: number): string {
+    };
+    const toFixed0 = (ms: number): string => {
         return ms.toFixed(0);
-    }
-    function onColorText(text: string) {
+    };
+    const onColorText = (text: string) => {
         const rgb = Color.Rgb.fromCss(text);
         if (rgb === null) {
             return;
         }
 
         sender.setColor(Color.rgbToHsluv(rgb));
-    }
+    };
 </script>
 
 <Surface>
@@ -69,15 +69,17 @@
             fromString={stringToFloat}
             toString={toFixed1}
             percentage={brush.diameterPx / 500}
-            onChange={(pct) => sender.setDiameter(pct * 500)}
+            on:change={(ev) => sender.setDiameter(ev.detail * 500)}
         />
         <LabeledSlider
             label="Softness"
             value={brush.softness}
             fromString={stringToFloat}
-            toString={toFixed2}
+            toString={(pct) => {
+                return pct.toFixed(2);
+            }}
             percentage={brush.softness}
-            onChange={sender.setSoftness}
+            on:change={(ev) => sender.setSoftness(ev.detail)}
         />
         <LabeledSlider
             label="Flow"
@@ -85,7 +87,7 @@
             fromString={stringToFloat}
             toString={toFixed2}
             percentage={brush.flowPct}
-            onChange={sender.setOpacity}
+            on:change={(ev) => sender.setOpacity(ev.detail)}
         />
         <LabeledSlider
             label="Spacing"
@@ -94,7 +96,7 @@
             fromString={stringToFloat}
             toString={toFixed2}
             percentage={brush.spacingPct}
-            onChange={sender.setSpacing}
+            on:change={(ev) => sender.setSpacing(ev.detail)}
         />
         {#if colorType === ColorMode.Hsluv}
             <HsluvSliders {sender} color={brush.color} />
@@ -104,12 +106,12 @@
         <LabeledSwitch
             label="Pressure-Opacity"
             checked={brush.pressureAffectsOpacity}
-            onCheck={sender.setPressureAffectsOpacity}
+            on:change={(ev) => sender.setPressureAffectsOpacity(ev.detail)}
         />
         <LabeledSwitch
             label="Pressure-Size"
             checked={brush.pressureAffectsSize}
-            onCheck={sender.setPressureAffectsSize}
+            on:change={(ev) => sender.setPressureAffectsSize(ev.detail)}
         />
         <LabeledSlider
             label="Delay"
@@ -118,7 +120,7 @@
             fromString={stringToFloat}
             toString={toFixed0}
             percentage={brush.delay.duration / 500}
-            onChange={(pct) => sender.setDelay(pct * 500)}
+            on:change={(ev) => sender.setDelay(ev.detail * 500)}
         />
     </div>
 </Surface>

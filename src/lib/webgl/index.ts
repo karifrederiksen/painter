@@ -47,7 +47,7 @@ function compileShader(gl: WebGLRenderingContext, src: string, shaderType: numbe
     console.group("Failed to compile shader");
     console.error("shader info log: ", gl.getShaderInfoLog(shader));
     const prettySrc = withNumberedLines(src);
-    console.log(prettySrc);
+    console.info(prettySrc);
     console.groupEnd();
     gl.deleteShader(shader);
     return null;
@@ -59,8 +59,8 @@ function linkProgram(gl: WebGLRenderingContext, program: WebGLProgram): WebGLPro
 
     console.group("Failed to link program");
     console.error("error: ", gl.getError());
-    console.log("validate status: ", gl.getProgramParameter(program, gl.VALIDATE_STATUS));
-    console.log("program info log: ", gl.getProgramInfoLog(program));
+    console.info("validate status: ", gl.getProgramParameter(program, gl.VALIDATE_STATUS));
+    console.info("program info log: ", gl.getProgramInfoLog(program));
     console.groupEnd();
 
     gl.deleteProgram(program);

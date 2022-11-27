@@ -1,13 +1,11 @@
 <script lang="ts">
-    import type { SetOnce } from "$lib/util";
     import DefaultButton from "../components/buttons/default-button.svelte";
     import Surface from "../components/surface/surface.svelte";
     import Performance from "./performance.svelte";
     import Scripting from "./scripting.svelte";
-    import type { Seed } from "../../rng";
+    import { canvasEphemeral } from "../state";
 
-    export let themeRng: Seed;
-    export let gl: SetOnce<WebGLRenderingContext>;
+    $: themeRng = $canvasEphemeral?.themeRng;
 
     let isOpen = false;
 
@@ -27,7 +25,7 @@
             <div class="contentContainer">
                 RNG: <div class="monospaced">{themeRng.display()}</div>
                 <Performance />
-                <Scripting {gl} />
+                <Scripting />
             </div>
         </div>
     {:else}

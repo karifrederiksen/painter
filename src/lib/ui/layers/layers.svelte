@@ -29,7 +29,7 @@
             <LabeledSwitch
                 label="Hidden"
                 checked={current.isHidden}
-                onCheck={(isHidden) => sender.setHidden(current.id, isHidden)}
+                on:change={(ev) => sender.setHidden(current.id, ev.detail)}
             />
             <LabeledSlider
                 label="Opacity"
@@ -37,7 +37,7 @@
                 toString={toFixed2}
                 fromString={stringToFloat}
                 percentage={current.opacity}
-                onChange={(pct) => sender.setOpacity(current.id, pct)}
+                on:change={(ev) => sender.setOpacity(current.id, ev.detail)}
             />
         </div>
     </Surface>
