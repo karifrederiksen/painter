@@ -3,102 +3,102 @@ import { DEFINE_TAU, createProgram, DEFINE_hsluv_etc, DEFINE_hsvToRgb } from "..
 import { ColorMode, CanvasPool } from "../../../util";
 
 export interface ThumbPositions {
-  angle: number;
-  circleThumbX: number;
-  circleThumbY: number;
-  areaThumbX: number;
-  areaThumbY: number;
+    angle: number;
+    circleThumbX: number;
+    circleThumbY: number;
+    areaThumbX: number;
+    areaThumbY: number;
 }
 
 export interface ColorWheelProps {
-  readonly color: Color.Hsluv;
-  readonly colorType: ColorMode;
-  readonly onChange: (color: Color.Hsluv) => void;
+    readonly color: Color.Hsluv;
+    readonly colorType: ColorMode;
+    readonly onChange: (color: Color.Hsluv) => void;
 }
 
 export class GlState {
-  private readonly gl: WebGLRenderingContext;
-  private readonly ringRenderer: RingRenderer;
-  private readonly satValRenderer: SatValRenderer;
+    private readonly gl: WebGLRenderingContext;
+    private readonly ringRenderer: RingRenderer;
+    private readonly satValRenderer: SatValRenderer;
 
-  constructor(readonly canvas: HTMLCanvasElement) {
-    const gl = canvas.getContext("webgl");
-    if (gl === null) {
-      throw new Error("Failed to init webgl");
+    constructor(readonly canvas: HTMLCanvasElement) {
+        const gl = canvas.getContext("webgl");
+        if (gl === null) {
+            throw new Error("Failed to init webgl");
+        }
+
+        gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+        gl.enable(gl.BLEND);
+        gl.disable(gl.DEPTH_TEST);
+
+        this.gl = gl;
+        this.ringRenderer = new RingRenderer(gl);
+        this.satValRenderer = new SatValRenderer(gl);
     }
 
-    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-    gl.enable(gl.BLEND);
-    gl.disable(gl.DEPTH_TEST);
-
-    this.gl = gl;
-    this.ringRenderer = new RingRenderer(gl);
-    this.satValRenderer = new SatValRenderer(gl);
-  }
-
-  render(colorMode: ColorMode, color: Color.Hsluv) {
-    this.gl.clearColor(0, 0, 0, 0);
-    this.gl.clear(this.gl.COLOR_BUFFER_BIT);
-    this.ringRenderer.render(colorMode, color);
-    this.satValRenderer.render(colorMode, color);
-  }
-
-  getThumbPositions(colorType: ColorMode, color: Color.Hsluv): ThumbPositions {
-    const canvasRect = this.canvas.getBoundingClientRect();
-
-    let angle: number;
-    let xPct: number;
-    let yPct: number;
-    if (colorType === ColorMode.Hsluv) {
-      angle = (color.h + 180) % 360;
-      xPct = color.s / 100;
-      yPct = color.l / 100;
-    } else {
-      const hsv = Color.rgbToHsv(color.toRgb());
-      angle = (hsv.h * 360 + 180) % 360;
-      xPct = hsv.s;
-      yPct = hsv.v;
+    render(colorMode: ColorMode, color: Color.Hsluv) {
+        this.gl.clearColor(0, 0, 0, 0);
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+        this.ringRenderer.render(colorMode, color);
+        this.satValRenderer.render(colorMode, color);
     }
 
-    let circleThumbX = 0;
-    let circleThumbY = 0;
-    if (canvasRect !== null) {
-      const radius = 80;
-      const cx = canvasRect.left + radius;
-      const cy = canvasRect.top + radius;
+    getThumbPositions(colorType: ColorMode, color: Color.Hsluv): ThumbPositions {
+        const canvasRect = this.canvas.getBoundingClientRect();
 
-      const theta = (angle * Math.PI) / 180;
-      const dx = (radius - 8) * Math.cos(theta);
-      const dy = (radius - 8) * Math.sin(theta);
+        let angle: number;
+        let xPct: number;
+        let yPct: number;
+        if (colorType === ColorMode.Hsluv) {
+            angle = (color.h + 180) % 360;
+            xPct = color.s / 100;
+            yPct = color.l / 100;
+        } else {
+            const hsv = Color.rgbToHsv(color.toRgb());
+            angle = (hsv.h * 360 + 180) % 360;
+            xPct = hsv.s;
+            yPct = hsv.v;
+        }
 
-      circleThumbX = cx + dx;
-      circleThumbY = cy + dy;
+        let circleThumbX = 0;
+        let circleThumbY = 0;
+        if (canvasRect !== null) {
+            const radius = 80;
+            const cx = canvasRect.left + radius;
+            const cy = canvasRect.top + radius;
+
+            const theta = (angle * Math.PI) / 180;
+            const dx = (radius - 8) * Math.cos(theta);
+            const dy = (radius - 8) * Math.sin(theta);
+
+            circleThumbX = cx + dx;
+            circleThumbY = cy + dy;
+        }
+
+        let areaThumbX = 0;
+        let areaThumbY = 0;
+        if (canvasRect !== null) {
+            const offset = canvasRect.width * 0.225;
+            const width = canvasRect.width * 0.55;
+
+            areaThumbX = canvasRect.left + offset + width * xPct;
+            areaThumbY = canvasRect.top + offset + width * (1 - yPct);
+        }
+
+        return {
+            angle,
+            circleThumbX,
+            circleThumbY,
+            areaThumbX,
+            areaThumbY,
+        };
     }
 
-    let areaThumbX = 0;
-    let areaThumbY = 0;
-    if (canvasRect !== null) {
-      const offset = canvasRect.width * 0.225;
-      const width = canvasRect.width * 0.55;
-
-      areaThumbX = canvasRect.left + offset + width * xPct;
-      areaThumbY = canvasRect.top + offset + width * (1 - yPct);
+    dispose() {
+        this.ringRenderer.dispose();
+        this.satValRenderer.dispose();
+        CanvasPool.recycle(this.canvas);
     }
-
-    return {
-      angle,
-      circleThumbX,
-      circleThumbY,
-      areaThumbX,
-      areaThumbY,
-    };
-  }
-
-  dispose() {
-    this.ringRenderer.dispose();
-    this.satValRenderer.dispose();
-    CanvasPool.recycle(this.canvas);
-  }
 }
 
 const RING_VERT_SRC = `
@@ -116,7 +116,7 @@ void main() {
 `;
 
 function makeRingFragSrc(DEFINE_toRgb: string) {
-  return `
+    return `
     precision highp float;
     
     ${DEFINE_TAU}
@@ -165,68 +165,76 @@ vec3 toRgb(vec3 color, vec3 xyz) {
 `);
 
 class RingRenderer {
-  private readonly buffer: WebGLBuffer;
-  private program: WebGLProgram | null = null;
-  private colorLocation: WebGLUniformLocation | null = null;
-  private prevColorType: ColorMode | null = null;
+    private readonly buffer: WebGLBuffer;
+    private program: WebGLProgram | null = null;
+    private colorLocation: WebGLUniformLocation | null = null;
+    private prevColorType: ColorMode | null = null;
 
-  constructor(private readonly gl: WebGLRenderingContext) {
-    this.buffer = gl.createBuffer() as WebGLBuffer;
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
-    gl.bufferData(
-      gl.ARRAY_BUFFER,
-      new Float32Array([1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, -1.0]),
-      gl.STATIC_DRAW,
-    );
-  }
+    constructor(private readonly gl: WebGLRenderingContext) {
+        this.buffer = gl.createBuffer() as WebGLBuffer;
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+        gl.bufferData(
+            gl.ARRAY_BUFFER,
+            new Float32Array([1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, -1.0]),
+            gl.STATIC_DRAW,
+        );
+    }
 
-  render(colorType: ColorMode, color: Color.Hsluv): void {
-    if (!this.program || this.prevColorType !== colorType) {
-      if (this.program) {
+    render(colorType: ColorMode, color: Color.Hsluv): void {
+        if (!this.program || this.prevColorType !== colorType) {
+            if (this.program) {
+                this.gl.deleteProgram(this.program);
+            }
+
+            switch (colorType) {
+                case ColorMode.Hsv:
+                    this.program = createProgram(
+                        this.gl,
+                        RING_VERT_SRC,
+                        RING_FRAG_SRC_HSV,
+                    ) as WebGLProgram;
+                    break;
+                case ColorMode.Hsluv:
+                    this.program = createProgram(
+                        this.gl,
+                        RING_VERT_SRC,
+                        RING_FRAG_SRC_HSLUV,
+                    ) as WebGLProgram;
+                    break;
+            }
+            this.gl.bindAttribLocation(this.program as WebGLProgram, 0, "a_position");
+            this.colorLocation = this.gl.getUniformLocation(
+                this.program as WebGLProgram,
+                "u_color",
+            ) as WebGLUniformLocation;
+            this.prevColorType = colorType;
+        }
+
+        this.gl.useProgram(this.program);
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffer);
+
+        this.gl.vertexAttribPointer(0, 2, this.gl.FLOAT, false, 0, 0);
+        this.gl.enableVertexAttribArray(0);
+
+        switch (colorType) {
+            case ColorMode.Hsv: {
+                const hsv = Color.rgbToHsv(Color.hsluvToRgb(color));
+                this.gl.uniform3f(this.colorLocation, hsv.h, hsv.s, hsv.v);
+                break;
+            }
+            case ColorMode.Hsluv: {
+                this.gl.uniform3f(this.colorLocation, color.h, color.s, color.l);
+                break;
+            }
+        }
+
+        this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
+    }
+
+    dispose(): void {
+        this.gl.deleteBuffer(this.buffer);
         this.gl.deleteProgram(this.program);
-      }
-
-      switch (colorType) {
-        case ColorMode.Hsv:
-          this.program = createProgram(this.gl, RING_VERT_SRC, RING_FRAG_SRC_HSV) as WebGLProgram;
-          break;
-        case ColorMode.Hsluv:
-          this.program = createProgram(this.gl, RING_VERT_SRC, RING_FRAG_SRC_HSLUV) as WebGLProgram;
-          break;
-      }
-      this.gl.bindAttribLocation(this.program as WebGLProgram, 0, "a_position");
-      this.colorLocation = this.gl.getUniformLocation(
-        this.program as WebGLProgram,
-        "u_color",
-      ) as WebGLUniformLocation;
-      this.prevColorType = colorType;
     }
-
-    this.gl.useProgram(this.program);
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffer);
-
-    this.gl.vertexAttribPointer(0, 2, this.gl.FLOAT, false, 0, 0);
-    this.gl.enableVertexAttribArray(0);
-
-    switch (colorType) {
-      case ColorMode.Hsv: {
-        const hsv = Color.rgbToHsv(Color.hsluvToRgb(color));
-        this.gl.uniform3f(this.colorLocation, hsv.h, hsv.s, hsv.v);
-        break;
-      }
-      case ColorMode.Hsluv: {
-        this.gl.uniform3f(this.colorLocation, color.h, color.s, color.l);
-        break;
-      }
-    }
-
-    this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
-  }
-
-  dispose(): void {
-    this.gl.deleteBuffer(this.buffer);
-    this.gl.deleteProgram(this.program);
-  }
 }
 
 const WI = 0.55;
@@ -246,7 +254,7 @@ void main() {
 `;
 
 function makeSatValFragSrc(DEFINE_toRgb: string): string {
-  return `
+    return `
     precision highp float;
 
     ${DEFINE_toRgb}
@@ -286,93 +294,93 @@ vec3 toRgb(float hue, float x, float y) {
 `);
 
 class SatValRenderer {
-  private readonly buffer: WebGLBuffer;
-  private colorLocation: WebGLUniformLocation | null = null;
-  private program: WebGLProgram | null = null;
-  private prevColorMode: ColorMode | null = null;
+    private readonly buffer: WebGLBuffer;
+    private colorLocation: WebGLUniformLocation | null = null;
+    private program: WebGLProgram | null = null;
+    private prevColorMode: ColorMode | null = null;
 
-  constructor(private readonly gl: WebGLRenderingContext) {
-    this.buffer = gl.createBuffer() as WebGLBuffer;
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
-    gl.bufferData(
-      gl.ARRAY_BUFFER,
-      new Float32Array([
-        // 1
-        WI,
-        WI,
-        // 2
-        -WI,
-        WI,
-        // 3
-        WI,
-        -WI,
-        // 4
-        -WI,
-        WI,
-        // 5
-        WI,
-        -WI,
-        // 6
-        -WI,
-        -WI,
-      ]),
-      gl.STATIC_DRAW,
-    );
-  }
+    constructor(private readonly gl: WebGLRenderingContext) {
+        this.buffer = gl.createBuffer() as WebGLBuffer;
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+        gl.bufferData(
+            gl.ARRAY_BUFFER,
+            new Float32Array([
+                // 1
+                WI,
+                WI,
+                // 2
+                -WI,
+                WI,
+                // 3
+                WI,
+                -WI,
+                // 4
+                -WI,
+                WI,
+                // 5
+                WI,
+                -WI,
+                // 6
+                -WI,
+                -WI,
+            ]),
+            gl.STATIC_DRAW,
+        );
+    }
 
-  render(colorMode: ColorMode, color: Color.Hsluv): void {
-    const gl = this.gl;
+    render(colorMode: ColorMode, color: Color.Hsluv): void {
+        const gl = this.gl;
 
-    if (!this.program || this.prevColorMode !== colorMode) {
-      if (this.program) {
-        gl.deleteProgram(this.program);
-      }
+        if (!this.program || this.prevColorMode !== colorMode) {
+            if (this.program) {
+                gl.deleteProgram(this.program);
+            }
 
-      switch (colorMode) {
-        case ColorMode.Hsv:
-          this.program = createProgram(gl, SATVAL_VERT_SRC, SATVAL_FRAG_SRC_HSV);
-          break;
-        case ColorMode.Hsluv:
-          this.program = createProgram(gl, SATVAL_VERT_SRC, SATVAL_FRAG_SRC_HSLUV);
-          break;
-        default: {
-          const never: never = colorMode;
-          throw { "unexpected color mode": colorMode };
+            switch (colorMode) {
+                case ColorMode.Hsv:
+                    this.program = createProgram(gl, SATVAL_VERT_SRC, SATVAL_FRAG_SRC_HSV);
+                    break;
+                case ColorMode.Hsluv:
+                    this.program = createProgram(gl, SATVAL_VERT_SRC, SATVAL_FRAG_SRC_HSLUV);
+                    break;
+                default: {
+                    const never: never = colorMode;
+                    throw { "unexpected color mode": colorMode };
+                }
+            }
+
+            gl.bindAttribLocation(this.program as WebGLProgram, 0, "a_position");
+            this.colorLocation = gl.getUniformLocation(
+                this.program as WebGLProgram,
+                "u_color",
+            ) as WebGLUniformLocation;
         }
-      }
+        gl.useProgram(this.program);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
 
-      gl.bindAttribLocation(this.program as WebGLProgram, 0, "a_position");
-      this.colorLocation = gl.getUniformLocation(
-        this.program as WebGLProgram,
-        "u_color",
-      ) as WebGLUniformLocation;
-    }
-    gl.useProgram(this.program);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+        gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(0);
 
-    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(0);
+        switch (colorMode) {
+            case ColorMode.Hsv: {
+                const hsv = Color.rgbToHsv(Color.hsluvToRgb(color));
+                this.gl.uniform3f(this.colorLocation, hsv.h, hsv.s, hsv.v);
+                break;
+            }
+            case ColorMode.Hsluv: {
+                this.gl.uniform3f(this.colorLocation, color.h, color.s, color.l);
+                break;
+            }
+        }
 
-    switch (colorMode) {
-      case ColorMode.Hsv: {
-        const hsv = Color.rgbToHsv(Color.hsluvToRgb(color));
-        this.gl.uniform3f(this.colorLocation, hsv.h, hsv.s, hsv.v);
-        break;
-      }
-      case ColorMode.Hsluv: {
-        this.gl.uniform3f(this.colorLocation, color.h, color.s, color.l);
-        break;
-      }
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+        this.prevColorMode = colorMode;
     }
 
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
-
-    this.prevColorMode = colorMode;
-  }
-
-  dispose(): void {
-    const gl = this.gl;
-    gl.deleteBuffer(this.buffer);
-    gl.deleteProgram(this.program);
-  }
+    dispose(): void {
+        const gl = this.gl;
+        gl.deleteBuffer(this.buffer);
+        gl.deleteProgram(this.program);
+    }
 }

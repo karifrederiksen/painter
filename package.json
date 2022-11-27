@@ -1,42 +1,42 @@
 {
-  "name": "painter",
-  "version": "0.1.0",
-  "license": "UNLICENSED",
-  "scripts": {
-    "dev": "vite dev",
-    "build": "vite build",
-    "preview": "vite preview",
-    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-    "lint": "prettier --plugin-search-dir . --check . && eslint .",
-    "format": "prettier --plugin-search-dir . --write .",
-    "test": "vitest"
-  },
-  "dependencies": {
-    "@types/node": "16.11.1",
-    "color": "git+https://github.com/karifrederiksen/color.git",
-    "jsverify": "0.8.4",
-    "ordered-collections": "git+https://github.com/karifrederiksen/ordered-collections.git",
-    "rxjs": "7.4.0"
-  },
-  "devDependencies": {
-    "@sveltejs/adapter-static": "^1.0.0-next.48",
-    "@sveltejs/kit": "^1.0.0-next.556",
-    "@typescript-eslint/eslint-plugin": "^5.44.0",
-    "@typescript-eslint/parser": "^5.44.0",
-    "eslint": "^8.28.0",
-    "eslint-config-prettier": "^8.5.0",
-    "eslint-plugin-svelte3": "^4.0.0",
-    "node-sass": "^8.0.0",
-    "prettier": "^2.7.1",
-    "prettier-plugin-svelte": "^2.8.1",
-    "sass": "^1.56.1",
-    "svelte": "^3.53.1",
-    "svelte-check": "^2.9.2",
-    "tslib": "^2.4.1",
-    "typescript": "^4.9.3",
-    "vite": "^3.2.4",
-    "vitest": "^0.25.2"
-  },
-  "type": "module"
+    "name": "painter",
+    "version": "0.1.0",
+    "license": "UNLICENSED",
+    "scripts": {
+        "dev": "vite dev",
+        "build": "vite build",
+        "preview": "vite preview",
+        "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+        "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+        "lint": "prettier --plugin-search-dir . --check . && eslint .",
+        "format": "prettier --plugin-search-dir . --write .",
+        "test": "vitest"
+    },
+    "dependencies": {
+        "@types/node": "16.11.1",
+        "color": "git+https://github.com/karifrederiksen/color.git",
+        "jsverify": "0.8.4",
+        "ordered-collections": "git+https://github.com/karifrederiksen/ordered-collections.git",
+        "rxjs": "7.4.0"
+    },
+    "devDependencies": {
+        "@sveltejs/adapter-static": "^1.0.0-next.48",
+        "@sveltejs/kit": "^1.0.0-next.556",
+        "@typescript-eslint/eslint-plugin": "^5.44.0",
+        "@typescript-eslint/parser": "^5.44.0",
+        "eslint": "^8.28.0",
+        "eslint-config-prettier": "^8.5.0",
+        "eslint-plugin-svelte3": "^4.0.0",
+        "node-sass": "^8.0.0",
+        "prettier": "^2.7.1",
+        "prettier-plugin-svelte": "^2.8.1",
+        "sass": "^1.56.1",
+        "svelte": "^3.53.1",
+        "svelte-check": "^2.9.2",
+        "tslib": "^2.4.1",
+        "typescript": "^4.9.3",
+        "vite": "^3.2.4",
+        "vitest": "^0.25.2"
+    },
+    "type": "module"
 }
