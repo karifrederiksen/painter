@@ -43,12 +43,6 @@
     display: flex;
     z-index: 1;
   }
-  .surfaceLike {
-    background-color: $color-surface;
-    color: $color-onSurface;
-    box-shadow: $shadows-surface;
-    pointer-events: all;
-  }
 
   .leftBar {
     display: flex;
@@ -56,5 +50,10 @@
     padding-top: 1rem;
     margin-right: 0.5rem;
     gap: 0.125rem;
+
+    background-color: $color-surface;
+    color: $color-onSurface;
+    box-shadow: $shadows-surface;
+    pointer-events: all;
   }
 </style>
