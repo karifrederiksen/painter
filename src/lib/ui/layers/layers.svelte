@@ -56,7 +56,7 @@
     @import "../theme.scss";
 
     .layersWrapper {
-        height: 100%;
+        height: fit-content;
     }
 
     .layersListWrapper {

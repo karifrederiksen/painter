@@ -42,6 +42,7 @@ export class SetOnce<a> {
     set(value: a): void {
         if (this.__isSet) throw new Error("Attempted to re-set a SetOnce");
         this.__value = value;
+        this.__isSet = true;
     }
 
     get value(): a {

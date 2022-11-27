@@ -60,7 +60,7 @@
             />
         </div>
         <div style="margin: 0.5rem 0">
-            <TextInput initialValue={brush.color.toStyle()} onChange={onColorText} />
+            <TextInput initialValue={brush.color.toStyle()} onEnter={onColorText} />
         </div>
         <LabeledSlider
             label="Size"

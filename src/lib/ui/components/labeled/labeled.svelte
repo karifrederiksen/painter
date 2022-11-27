@@ -50,27 +50,27 @@
     <div class="textContainer">
         <p class="label">{label}</p>
         <!-- svelte-ignore a11y-click-events-have-key-events -->
-        <p class="label" on:click={startEditing}>{toString(value) || ""}{valuePostfix || null}</p>
-        <Dialog isOpen={isEditing} onClose={stopEditing}>
-            <slot name="body">
-                <div class="title-text">{label}</div>
-                <TextInput
-                    initialValue={inputValue}
-                    onChange={handleInput}
-                    onEnter={handleUpdateWithText}
-                    autoFocus={true}
-                />
-            </slot>
-            <slot name="footer">
-                <Row spacing={0.5}>
-                    <DefaultButton onClick={stopEditing}>Cancel</DefaultButton>
-                    <PrimaryButton onClick={handleUpdate}>Update</PrimaryButton>
-                </Row>
-            </slot>
-        </Dialog>
-        <div class="content">
-            <slot />
-        </div>
+        <p class="label" on:click={startEditing}>{toString(value)}{valuePostfix ?? ""}</p>
+    </div>
+    <Dialog isOpen={isEditing} onClose={stopEditing}>
+        <slot name="body">
+            <div class="title-text">{label}</div>
+            <TextInput
+                initialValue={inputValue}
+                onChange={handleInput}
+                onEnter={handleUpdateWithText}
+                autoFocus={true}
+            />
+        </slot>
+        <slot name="footer">
+            <Row spacing={0.5}>
+                <DefaultButton onClick={stopEditing}>Cancel</DefaultButton>
+                <PrimaryButton onClick={handleUpdate}>Update</PrimaryButton>
+            </Row>
+        </slot>
+    </Dialog>
+    <div class="content">
+        <slot />
     </div>
 </div>
 

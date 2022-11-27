@@ -200,6 +200,17 @@
         width: 100%;
     }
 
+    .circleThumb {
+        z-index: 100;
+        position: absolute;
+        width: 1rem;
+        height: 0.5rem;
+        margin-left: calc(-0.5rem - 0.05rem);
+        margin-top: calc(-0.25rem - 0.05rem);
+        border-width: 0.1rem;
+        border-style: solid;
+    }
+
     .areaThumb {
         z-index: 100;
         position: absolute;

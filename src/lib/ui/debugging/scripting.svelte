@@ -4,31 +4,29 @@
 
     export let gl: SetOnce<WebGLRenderingContext>;
 
-    let textareaRef: HTMLTextAreaElement | null = null;
+    $: gl_ = gl;
+
     let code = "";
 
-    const onInput = (ev: Event) => {
-        code = (ev.target as any).value;
-    };
-
     const onKeyboard = (ev: KeyboardEvent) => {
-        if (textareaRef === null || textareaRef !== ev.target) {
-            return;
-        }
         if (ev.key === "Enter" && !ev.shiftKey && !ev.altKey) {
             ev.preventDefault();
             try {
                 /* eslint-disable-next-line no-eval */
-                console.log(eval("var gl = props.gl.value;\n" + code));
-            } catch {}
+                console.log(`Evaluating {| ${code} |}`);
+                const gl = gl_.value;
+                console.log(eval(code));
+            } catch (err) {
+                console.error("Error: ", err);
+            }
             code = "";
         }
     };
 
     onMount(() => {
-        document.body.addEventListener("keydown", onKeyboard);
+        window.addEventListener("keydown", onKeyboard);
         return () => {
-            document.body.removeEventListener("keydown", onKeyboard);
+            window.removeEventListener("keydown", onKeyboard);
         };
     });
 </script>
@@ -42,7 +40,7 @@
             </li>
         </ul>
     </div>
-    <textarea class="codeInput" on:change={onInput} bind:this={textareaRef} content={code} />
+    <textarea class="codeInput" bind:value={code} />
 </div>
 
 <style lang="scss">

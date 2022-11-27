@@ -9,6 +9,7 @@ import * as Context from "./context";
 import type { BrushPoint } from "./brushShader";
 import { Stack } from "../collections";
 import { Vec2, PerfTracker, turn, type Tagged, tagged } from "../util";
+import { dev } from "$app/environment";
 
 export type CanvasMsg =
     | Tagged<"OnFrame", number>
@@ -278,7 +279,7 @@ export class Canvas {
     static create(canvas: HTMLCanvasElement, hooks: Hooks): Canvas | null {
         const context = Context.create(canvas);
         if (context.isOk()) {
-            if (process.env.NODE_ENV === "development") {
+            if (dev) {
                 hooks.onWebglContextCreated(context.value[1]);
             }
             return new Canvas(new Vec2(canvas.width, canvas.height), hooks, context.value[0]);

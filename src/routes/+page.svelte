@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { afterUpdate, onMount } from "svelte";
+    import { onMount } from "svelte";
     import * as Toolbar from "../lib/ui/toolbar";
     import { Layers } from "../lib/ui/layers";
     import * as Input from "../lib/canvas/input";
@@ -10,6 +10,7 @@
     import { Surface } from "../lib/ui/components";
     import { samples } from "../lib/ui/debugging";
     import { MiniMap } from "../lib/ui/mini-map";
+    import { Debugging } from "../lib/ui/debugging";
     import { Subscription as RxSubscription } from "rxjs";
     import PrimaryButton from "$lib/ui/components/buttons/primary-button.svelte";
     import {
@@ -20,12 +21,14 @@
         getCameraTransform,
         onLayoutChange,
     } from "./util";
+    import { dev } from "$app/environment";
 
     const updateTheme = createUpdateThemeEffect();
     const [initialState, initialEphemeral] = Canvas.initState();
     const canvasResolution = new Vec2(800, 800);
 
     let canvasRef: HTMLCanvasElement | undefined;
+    let debuggingGl = new SetOnce<WebGLRenderingContext>();
     let state: Canvas.Config | undefined;
     let sender: Canvas.Sender | undefined;
     let canvasInfo: Canvas.CanvasInfo = getCanvasInfo({
@@ -40,7 +43,6 @@
         if (canvasRef == null) {
             throw new Error("Canvas not found");
         }
-        const debuggingGl = new SetOnce<WebGLRenderingContext>();
         const canvas = Canvas.Canvas.create(canvasRef, {
             onStats: (stats) => {
                 samples.update((c) => c.update(stats));
@@ -59,7 +61,15 @@
             initialEphemeral,
             effectsHandler: (ef) => canvas.handle(ef),
             forceRender: () => {},
-            update: (state, ephState, msg) => Canvas.update(canvasInfo, state, ephState, msg),
+            update: (state, ephState, msg) => {
+                const res = Canvas.update(canvasInfo, state, ephState, msg);
+                state = res[0];
+                updateTheme(state.theme);
+                if (msg.tag !== "OnFrame") {
+                    console.log(`Update [${msg.tag}]`, state);
+                }
+                return res;
+            },
         });
         store = store_;
         sender = new Canvas.Sender(store_.send);
@@ -80,7 +90,7 @@
         disposals.push(FrameStream.FrameStream.make(sender.onFrame));
         disposals.push(() => canvas.dispose());
 
-        if (process.env.NODE_ENV !== "production") {
+        if (dev) {
             Setup.setup(canvasRef, () => store_.getState(), sender).then(() => {
                 console.log("setup complete");
                 state = store_.getState();
@@ -96,13 +106,6 @@
             }
             console.log("Painter unmounted");
         };
-    });
-
-    afterUpdate(() => {
-        if (store) {
-            state = store.getState();
-            updateTheme(state.theme);
-        }
     });
 
     onLayoutChange(() => {
@@ -146,11 +149,11 @@
             <PrimaryButton onClick={sender.randomizeTheme}>Next theme</PrimaryButton>
         </div>
     {/if}
-    <!-- {#if process.env.NODE_ENV === 'development'}
-		<div class="bottomRight">
-			<Debugging gl={debuggingGl} themeRng={store.getEphemeral().themeRng} />
-		</div>
-	{/if} -->
+    {#if dev && store}
+        <div class="bottomRight">
+            <Debugging gl={debuggingGl} themeRng={store.getEphemeral().themeRng} />
+        </div>
+    {/if}
 </div>
 
 <style lang="scss">
@@ -192,6 +195,9 @@
     }
 
     .layersViewContainer {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
         width: 14rem;
         z-index: 1;
     }

@@ -3,9 +3,10 @@ import type * as Camera from "../lib/tools/camera";
 import { Vec2 } from "$lib/util";
 import * as Theme from "$lib/ui/theme";
 import { afterUpdate, onMount } from "svelte";
+import { dev } from "$app/environment";
 
 export const onBeforeUnload = () => {
-    if (process.env.NODE_ENV !== "development") {
+    if (!dev) {
         onMount(() => {
             const handle = (e: BeforeUnloadEvent) => {
                 e.preventDefault();

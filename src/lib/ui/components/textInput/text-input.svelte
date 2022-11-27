@@ -2,17 +2,13 @@
     import { onMount } from "svelte";
 
     export let initialValue: string;
-    export let onChange: (text: string) => void;
+    export let onChange: (text: string) => void = () => {};
     export let onEnter: (text: string) => void = () => {};
     export let autoFocus: boolean = false;
 
     let inputRef: HTMLInputElement | null = null;
 
     function handleChange(ev: Event) {
-        if (onChange === null) {
-            return;
-        }
-
         onChange((ev.target as HTMLInputElement).value);
     }
 
