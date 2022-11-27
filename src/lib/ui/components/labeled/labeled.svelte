@@ -15,9 +15,7 @@
 	export let onChange: (val: a) => void;
 
 	let isEditing = false;
-	let inputValue = toString(value);
-	let textToValue: (text: string) => a | null = fromString;
-	let handleChange: (val: a) => void = onChange;
+	$: inputValue = toString(value);
 
 	const handleInput = (text: string) => {
 		inputValue = text;
@@ -32,12 +30,12 @@
 	};
 
 	const handleUpdate = () => {
-		const value = textToValue(inputValue);
+		const value = fromString(inputValue);
 		console.debug('value', value);
 		if (value === null) {
 			// unable to parse - show error?
 		} else {
-			handleChange(value);
+			onChange(value);
 			isEditing = false;
 		}
 	};

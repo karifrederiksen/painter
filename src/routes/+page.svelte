@@ -13,6 +13,7 @@
 	import { samples } from '../lib/ui/debugging';
 	import { MiniMap } from '../lib/ui/mini-map';
 	import { Subscription as RxSubscription } from 'rxjs';
+	import PrimaryButton from '$lib/ui/components/buttons/primary-button.svelte';
 
 	function getCanvasOffset(canvas: HTMLCanvasElement): Vec2 {
 		return new Vec2(canvas.offsetLeft, canvas.offsetTop);
@@ -92,7 +93,11 @@
 			initialEphemeral,
 			effectsHandler: (ef) => canvas.handle(ef),
 			forceRender: () => {},
-			update: (state, ephState, msg) => Canvas.update(canvasInfo, state, ephState, msg)
+			update: (state, ephState, msg) => {
+				const res = Canvas.update(canvasInfo, state, ephState, msg);
+				state = res[0];
+				return res;
+			}
 		});
 		store_ = store;
 		state = store.getState();
@@ -100,7 +105,6 @@
 		const updateTheme = createUpdateThemeEffect();
 
 		updateTheme(state.theme);
-		console.log('Painter mounting...');
 		const disposals: Disposals = [];
 		console.log('Painter mounted');
 
@@ -125,6 +129,7 @@
 		if (process.env.NODE_ENV !== 'production') {
 			Setup.setup(canvasRef, () => store.getState(), sender).then(() => {
 				console.log('setup complete');
+				state = store.getState();
 			});
 		}
 		return () => {
@@ -193,15 +198,17 @@
 			<div class="layersViewContainer">
 				<Surface>
 					<MiniMap camera={state.tool.camera} sender={sender.tool.camera} />
-					<Layers layers={state.layers} sender={sender.layer} />
 				</Surface>
+				<Layers layers={state.layers} sender={sender.layer} />
 			</div>
 		{/if}
 	</div>
-	<!-- <div class="bottomLeft">
-		<PrimaryButton onClick={sender.randomizeTheme}>Next theme</PrimaryButton>
-	</div>
-	{#if process.env.NODE_ENV === 'development'}
+	{#if sender && state}
+		<div class="bottomLeft">
+			<PrimaryButton onClick={sender.randomizeTheme}>Next theme</PrimaryButton>
+		</div>
+	{/if}
+	<!-- {#if process.env.NODE_ENV === 'development'}
 		<div class="bottomRight">
 			<Debugging gl={debuggingGl} themeRng={store.getEphemeral().themeRng} />
 		</div>
