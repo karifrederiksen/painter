@@ -12,7 +12,7 @@
     } from "../components";
     import type * as Brush from "../../tools/brush";
     import * as Color from "color";
-    import { ColorMode, colorModeToString, stringToFloat } from "../../util";
+    import { ColorMode, colorModeToString, stringToFloat } from "$lib/util";
     import HsluvSliders from "./hsluv-sliders.svelte";
     import HsvSliders from "./hsv-sliders.svelte";
 

@@ -3,7 +3,7 @@
 
     import * as Color from "color";
     import { onMount } from "svelte";
-    import { ColorMode, clamp, CanvasPool } from "../../../util";
+    import { ColorMode, clamp, CanvasPool } from "$lib/util";
     import { GlState } from "./color-wheel-logic";
 
     export let color: Color.Hsluv;

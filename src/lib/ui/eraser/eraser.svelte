@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Surface, Labeled, Slider, Switch } from "../components";
     import type * as Eraser from "../../tools/brush";
-    import { stringToFloat } from "../../util";
+    import { stringToFloat } from "$lib/util";
 
     export let sender: Eraser.Sender;
     export let brush: Eraser.Config;
