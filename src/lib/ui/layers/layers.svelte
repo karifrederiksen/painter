@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { State, Sender } from "../../canvas/layers";
-    import { Row, DefaultButton, Surface, LabeledSlider, LabeledSwitch } from "../components";
+    import { Row, DefaultButton, Surface, Labeled, Slider, Switch } from "../components";
     import { stringToFloat } from "../../util";
     import LayerComponent from "./layer.svelte";
 
@@ -10,35 +10,41 @@
     $: topLayers = layers.layers.children;
     $: current = layers.current();
 
-    function toFixed2(n: number): string {
-        return n.toFixed(2);
-    }
+    const sendFloat = (ev: CustomEvent<string>, f: (n: number) => void) => {
+        const val = stringToFloat(ev.detail);
+        if (val != null) {
+            f(val);
+        }
+    };
 </script>
 
 <div class="layersWrapper">
     <Surface>
         <div class="layersControlsWrapper">
             <Row spacing={0.25}>
-                <DefaultButton onClick={() => sender.newLayer(current.id)} title="New layer">
+                <DefaultButton on:click={() => sender.newLayer(current.id)} title="New layer">
                     New
                 </DefaultButton>
-                <DefaultButton onClick={() => sender.removeLayer(current.id)} title="Delete layer">
+                <DefaultButton on:click={() => sender.removeLayer(current.id)} title="Delete layer">
                     Delete
                 </DefaultButton>
             </Row>
-            <LabeledSwitch
-                label="Hidden"
-                checked={current.isHidden}
-                on:change={(ev) => sender.setHidden(current.id, ev.detail)}
-            />
-            <LabeledSlider
+            <Labeled label="Hidden">
+                <Switch
+                    checked={current.isHidden}
+                    on:change={(ev) => sender.setHidden(current.id, ev.detail)}
+                />
+            </Labeled>
+            <Labeled
                 label="Opacity"
-                value={current.opacity}
-                toString={toFixed2}
-                fromString={stringToFloat}
-                percentage={current.opacity}
-                on:change={(ev) => sender.setOpacity(current.id, ev.detail)}
-            />
+                value={current.opacity.toFixed(2)}
+                on:change={(ev) => sendFloat(ev, (n) => sender.setOpacity(current.id, n))}
+            >
+                <Slider
+                    value={current.opacity}
+                    on:change={(ev) => sender.setOpacity(current.id, ev.detail)}
+                />
+            </Labeled>
         </div>
     </Surface>
     <div class="layersListWrapper">

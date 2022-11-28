@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { createEventDispatcher } from "svelte";
     import { onMount } from "svelte";
     import type { ZipperList } from "../../../collections/zipperList";
 
@@ -6,7 +7,8 @@
 
     export let choices: ZipperList<a>;
     export let show: (val: a) => string;
-    export let onSelect: (val: a) => void;
+
+    const dispatch = createEventDispatcher<{ select: a }>();
 
     let containerRef: HTMLDivElement | null = null;
     let isExpanded = false;
@@ -35,7 +37,7 @@
     };
 
     const closeAndCallback = (val: a) => {
-        onSelect(val);
+        dispatch("select", val);
         closeMenu();
     };
 

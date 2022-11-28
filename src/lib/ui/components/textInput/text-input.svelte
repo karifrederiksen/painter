@@ -1,22 +1,24 @@
 <script lang="ts">
+    import { createEventDispatcher } from "svelte";
     import { onMount } from "svelte";
 
     export let initialValue: string;
-    export let onChange: (text: string) => void = () => {};
-    export let onEnter: (text: string) => void = () => {};
     export let autoFocus: boolean = false;
 
+    const dispatch = createEventDispatcher<{ change: string; enter: string }>();
+
     let inputRef: HTMLInputElement | null = null;
+    let text: string = initialValue;
 
     function handleChange(ev: Event) {
-        onChange((ev.target as HTMLInputElement).value);
+        dispatch("change", (ev.target as HTMLInputElement).value);
     }
 
     function handleKeyboard(ev: KeyboardEvent) {
-        if (ev.key !== "Enter" || onEnter === null || inputRef == null) {
+        if (ev.key !== "Enter") {
             return;
         }
-        onEnter(inputRef.value);
+        dispatch("enter", text);
     }
 
     onMount(() => {
@@ -28,12 +30,12 @@
 
 <input
     bind:this={inputRef}
+    bind:value={text}
     on:paste={handleChange}
     on:change={handleChange}
     on:keydown={handleKeyboard}
     class="textInput"
     type="text"
-    value={initialValue}
 />
 
 <style lang="scss">

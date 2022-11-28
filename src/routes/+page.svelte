@@ -47,7 +47,7 @@
     </div>
     {#if sender && state}
         <div class="bottomLeft">
-            <PrimaryButton onClick={sender.randomizeTheme}>Next theme</PrimaryButton>
+            <PrimaryButton on:click={sender.randomizeTheme}>Next theme</PrimaryButton>
         </div>
     {/if}
     {#if dev}

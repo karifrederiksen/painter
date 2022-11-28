@@ -1,9 +1,12 @@
 <script lang="ts">
-    export let onClick: () => void;
+    import { createEventDispatcher } from "svelte";
+
     export let title: string | undefined = undefined;
+
+    const dispatch = createEventDispatcher<{ click: undefined }>();
 </script>
 
-<button {title} class="primary" on:click={onClick}>
+<button {title} class="primary" on:click={() => dispatch("click")}>
     <slot />
 </button>
 

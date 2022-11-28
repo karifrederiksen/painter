@@ -4,7 +4,7 @@
     import { onMount } from "svelte";
     import { createEventDispatcher } from "svelte";
 
-    export let percentage: number;
+    export let value: number;
     export let color: Hsv | undefined = undefined;
 
     const dispatch = createEventDispatcher<{ change: number }>();
@@ -52,18 +52,18 @@
         };
     });
 
-    $: percentage01 = Math.max(0, Math.min(1, percentage));
+    $: value01 = clamp(value, 0, 1);
 </script>
 
 <div class="container" on:mousedown={onDown} bind:this={containerRef}>
     <div>
         <div
-            class={percentage === 0 ? "emptyButton" : "button"}
-            style={`left: calc(${percentage01} * calc(100% - 0.75rem)); background-color: ${color?.toStyle()}`}
+            class={value === 0 ? "emptyButton" : "button"}
+            style={`left: calc(${value01} * calc(100% - 0.75rem)); background-color: ${color?.toStyle()}`}
         />
         <div
             class="filledLineClass"
-            style={`width: ${percentage01 * 100}%; background-color: ${color?.toStyle()}`}
+            style={`width: ${value01 * 100}%; background-color: ${color?.toStyle()}`}
         />
         <div class="baseline" />
     </div>

@@ -1,4 +1,6 @@
 <script lang="ts">
+    import { createEventDispatcher } from "svelte";
+
     import * as Color from "color";
     import { onMount } from "svelte";
     import { ColorMode, clamp, CanvasPool } from "../../../util";
@@ -6,7 +8,12 @@
 
     export let color: Color.Hsluv;
     export let colorType: ColorMode; // = ColorMode.Hsluv;
-    export let onChange: (color: Color.Hsluv) => void;
+
+    const dispatch = createEventDispatcher<{ colorChange: Color.Hsluv }>();
+
+    const colorChange = (color: Color.Hsluv) => {
+        dispatch("colorChange", color);
+    };
 
     const enum PointerState {
         Default,
@@ -44,11 +51,11 @@
         switch (colorType) {
             case ColorMode.Hsv: {
                 const hsv = Color.rgbToHsv(color.toRgb());
-                onChange(Color.rgbToHsluv(hsv.with({ h: hue }).toRgb()));
+                colorChange(Color.rgbToHsluv(hsv.with({ h: hue }).toRgb()));
                 break;
             }
             case ColorMode.Hsluv: {
-                onChange(color.with({ h: hue * 360 }));
+                colorChange(color.with({ h: hue * 360 }));
                 break;
             }
         }
@@ -74,12 +81,12 @@
         switch (colorType) {
             case ColorMode.Hsv: {
                 const hue = Color.rgbToHsv(color.toRgb()).h;
-                onChange(Color.rgbToHsluv(Color.hsvToRgb(new Color.Hsv(hue, pctX, pctY))));
+                colorChange(Color.rgbToHsluv(Color.hsvToRgb(new Color.Hsv(hue, pctX, pctY))));
                 break;
             }
             case ColorMode.Hsluv: {
                 const hue = color.h;
-                onChange(new Color.Hsluv(hue, pctX * 100, pctY * 100));
+                colorChange(new Color.Hsluv(hue, pctX * 100, pctY * 100));
                 break;
             }
         }

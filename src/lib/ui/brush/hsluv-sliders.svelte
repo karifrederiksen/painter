@@ -1,38 +1,39 @@
 <script lang="ts">
     import type * as Brush from "../../tools/brush";
     import type { Hsluv } from "color";
-    import LabeledSlider from "../components/slider/labeled-slider.svelte";
+    import Labeled from "../components/labeled/labeled.svelte";
+    import Slider from "../components/slider/slider.svelte";
     import { stringToFloat } from "$lib/util";
 
     export let sender: Brush.Sender;
     export let color: Hsluv;
 
-    function toFixed2(pct: number): string {
-        return pct.toFixed(2);
-    }
+    const sendFloat = (ev: CustomEvent<string>, f: (n: number) => void) => {
+        const val = stringToFloat(ev.detail);
+        if (val != null) {
+            f(val);
+        }
+    };
 </script>
 
-<LabeledSlider
+<Labeled
     label="Hue"
-    value={color.h}
-    fromString={stringToFloat}
-    toString={toFixed2}
-    percentage={color.h}
-    on:change={(ev) => sender.setColor(color.with({ h: ev.detail }))}
-/>
-<LabeledSlider
+    value={color.h.toFixed(2)}
+    on:change={(ev) => sendFloat(ev, (h) => sender.setColor(color.with({ h })))}
+>
+    <Slider value={color.h} on:change={(ev) => sender.setColor(color.with({ h: ev.detail }))} />
+</Labeled>
+<Labeled
     label="Saturation"
-    value={color.s}
-    fromString={stringToFloat}
-    toString={toFixed2}
-    percentage={color.s}
-    on:change={(ev) => sender.setColor(color.with({ s: ev.detail }))}
-/>
-<LabeledSlider
+    value={color.s.toFixed(2)}
+    on:change={(ev) => sendFloat(ev, (s) => sender.setColor(color.with({ s })))}
+>
+    <Slider value={color.s} on:change={(ev) => sender.setColor(color.with({ s: ev.detail }))} />
+</Labeled>
+<Labeled
     label="Luminosity"
-    value={color.l}
-    fromString={stringToFloat}
-    toString={toFixed2}
-    percentage={color.l}
-    on:change={(ev) => sender.setColor(color.with({ l: ev.detail }))}
-/>
+    value={color.l.toFixed(2)}
+    on:change={(ev) => sendFloat(ev, (l) => sender.setColor(color.with({ l })))}
+>
+    <Slider value={color.l} on:change={(ev) => sender.setColor(color.with({ l: ev.detail }))} />
+</Labeled>

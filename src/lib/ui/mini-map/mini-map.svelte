@@ -1,67 +1,88 @@
 <script lang="ts">
-    import { LabeledSlider } from "../components";
     import type * as Camera from "../../tools/camera";
     import { clamp, stringToFloat } from "../../util";
+    import Slider from "../components/slider/slider.svelte";
+    import Labeled from "../components/labeled/labeled.svelte";
 
-    function zoomToString(pct: number): string {
+    const zoomToString = (pct: number): string => {
         return (pct * 100).toFixed(2);
-    }
-    function rotateToString(pct: number): string {
+    };
+    const rotateToString = (pct: number): string => {
         return (pct * 360).toFixed(1);
-    }
-    function toFixed0(px: number): string {
-        return px.toFixed(0);
-    }
+    };
+
+    const sendFloat = (ev: CustomEvent<string>, f: (n: number) => void) => {
+        const val = stringToFloat(ev.detail);
+        if (val != null) {
+            f(val);
+        }
+    };
 
     export let camera: Camera.Config;
     export let sender: Camera.Sender;
 </script>
 
 <div class="container">
-    <LabeledSlider
+    <Labeled
         label="Zoom"
         valuePostfix="%"
-        value={camera.zoomPct}
-        fromString={stringToFloat}
-        toString={zoomToString}
-        percentage={camera.zoomPct / 4}
+        value={zoomToString(camera.zoomPct)}
         on:change={(ev) => {
-            sender.setZoom(ev.detail * 4);
+            sendFloat(ev, sender.setZoom);
         }}
-    />
-    <LabeledSlider
+    >
+        <Slider
+            value={camera.zoomPct / 4}
+            on:change={(ev) => {
+                sender.setRotation(ev.detail * 4);
+            }}
+        />
+    </Labeled>
+    <Labeled
         label="Rotate"
-        valuePostfix="deg"
-        value={camera.rotateTurns}
-        fromString={stringToFloat}
-        toString={rotateToString}
-        percentage={camera.rotateTurns}
+        valuePostfix=" deg"
+        value={rotateToString(camera.rotateTurns)}
         on:change={(ev) => {
-            sender.setRotation(ev.detail);
+            sendFloat(ev, sender.setRotation);
         }}
-    />
-    <LabeledSlider
+    >
+        <Slider
+            value={camera.rotateTurns}
+            on:change={(ev) => {
+                sender.setRotation(ev.detail);
+            }}
+        />
+    </Labeled>
+    <Labeled
         label="Offset X"
-        valuePostfix="px"
-        value={camera.offsetX}
-        fromString={stringToFloat}
-        toString={toFixed0}
-        percentage={clamp((camera.offsetX + 2500) / 5000, -5000, 5000)}
+        valuePostfix=" px"
+        value={camera.offsetX.toFixed(0)}
         on:change={(ev) => {
-            sender.setOffset(ev.detail * 5000 - 2500, camera.offsetY);
+            sendFloat(ev, (n) => sender.setOffset(n, camera.offsetY));
         }}
-    />
-    <LabeledSlider
+    >
+        <Slider
+            value={clamp((camera.offsetX + 2500) / 5000, -5000, 5000)}
+            on:change={(ev) => {
+                sender.setOffset(ev.detail * 5000 - 2500, camera.offsetY);
+            }}
+        />
+    </Labeled>
+    <Labeled
         label="Offset Y"
-        valuePostfix="px"
-        value={camera.offsetY}
-        fromString={stringToFloat}
-        toString={toFixed0}
-        percentage={clamp((camera.offsetY + 2500) / 5000, -5000, 5000)}
+        valuePostfix=" px"
+        value={camera.offsetY.toFixed(0)}
         on:change={(ev) => {
-            sender.setOffset(camera.offsetX, ev.detail * 5000 - 2500);
+            sendFloat(ev, (n) => sender.setOffset(camera.offsetX, n));
         }}
-    />
+    >
+        <Slider
+            value={clamp((camera.offsetY + 2500) / 5000, -5000, 5000)}
+            on:change={(ev) => {
+                sender.setOffset(camera.offsetX, ev.detail * 5000 - 2500);
+            }}
+        />
+    </Labeled>
 </div>
 
 <style lang="scss">

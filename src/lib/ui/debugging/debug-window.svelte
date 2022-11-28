@@ -18,10 +18,10 @@
     }
 </script>
 
-<Surface {isOpen}>
+<Surface>
     {#if isOpen}
         <div class="container">
-            <DefaultButton onClick={close}>Close</DefaultButton>
+            <DefaultButton on:click={close}>Close</DefaultButton>
             <div class="contentContainer">
                 RNG: <div class="monospaced">{themeRng.display()}</div>
                 <Performance />
@@ -29,7 +29,7 @@
             </div>
         </div>
     {:else}
-        <DefaultButton onClick={open}>Debug</DefaultButton>
+        <DefaultButton on:click={open}>Debug</DefaultButton>
     {/if}
 </Surface>
 

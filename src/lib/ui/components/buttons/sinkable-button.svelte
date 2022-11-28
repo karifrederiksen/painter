@@ -1,15 +1,19 @@
 <script lang="ts">
-    export let onClick: () => void;
-    export let onDownClick: () => void = () => {};
+    import { createEventDispatcher } from "svelte";
+
     export let title: string | undefined = undefined;
     export let isDown: boolean;
+
+    const dispatch = createEventDispatcher<{ click: undefined }>();
+
+    const bubble = () => {
+        if (!isDown) {
+            dispatch("click");
+        }
+    };
 </script>
 
-<button
-    {title}
-    class={isDown ? "sinkableSunk" : "sinkableUnsunk"}
-    on:click={isDown ? onClick : onDownClick}
->
+<button {title} class={isDown ? "sinkableSunk" : "sinkableUnsunk"} on:click={bubble}>
     <slot />
 </button>
 

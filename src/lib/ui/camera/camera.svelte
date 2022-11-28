@@ -3,6 +3,8 @@
 
     export let camera: Camera.Config;
     export let sender: Camera.Sender;
+    void camera;
+    void sender;
 </script>
 
 <div>Hello!</div>

@@ -1,12 +1,17 @@
 <script lang="ts">
+    import { createEventDispatcher } from "svelte";
+
     import type { Hsluv } from "color";
     export let color: Hsluv;
     export let colorSecondary: Hsluv;
-    export let onClick: () => void;
+
+    const dispatch = createEventDispatcher<{
+        click: undefined;
+    }>();
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
-<div class="container" on:click={onClick}>
+<div class="container" on:click={() => dispatch("click")}>
     <span class="secondary" style="background-color: {colorSecondary.toStyle()}" />
     <span class="primary" style="background-color: {color.toStyle()}" />
 </div>

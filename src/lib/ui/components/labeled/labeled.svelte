@@ -1,23 +1,19 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
+    import { afterUpdate, createEventDispatcher } from "svelte";
     import { Dialog } from "../dialog";
     import { PrimaryButton } from "..";
     import { Row } from "../row";
     import { DefaultButton } from "../buttons";
     import { TextInput } from "../textInput";
 
-    export type a = $$Generic;
-
     export let label: string;
     export let valuePostfix: string | undefined = undefined;
-    export let value: a;
-    export let toString: (value: a) => string;
-    export let fromString: (text: string) => a | null;
+    export let value: string = "";
 
-    const dispatch = createEventDispatcher<{ change: a }>();
+    const dispatch = createEventDispatcher<{ change: string }>();
 
     let isEditing = false;
-    $: inputValue = toString(value);
+    $: inputValue = value;
 
     const handleInput = (text: string) => {
         inputValue = text;
@@ -32,12 +28,10 @@
     };
 
     const handleUpdate = (text: string) => {
-        const value = fromString(text);
-        console.debug("update value", value);
-        if (value === null) {
+        if (text === null) {
             // unable to parse - show error?
         } else {
-            dispatch("change", value);
+            dispatch("change", text);
             isEditing = false;
         }
     };
@@ -52,21 +46,21 @@
     <div class="textContainer">
         <p class="label">{label}</p>
         <!-- svelte-ignore a11y-click-events-have-key-events -->
-        <p class="label" on:click={startEditing}>{toString(value)}{valuePostfix ?? ""}</p>
+        <p class="label" on:click={startEditing}>{inputValue}{valuePostfix ?? ""}</p>
     </div>
     <Dialog isOpen={isEditing} onClose={stopEditing}>
         <svelte:fragment slot="body">
             <div class="title-text">{label}</div>
             <TextInput
                 initialValue={inputValue}
-                onChange={handleInput}
-                onEnter={handleUpdateWithText}
+                on:change={(ev) => handleInput(ev.detail)}
+                on:enter={(ev) => handleUpdateWithText(ev.detail)}
                 autoFocus={true}
             />
         </svelte:fragment>
         <Row spacing={0.5} slot="footer">
-            <DefaultButton onClick={stopEditing}>Cancel</DefaultButton>
-            <PrimaryButton onClick={() => handleUpdate(inputValue)}>Update</PrimaryButton>
+            <DefaultButton on:click={stopEditing}>Cancel</DefaultButton>
+            <PrimaryButton on:click={() => handleUpdate(inputValue)}>Update</PrimaryButton>
         </Row>
     </Dialog>
     <div class="content">

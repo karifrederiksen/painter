@@ -19,17 +19,17 @@
     <div class="surfaceLike leftBar">
         <SinkableButton
             isDown={currentToolType === "Brush"}
-            onClick={() => sender.setTool("Brush")}
+            on:click={() => sender.setTool("Brush")}
         >
             <Icons.Brush24 />
         </SinkableButton>
         <SinkableButton
             isDown={currentToolType === "Eraser"}
-            onClick={() => sender.setTool("Eraser")}
+            on:click={() => sender.setTool("Eraser")}
         >
             <Icons.Edit24 />
         </SinkableButton>
-        <SinkableButton isDown={currentToolType === "Zoom"} onClick={() => sender.setTool("Zoom")}>
+        <SinkableButton isDown={currentToolType === "Zoom"} on:click={() => sender.setTool("Zoom")}>
             <Icons.Search24 />
         </SinkableButton>
     </div>
