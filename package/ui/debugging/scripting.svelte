@@ -1,5 +1,5 @@
 <script>import { onMount } from "svelte";
-import { debuggingGl } from "../state";
+import { debuggingGl } from "../state.js";
 let code = "";
 const onKeyboard = (ev) => {
     if (ev.key === "Enter" && !ev.shiftKey && !ev.altKey) {

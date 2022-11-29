@@ -1,5 +1,5 @@
 import { SvelteComponentTyped } from "svelte";
-import type { State, Sender } from "../../canvas/layers";
+import type { State, Sender } from "../../canvas/layers.js";
 declare const __propDef: {
     props: {
         layers: State;

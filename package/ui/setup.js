@@ -1,5 +1,5 @@
 import * as Color from "color";
-import { delay, ColorMode } from "../util";
+import { delay, ColorMode } from "../util/index.js";
 export async function setup(canvas, getState, sender) {
     const forceRender = () => sender.onFrame(performance.now());
     const mkPt = (x, y, p) => ({

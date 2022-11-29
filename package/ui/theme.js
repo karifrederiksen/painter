@@ -1,5 +1,5 @@
 import * as Color from "color";
-import { Generators as Gen } from "../rng";
+import { Generators as Gen } from "../rng/index.js";
 const styleMap = {
     "--color-primary": (theme) => theme.color.primary.toStyle(),
     "--color-primaryLight": (theme) => theme.color.primaryLight.toStyle(),

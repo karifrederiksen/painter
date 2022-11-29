@@ -1,5 +1,5 @@
 import { SvelteComponentTyped } from "svelte";
-import type * as Tools from "../../tools";
+import type * as Tools from "../../tools/index.js";
 declare const __propDef: {
     props: {
         sender: Tools.Sender;

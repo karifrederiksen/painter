@@ -1,5 +1,5 @@
-import * as WebGL from "../webgl";
-import type { HighlightBlock } from "./renderBlockSystem";
+import * as WebGL from "../webgl/index.js";
+import type { HighlightBlock } from "./renderBlockSystem.js";
 declare const Uniforms: {
     readonly u_resolution: WebGL.UniformType.F2;
     readonly u_rgba: WebGL.UniformType.F4;

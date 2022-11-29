@@ -1,5 +1,5 @@
 <script>import { onMount } from "svelte";
-import { samples } from "./samples";
+import { samples } from "./samples.js";
 let samplecount = 0;
 let max = Number.MIN_VALUE;
 let sum = 0;

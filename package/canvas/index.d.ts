@@ -1,11 +1,11 @@
-import * as Layers from "./layers";
-import * as Tools from "../tools";
-import type * as Input from "./input";
-import * as keymapping from "./keymapping";
-import * as Rng from "../rng";
-import * as Theme from "../ui/theme";
-import type { BrushPoint } from "./brushShader";
-import { Vec2, PerfTracker, type Tagged } from "../util";
+import * as Layers from "./layers.js";
+import * as Tools from "../tools/index.js";
+import type * as Input from "./input.js";
+import * as keymapping from "./keymapping.js";
+import * as Rng from "../rng/index.js";
+import * as Theme from "../ui/theme.js";
+import type { BrushPoint } from "./brushShader.js";
+import { Vec2, PerfTracker, type Tagged } from "../util/index.js";
 export type CanvasMsg = Tagged<"OnFrame", number> | Tagged<"OnClick", Input.PointerData> | Tagged<"OnRelease", Input.PointerData> | Tagged<"OnDrag", readonly Input.PointerData[]> | Tagged<"OnKeyboard", keymapping.KeyInput> | Tagged<"RandomizeTheme"> | Tagged<"ToggleHighlightRenderBlocks"> | Tagged<"ToolMsg", Tools.ToolMsg> | Tagged<"LayersMsg", Layers.Msg>;
 export type Effect = Tagged<"NoOp"> | Tagged<"Batch", readonly Effect[]> | Tagged<"RenderFrame", {
     brushPoints: readonly BrushPoint[];

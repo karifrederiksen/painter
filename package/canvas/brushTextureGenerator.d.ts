@@ -1,5 +1,5 @@
-import * as WebGL from "../webgl";
-import type { Vec2 } from "../util";
+import * as WebGL from "../webgl/index.js";
+import type { Vec2 } from "../util/index.js";
 declare const Uniforms: {
     readonly u_softness: WebGL.UniformType.F1;
 };

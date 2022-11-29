@@ -1,4 +1,4 @@
-import { Stack, type PushArray } from "../collections";
+import { Stack, type PushArray } from "../collections/index.js";
 export interface Id {
     __nominal: "Id";
 }

@@ -1,17 +1,16 @@
-<script>import * as Toolbar from "./ui/toolbar";
-import { Layers } from "./ui/layers";
-import { Surface } from "./ui/components";
-import { MiniMap } from "./ui/mini-map";
-import { Debugging } from "./ui/debugging";
+<script>import * as Toolbar from "./ui/toolbar/index.js";
+import { Layers } from "./ui/layers/index.js";
+import { Surface } from "./ui/components/surface/index.js";
+import { MiniMap } from "./ui/mini-map/index.js";
+import { Debugging } from "./ui/debugging/index.js";
 import PrimaryButton from "./ui/components/buttons/primary-button.svelte";
-import { onBeforeUnload, getCameraTransform } from "./AppUtil";
-import { onPageMount, canvasState, canvasInfo, canvasSender } from "./ui/state";
-import { dev } from "$app/environment";
+import { onBeforeUnload, getCameraTransform } from "./AppUtil.js";
+import { onPageMount, canvasState, canvasInfo, canvasSender } from "./ui/state.js";
 let canvasRef;
 $: state = $canvasState;
 $: sender = $canvasSender;
 onPageMount(() => canvasRef);
-if (!dev) {
+if (!import.meta.env.DEV) {
     onBeforeUnload();
 }
 </script>
@@ -46,7 +45,7 @@ if (!dev) {
             <PrimaryButton on:click={sender.randomizeTheme}>Next theme</PrimaryButton>
         </div>
     {/if}
-    {#if dev}
+    {#if import.meta.env.DEV}
         <div class="bottomRight">
             <Debugging />
         </div>

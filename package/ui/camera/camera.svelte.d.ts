@@ -1,5 +1,5 @@
 import { SvelteComponentTyped } from "svelte";
-import type * as Camera from "../../tools/camera";
+import type * as Camera from "../../tools/camera.js";
 declare const __propDef: {
     props: {
         camera: Camera.Config;

@@ -1,6 +1,6 @@
-<script>import { Brush } from "../brush";
-import { Eraser } from "../eraser";
-import { SinkableButton, Icons } from "../components";
+<script>import { Brush } from "../brush/index.js";
+import { Eraser } from "../eraser/index.js";
+import { SinkableButton, Icons } from "../components/index.js";
 export let sender;
 export let tool;
 export let transientState;

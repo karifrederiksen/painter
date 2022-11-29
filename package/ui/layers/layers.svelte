@@ -1,5 +1,5 @@
-<script>import { Row, DefaultButton, Surface, Labeled, Slider, Switch } from "../components";
-import { stringToFloat } from "../../util";
+<script>import { Row, DefaultButton, Surface, Labeled, Slider, Switch } from "../components/index.js";
+import { stringToFloat } from "../../util/index.js";
 import LayerComponent from "./layer.svelte";
 export let layers;
 export let sender;

@@ -1,4 +1,4 @@
-<script>import { clamp, stringToFloat } from "../../util";
+<script>import { clamp, stringToFloat } from "../../util/index.js";
 import Slider from "../components/slider/slider.svelte";
 import Labeled from "../components/labeled/labeled.svelte";
 const zoomToString = (pct) => {

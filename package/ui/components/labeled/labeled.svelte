@@ -1,9 +1,9 @@
 <script>import { afterUpdate, createEventDispatcher } from "svelte";
-import { Dialog } from "../dialog";
-import { PrimaryButton } from "..";
-import { Row } from "../row";
-import { DefaultButton } from "../buttons";
-import { TextInput } from "../textInput";
+import { Dialog } from "../dialog/index.js";
+import { PrimaryButton } from "../buttons/index.js";
+import { Row } from "../row/index.js";
+import { DefaultButton } from "../buttons/index.js";
+import { TextInput } from "../textInput/index.js";
 export let label;
 export let valuePostfix = undefined;
 export let value = "";

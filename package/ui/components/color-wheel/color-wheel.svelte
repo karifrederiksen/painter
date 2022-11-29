@@ -1,8 +1,8 @@
 <script>import { createEventDispatcher } from "svelte";
 import * as Color from "color";
 import { onMount } from "svelte";
-import { ColorMode, clamp, CanvasPool } from "../../../util";
-import { GlState } from "./color-wheel-logic";
+import { ColorMode, clamp, CanvasPool } from "../../../util/index.js";
+import { GlState } from "./color-wheel-logic.js";
 export let color;
 export let colorType; // = ColorMode.Hsluv;
 const dispatch = createEventDispatcher();

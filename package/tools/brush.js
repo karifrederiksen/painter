@@ -1,8 +1,8 @@
-import * as Interp from "./interpolation";
-import * as BrushDelay from "./brushDelay";
+import * as Interp from "./interpolation.js";
+import * as BrushDelay from "./brushDelay.js";
 import * as Color from "color";
-import { Vec2, ColorMode, clamp, tagged } from "../util";
-import { ZipperList } from "../collections/zipperList";
+import { Vec2, ColorMode, clamp, tagged } from "../util/index.js";
+import { ZipperList } from "../collections/zipperList.js";
 export class Sender {
     sendMessage;
     constructor(sendMessage) {

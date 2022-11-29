@@ -1,7 +1,7 @@
 <script>import { rgbToHsluv } from "color";
 import Labeled from "../components/labeled/labeled.svelte";
 import Slider from "../components/slider/slider.svelte";
-import { stringToFloat } from "../../util";
+import { stringToFloat } from "../../util/index.js";
 export let sender;
 export let color;
 const sendFloat = (ev, f) => {

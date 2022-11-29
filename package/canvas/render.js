@@ -1,4 +1,4 @@
-import { Texture, createTextureWithFramebuffer } from "./texture";
+import { Texture, createTextureWithFramebuffer } from "./texture.js";
 /*
  * Bind any new layers to their own textures
  * Determine which layers are above and what layers are below

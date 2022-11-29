@@ -1,4 +1,4 @@
-import type { Stack } from "../collections";
+import type { Stack } from "../collections/index.js";
 export interface ModifiersT {
     __nominal: "ModifiersT";
 }

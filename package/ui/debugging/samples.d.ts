@@ -1,4 +1,4 @@
-import type { PerfTracker } from "../../util";
+import type { PerfTracker } from "../../util/index.js";
 export declare class SamplesOverTime {
     readonly sample0: readonly PerfTracker.Sample[];
     readonly sample1: readonly PerfTracker.Sample[];

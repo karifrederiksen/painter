@@ -1,1 +1,1 @@
-export * as Stack from "./stack";
+export * as Stack from "./stack.js";

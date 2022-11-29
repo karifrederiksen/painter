@@ -1,4 +1,4 @@
-import * as WebGL from "../webgl";
+import * as WebGL from "../webgl/index.js";
 declare const Uniforms: {
     readonly u_texture: WebGL.UniformType.I1;
     readonly u_resolution: WebGL.UniformType.F2;

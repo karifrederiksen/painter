@@ -1,5 +1,5 @@
-import { orDefault, arrUpdate, arrInsert, arrRemove } from "../util";
-import { Stack } from "../collections";
+import { orDefault, arrUpdate, arrInsert, arrRemove } from "../util/index.js";
+import { Stack } from "../collections/index.js";
 export class LeafLayer {
     id;
     name;

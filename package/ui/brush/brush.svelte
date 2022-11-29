@@ -1,6 +1,6 @@
-<script>import { Menu, ColorWheel, ColorDisplay, Surface, Labeled, InlineLabeled, Slider, Switch, TextInput, } from "../components";
+<script>import { Menu, ColorWheel, ColorDisplay, Surface, Labeled, InlineLabeled, Slider, Switch, TextInput, } from "../components/index.js";
 import * as Color from "color";
-import { ColorMode, colorModeToString, stringToFloat } from "../../util";
+import { ColorMode, colorModeToString, stringToFloat } from "../../util/index.js";
 import HsluvSliders from "./hsluv-sliders.svelte";
 import HsvSliders from "./hsv-sliders.svelte";
 export let sender;

@@ -1,4 +1,4 @@
-import type * as Rng from "./rng";
+import type * as Rng from "./rng.js";
 export type GenResult<a> = readonly [a, Rng.Seed];
 export interface Generators<a> {
     (rng: Rng.Seed): GenResult<a>;

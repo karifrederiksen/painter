@@ -1,7 +1,7 @@
-import type * as Layers from "./layers";
-import type { Vec2, PushOnlyArray } from "../util";
-import { type TextureId, Texture } from "./texture";
-import type { Shader as TextureShader } from "./textureShader";
+import type * as Layers from "./layers.js";
+import type { Vec2, PushOnlyArray } from "../util/index.js";
+import { type TextureId, Texture } from "./texture.js";
+import type { Shader as TextureShader } from "./textureShader.js";
 export declare class LayersToCombine {
     readonly above: null | Layers.CollectedLayer[];
     readonly below: null | Layers.CollectedLayer[];

@@ -1,5 +1,5 @@
 import { SvelteComponentTyped } from "svelte";
-import type { Id, Layer } from "../../canvas/layers";
+import type { Id, Layer } from "../../canvas/layers.js";
 declare const __propDef: {
     props: {
         selectedId: Id;

@@ -1,2 +1,2 @@
-export * from "./rng";
-export * as Generators from "./generators";
+export * from "./rng.js";
+export * as Generators from "./generators.js";

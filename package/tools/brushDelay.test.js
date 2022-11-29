@@ -1,5 +1,5 @@
 import { test } from "vitest";
-import * as Delay from "./brushDelay";
+import * as Delay from "./brushDelay.js";
 function mkInput(x, y, pressure) {
     return new Delay.Input(x, y, pressure);
 }

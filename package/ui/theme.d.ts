@@ -1,5 +1,5 @@
 import * as Color from "color";
-import { Generators as Gen } from "../rng";
+import { Generators as Gen } from "../rng/index.js";
 export interface Theme {
     readonly color: {
         readonly primary: Color.Hsluv;

@@ -1,4 +1,4 @@
-import { lerp, distance, Vec2 } from "../util";
+import { lerp, distance, Vec2 } from "../util/index.js";
 export function init(prevPoint) {
     return { prevPoint };
 }

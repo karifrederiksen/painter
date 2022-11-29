@@ -1,4 +1,4 @@
-import type * as Camera from "./camera";
+import type * as Camera from "./camera.js";
 export interface TransformedPointerInput {
     readonly x: number;
     readonly y: number;

@@ -1,5 +1,5 @@
 import { SvelteComponentTyped } from "svelte";
-import type * as Brush from "../../tools/brush";
+import type * as Brush from "../../tools/brush.js";
 import { type Hsv } from "color";
 declare const __propDef: {
     props: {

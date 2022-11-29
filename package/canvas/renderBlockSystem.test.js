@@ -1,7 +1,7 @@
 import { test } from "vitest";
-import { RenderBlockSystem } from "./renderBlockSystem";
+import { RenderBlockSystem } from "./renderBlockSystem.js";
 import { RgbLinear } from "color";
-import { Vec2 } from "../util";
+import { Vec2 } from "../util/index.js";
 function createBrushPoint(scaledDiameter, position) {
     return {
         color: RgbLinear.White,

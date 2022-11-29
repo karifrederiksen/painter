@@ -1,4 +1,9 @@
-import { Observable } from "rxjs";
+export interface Unsubscribe {
+    (): void;
+}
+export interface Observable<a> {
+    subscribe(f: (val: a) => void): Unsubscribe;
+}
 export interface PointerData {
     readonly x: number;
     readonly y: number;

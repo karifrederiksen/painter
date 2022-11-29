@@ -1,5 +1,5 @@
-export * from "./glsl";
-export * as Blend from "./blend";
+export * from "./glsl.js";
+export * as Blend from "./blend.js";
 export function createProgram(gl, vSrc, fSrc) {
     const vShader = compileShader(gl, vSrc, gl.VERTEX_SHADER);
     const fShader = compileShader(gl, fSrc, gl.FRAGMENT_SHADER);

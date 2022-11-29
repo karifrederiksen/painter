@@ -1,4 +1,4 @@
-<script>import { clamp } from "../../../util";
+<script>import { clamp } from "../../../util/index.js";
 import { onMount } from "svelte";
 import { createEventDispatcher } from "svelte";
 export let value;

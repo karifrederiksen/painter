@@ -1,6 +1,6 @@
-import type { Vec2, Vec3, Vec4 } from "../util";
-export * from "./glsl";
-export * as Blend from "./blend";
+import type { Vec2, Vec3, Vec4 } from "../util/index.js";
+export * from "./glsl.js";
+export * as Blend from "./blend.js";
 export declare function createProgram(gl: WebGLRenderingContext, vSrc: string, fSrc: string): WebGLProgram | null;
 export declare const enum UniformType {
     I1 = 0,

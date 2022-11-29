@@ -1,6 +1,6 @@
 import { SvelteComponentTyped } from "svelte";
 import * as Color from "color";
-import { ColorMode } from "../../../util";
+import { ColorMode } from "../../../util/index.js";
 declare const __propDef: {
     props: {
         color: Color.Hsluv;

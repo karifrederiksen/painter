@@ -1,7 +1,7 @@
-import * as Brush from "./brush";
-import * as Camera from "./camera";
-import { Blend } from "../webgl";
-import { tagged } from "../util";
+import * as Brush from "./brush.js";
+import * as Camera from "./camera.js";
+import { Blend } from "../webgl/index.js";
+import { tagged } from "../util/index.js";
 export class Sender {
     sendMessage;
     brush;

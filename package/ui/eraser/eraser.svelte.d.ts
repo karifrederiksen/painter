@@ -1,5 +1,5 @@
 import { SvelteComponentTyped } from "svelte";
-import type * as Eraser from "../../tools/brush";
+import type * as Eraser from "../../tools/brush.js";
 declare const __propDef: {
     props: {
         sender: Eraser.Sender;

@@ -1,5 +1,5 @@
-<script>import { Surface, Labeled, Slider, Switch } from "../components";
-import { stringToFloat } from "../../util";
+<script>import { Surface, Labeled, Slider, Switch } from "../components/index.js";
+import { stringToFloat } from "../../util/index.js";
 export let sender;
 export let brush;
 const sendFloat = (ev, f) => {

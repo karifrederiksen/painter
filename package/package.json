@@ -6,8 +6,7 @@
     "@types/node": "16.11.1",
     "color": "git+https://github.com/karifrederiksen/color.git",
     "jsverify": "0.8.4",
-    "ordered-collections": "git+https://github.com/karifrederiksen/ordered-collections.git",
-    "rxjs": "7.4.0"
+    "ordered-collections": "git+https://github.com/karifrederiksen/ordered-collections.git"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^1.0.0-next.48",

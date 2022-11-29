@@ -1,5 +1,5 @@
-import type { TransformedPointerInput } from "../canvas";
-import { type Tagged } from "../util";
+import type { TransformedPointerInput } from "../canvas/index.js";
+import { type Tagged } from "../util/index.js";
 export interface DragState {
     readonly originalScale: number;
     readonly clickPoint: TransformedPointerInput;

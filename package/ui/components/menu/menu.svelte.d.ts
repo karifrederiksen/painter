@@ -1,5 +1,5 @@
 import { SvelteComponentTyped } from "svelte";
-import type { ZipperList } from "../../../collections/zipperList";
+import type { ZipperList } from "../../../collections/zipperList.js";
 declare class __sveltets_Render<a> {
     props(): {
         choices: ZipperList<a>;

@@ -1,4 +1,4 @@
-import { tagged } from "../util";
+import { tagged } from "../util/index.js";
 export class Sender {
     sendMessage;
     constructor(sendMessage) {

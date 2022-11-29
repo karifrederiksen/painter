@@ -1,12 +1,12 @@
-import * as OutputShader from "./outputShader";
-import * as BrushTextureShader from "./brushTextureGenerator";
-import * as TextureShader from "./textureShader";
-import * as ClearBlocksShader from "./clearBlocksShader";
-import * as BlockHighlightShader from "./blockHighlightShader";
-import * as BrushShader from "./brushShader";
-import type * as Layers from "./layers";
-import { Blend } from "../webgl";
-import { type Result, Vec2 } from "../util";
+import * as OutputShader from "./outputShader.js";
+import * as BrushTextureShader from "./brushTextureGenerator.js";
+import * as TextureShader from "./textureShader.js";
+import * as ClearBlocksShader from "./clearBlocksShader.js";
+import * as BlockHighlightShader from "./blockHighlightShader.js";
+import * as BrushShader from "./brushShader.js";
+import type * as Layers from "./layers.js";
+import { Blend } from "../webgl/index.js";
+import { type Result, Vec2 } from "../util/index.js";
 export declare function create(canvas: HTMLCanvasElement): Result<readonly [Context, WebGLRenderingContext], string>;
 interface CreationArgs {
     readonly gl: WebGLRenderingContext;

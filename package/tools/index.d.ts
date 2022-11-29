@@ -1,9 +1,9 @@
-import * as Brush from "./brush";
-import * as Camera from "./camera";
-import type * as BrushShader from "../canvas/brushShader";
-import { Blend } from "../webgl";
-import type { TransformedPointerInput } from "../canvas";
-import { type Tagged } from "../util";
+import * as Brush from "./brush.js";
+import * as Camera from "./camera.js";
+import type * as BrushShader from "../canvas/brushShader.js";
+import { Blend } from "../webgl/index.js";
+import type { TransformedPointerInput } from "../canvas/index.js";
+import { type Tagged } from "../util/index.js";
 export type ToolMsg = Tagged<"SetToolMsg", ToolType> | Tagged<"BrushMsg", Brush.Msg> | Tagged<"EraserMsg", Brush.Msg> | Tagged<"CameraMsg", Camera.Msg>;
 export declare class Sender {
     private sendMessage;

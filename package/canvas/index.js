@@ -1,12 +1,11 @@
-import * as Layers from "./layers";
-import * as Tools from "../tools";
-import * as keymapping from "./keymapping";
-import * as Rng from "../rng";
-import * as Theme from "../ui/theme";
-import * as Context from "./context";
-import { Stack } from "../collections";
-import { Vec2, PerfTracker, turn, tagged } from "../util";
-import { dev } from "$app/environment";
+import * as Layers from "./layers.js";
+import * as Tools from "../tools/index.js";
+import * as keymapping from "./keymapping.js";
+import * as Rng from "../rng/index.js";
+import * as Theme from "../ui/theme.js";
+import * as Context from "./context.js";
+import { Stack } from "../collections/index.js";
+import { Vec2, PerfTracker, turn, tagged } from "../util/index.js";
 const NOOP_EFFECT = tagged("NoOp");
 export class Sender {
     sendMessage;
@@ -181,7 +180,7 @@ export class Canvas {
     static create(canvas, hooks) {
         const context = Context.create(canvas);
         if (context.isOk()) {
-            if (dev) {
+            if (import.meta.env.DEV) {
                 hooks.onWebglContextCreated(context.value[1]);
             }
             return new Canvas(new Vec2(canvas.width, canvas.height), hooks, context.value[0]);
