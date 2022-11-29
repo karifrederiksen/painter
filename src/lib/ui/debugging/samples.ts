@@ -1,4 +1,4 @@
-import type { PerfTracker } from "../../util";
+import type { PerfTracker } from "../../util/index.js";
 import { writable } from "svelte/store";
 
 export class SamplesOverTime {

@@ -1,5 +1,5 @@
-import * as WebGL from "../webgl";
-import type { HighlightBlock } from "./renderBlockSystem";
+import * as WebGL from "../webgl/index.js";
+import type { HighlightBlock } from "./renderBlockSystem.js";
 
 const VERT_SRC = `
 precision highp float;

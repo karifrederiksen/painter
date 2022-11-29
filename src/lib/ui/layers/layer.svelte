@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { Id, Layer } from "../../canvas/layers";
+    import type { Id, Layer } from "../../canvas/layers.js";
     import Surface from "../components/surface/surface.svelte";
 
     export let selectedId: Id;

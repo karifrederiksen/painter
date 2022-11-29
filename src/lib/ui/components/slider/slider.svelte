@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Hsv } from "color";
-    import { clamp } from "$lib/util";
+    import { clamp } from "$lib/util/index.js";
     import { onMount } from "svelte";
     import { createEventDispatcher } from "svelte";
 

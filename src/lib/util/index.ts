@@ -1,17 +1,17 @@
-import { Vec2 } from "./vec2";
+import { Vec2 } from "./vec2.js";
 
-export * as Store from "./store";
-export * as Decode from "./decode";
-export * from "./maybe";
-export * from "./result";
-export * from "./vec2";
-export * from "./vec3";
-export * from "./vec4";
-export * as FrameStream from "./frameStream";
-export * as PerfTracker from "./perfTracker";
-export * as CanvasPool from "./canvasPool";
-export * as Debug from "./debug";
-export * as Bloomfilter from "./bloomFilter";
+export * as Store from "./store.js";
+export * as Decode from "./decode.js";
+export * from "./maybe.js";
+export * from "./result.js";
+export * from "./vec2.js";
+export * from "./vec3.js";
+export * from "./vec4.js";
+export * as FrameStream from "./frameStream.js";
+export * as PerfTracker from "./perfTracker.js";
+export * as CanvasPool from "./canvasPool.js";
+export * as Debug from "./debug.js";
+export * as Bloomfilter from "./bloomFilter.js";
 
 export type Tagged<a, v = null> = { readonly tag: a; readonly val: v };
 

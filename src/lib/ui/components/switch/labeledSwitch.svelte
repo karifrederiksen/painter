@@ -1,6 +1,6 @@
 <script lang="ts">
     import Switch from "./switch.svelte";
-    import { InlineLabeled } from "../labeled";
+    import { InlineLabeled } from "../labeled/index.js";
     import { createEventDispatcher } from "svelte";
 
     const dispatch = createEventDispatcher<{ change: boolean }>();

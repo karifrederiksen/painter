@@ -1,7 +1,7 @@
 <script lang="ts">
-    import type { State, Sender } from "../../canvas/layers";
-    import { Row, DefaultButton, Surface, Labeled, Slider, Switch } from "../components";
-    import { stringToFloat } from "$lib/util";
+    import type { State, Sender } from "../../canvas/layers.js";
+    import { Row, DefaultButton, Surface, Labeled, Slider, Switch } from "../components/index.js";
+    import { stringToFloat } from "$lib/util/index.js";
     import LayerComponent from "./layer.svelte";
 
     export let layers: State;

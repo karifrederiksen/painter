@@ -1,7 +1,7 @@
-import type * as Canvas from "../canvas";
-import type * as Input from "../canvas/input";
+import type * as Canvas from "../canvas/index.js";
+import type * as Input from "../canvas/input.js";
 import * as Color from "color";
-import { delay, ColorMode } from "../util";
+import { delay, ColorMode } from "../util/index.js";
 
 export async function setup(
     canvas: HTMLCanvasElement,

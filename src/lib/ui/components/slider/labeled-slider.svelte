@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
-    import { Labeled } from "../labeled";
+    import { Labeled } from "../labeled/index.js";
     import Slider from "./slider.svelte";
 
     const dispatch = createEventDispatcher<{ change: number; changeStr: string }>();

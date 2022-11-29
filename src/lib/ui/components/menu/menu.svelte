@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
     import { onMount } from "svelte";
-    import type { ZipperList } from "../../../collections/zipperList";
+    import type { ZipperList } from "../../../collections/zipperList.js";
 
     type a = $$Generic;
 

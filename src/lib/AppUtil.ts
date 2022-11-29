@@ -1,4 +1,4 @@
-import type * as Camera from "./tools/camera";
+import type * as Camera from "./tools/camera.js";
 import { onMount } from "svelte";
 
 export const onBeforeUnload = () => {

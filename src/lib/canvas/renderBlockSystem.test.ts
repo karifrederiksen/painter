@@ -1,8 +1,8 @@
 import { test } from "vitest";
-import type { BrushPoint } from "./brushShader";
-import { RenderBlockSystem } from "./renderBlockSystem";
+import type { BrushPoint } from "./brushShader.js";
+import { RenderBlockSystem } from "./renderBlockSystem.js";
 import { RgbLinear } from "color";
-import { Vec2 } from "../util";
+import { Vec2 } from "../util/index.js";
 
 function createBrushPoint(scaledDiameter: number, position: Vec2): BrushPoint {
     return {

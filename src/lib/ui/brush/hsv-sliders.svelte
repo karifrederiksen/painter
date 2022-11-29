@@ -1,9 +1,9 @@
 <script lang="ts">
-    import type * as Brush from "../../tools/brush";
+    import type * as Brush from "../../tools/brush.js";
     import { type Hsv, rgbToHsluv } from "color";
     import Labeled from "../components/labeled/labeled.svelte";
     import Slider from "../components/slider/slider.svelte";
-    import { stringToFloat } from "$lib/util";
+    import { stringToFloat } from "$lib/util/index.js";
 
     export let sender: Brush.Sender;
     export let color: Hsv;

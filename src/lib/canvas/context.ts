@@ -1,21 +1,21 @@
-import * as OutputShader from "./outputShader";
-import * as BrushTextureShader from "./brushTextureGenerator";
-import * as TextureShader from "./textureShader";
-import * as ClearBlocksShader from "./clearBlocksShader";
-import * as BlockHighlightShader from "./blockHighlightShader";
-import * as BrushShader from "./brushShader";
-import type * as Layers from "./layers";
-import * as BlockRender from "./renderBlockSystem";
-import { Blend } from "../webgl";
-import { type Result, Ok, Err, Vec2, Vec4 } from "../util";
+import * as OutputShader from "./outputShader.js";
+import * as BrushTextureShader from "./brushTextureGenerator.js";
+import * as TextureShader from "./textureShader.js";
+import * as ClearBlocksShader from "./clearBlocksShader.js";
+import * as BlockHighlightShader from "./blockHighlightShader.js";
+import * as BrushShader from "./brushShader.js";
+import type * as Layers from "./layers.js";
+import * as BlockRender from "./renderBlockSystem.js";
+import { Blend } from "../webgl/index.js";
+import { type Result, Ok, Err, Vec2, Vec4 } from "../util/index.js";
 import { RgbLinear } from "color";
 import {
     Texture,
     type TextureId,
     createTextureWithFramebuffer,
     ensureTextureIsBound,
-} from "./texture";
-import * as Render from "./render";
+} from "./texture.js";
+import * as Render from "./render.js";
 
 export function create(
     canvas: HTMLCanvasElement,

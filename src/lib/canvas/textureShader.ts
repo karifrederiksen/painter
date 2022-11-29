@@ -1,4 +1,4 @@
-import * as WebGL from "../webgl";
+import * as WebGL from "../webgl/index.js";
 
 const VERT_SRC = `
 precision highp float;

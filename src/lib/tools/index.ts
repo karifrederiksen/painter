@@ -1,9 +1,9 @@
-import * as Brush from "./brush";
-import * as Camera from "./camera";
-import type * as BrushShader from "../canvas/brushShader";
-import { Blend } from "../webgl";
-import type { TransformedPointerInput } from "../canvas";
-import { type Tagged, tagged } from "../util";
+import * as Brush from "./brush.js";
+import * as Camera from "./camera.js";
+import type * as BrushShader from "../canvas/brushShader.js";
+import { Blend } from "../webgl/index.js";
+import type { TransformedPointerInput } from "../canvas/index.js";
+import { type Tagged, tagged } from "../util/index.js";
 
 export type ToolMsg =
     | Tagged<"SetToolMsg", ToolType>
