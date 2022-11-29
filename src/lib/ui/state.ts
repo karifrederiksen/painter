@@ -8,10 +8,8 @@ import * as Setup from "$lib/ui/setup";
 import { FrameStream, Store, Vec2, type PushOnlyArray } from "$lib/util";
 import { samples } from "$lib/ui/debugging";
 import * as Theme from "$lib/ui/theme";
-import { Subscription as RxSubscription } from "rxjs";
-import { dev } from "$app/environment";
 
-type Disposals = PushOnlyArray<(() => void) | RxSubscription>;
+type Disposals = PushOnlyArray<(() => void) | { unsubscribe(): void }>;
 
 export const canvasResolution = new Vec2(800, 800);
 const [initialState, initialEphemeral] = Canvas.initState();
@@ -114,14 +112,14 @@ export const onPageMount = (getCanvas: () => HTMLCanvasElement | undefined): voi
         disposals.push(FrameStream.FrameStream.make(sender.onFrame));
         disposals.push(() => canvas.dispose());
 
-        if (dev) {
+        if (import.meta.env.DEV) {
             Setup.setup(htmlCanvas, () => store_.getState(), sender).then(() => {
                 console.log("Setup complete");
             });
         }
         return () => {
             for (const d of disposals) {
-                if (d instanceof RxSubscription) {
+                if (typeof d !== "function") {
                     d.unsubscribe();
                 } else {
                     d();

@@ -3,8 +3,8 @@
 
     import * as Color from "color";
     import { onMount } from "svelte";
-    import { ColorMode, clamp, CanvasPool } from "$lib/util";
-    import { GlState } from "./color-wheel-logic";
+    import { ColorMode, clamp, CanvasPool } from "$lib/util/index.js";
+    import { GlState } from "./color-wheel-logic.js";
 
     export let color: Color.Hsluv;
     export let colorType: ColorMode; // = ColorMode.Hsluv;

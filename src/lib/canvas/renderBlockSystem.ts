@@ -1,5 +1,5 @@
-import type { BrushPoint } from "./brushShader";
-import { Vec2, clamp } from "../util";
+import type { BrushPoint } from "./brushShader.js";
+import { Vec2, clamp } from "../util/index.js";
 
 export const PX_PER_BLOCK_X = 32;
 export const PX_PER_BLOCK_Y = 32;

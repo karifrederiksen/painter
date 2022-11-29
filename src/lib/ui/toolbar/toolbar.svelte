@@ -1,8 +1,8 @@
 <script lang="ts">
-    import type * as Tools from "../../tools";
-    import { Brush } from "../brush";
-    import { Eraser } from "../eraser";
-    import { SinkableButton, Icons } from "../components";
+    import type * as Tools from "../../tools/index.js";
+    import { Brush } from "../brush/index.js";
+    import { Eraser } from "../eraser/index.js";
+    import { SinkableButton, Icons } from "../components/index.js";
 
     interface TransientState {
         readonly isDetailsExpanded: boolean;

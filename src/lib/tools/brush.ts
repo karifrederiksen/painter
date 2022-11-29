@@ -1,11 +1,11 @@
-import * as Interp from "./interpolation";
-import * as BrushDelay from "./brushDelay";
-import type * as BrushShader from "../canvas/brushShader";
-import type * as Camera from "./camera";
+import * as Interp from "./interpolation.js";
+import * as BrushDelay from "./brushDelay.js";
+import type * as BrushShader from "../canvas/brushShader.js";
+import type * as Camera from "./camera.js";
 import * as Color from "color";
-import { Vec2, ColorMode, clamp, type Tagged, tagged } from "../util";
-import { ZipperList } from "../collections/zipperList";
-import type { TransformedPointerInput } from "../canvas";
+import { Vec2, ColorMode, clamp, type Tagged, tagged } from "../util/index.js";
+import { ZipperList } from "../collections/zipperList.js";
+import type { TransformedPointerInput } from "../canvas/index.js";
 
 export type Msg =
     | Tagged<"SetDiameter", { diameterPx: number }>

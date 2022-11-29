@@ -1,15 +1,14 @@
-import * as Layers from "./layers";
-import * as Tools from "../tools";
-import type * as Input from "./input";
-import * as keymapping from "./keymapping";
-import type * as Camera from "../tools/camera";
-import * as Rng from "../rng";
-import * as Theme from "../ui/theme";
-import * as Context from "./context";
-import type { BrushPoint } from "./brushShader";
-import { Stack } from "../collections";
-import { Vec2, PerfTracker, turn, type Tagged, tagged } from "../util";
-import { dev } from "$app/environment";
+import * as Layers from "./layers.js";
+import * as Tools from "../tools/index.js";
+import type * as Input from "./input.js";
+import * as keymapping from "./keymapping.js";
+import type * as Camera from "../tools/camera.js";
+import * as Rng from "../rng/index.js";
+import * as Theme from "../ui/theme.js";
+import * as Context from "./context.js";
+import type { BrushPoint } from "./brushShader.js";
+import { Stack } from "../collections/index.js";
+import { Vec2, PerfTracker, turn, type Tagged, tagged } from "../util/index.js";
 
 export type CanvasMsg =
     | Tagged<"OnFrame", number>
@@ -279,7 +278,7 @@ export class Canvas {
     static create(canvas: HTMLCanvasElement, hooks: Hooks): Canvas | null {
         const context = Context.create(canvas);
         if (context.isOk()) {
-            if (dev) {
+            if (import.meta.env.DEV) {
                 hooks.onWebglContextCreated(context.value[1]);
             }
             return new Canvas(new Vec2(canvas.width, canvas.height), hooks, context.value[0]);

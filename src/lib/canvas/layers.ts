@@ -1,5 +1,5 @@
-import { orDefault, arrUpdate, arrInsert, arrRemove } from "../util";
-import { Stack, type PushArray } from "../collections";
+import { orDefault, arrUpdate, arrInsert, arrRemove } from "../util/index.js";
+import { Stack, type PushArray } from "../collections/index.js";
 
 export interface Id {
     __nominal: "Id";

@@ -1,6 +1,6 @@
 <script lang="ts">
-    import type * as Camera from "../../tools/camera";
-    import { clamp, stringToFloat } from "$lib/util";
+    import type * as Camera from "../../tools/camera.js";
+    import { clamp, stringToFloat } from "$lib/util/index.js";
     import Slider from "../components/slider/slider.svelte";
     import Labeled from "../components/labeled/labeled.svelte";
 

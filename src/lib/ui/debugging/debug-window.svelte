@@ -3,7 +3,7 @@
     import Surface from "../components/surface/surface.svelte";
     import Performance from "./performance.svelte";
     import Scripting from "./scripting.svelte";
-    import { canvasEphemeral } from "../state";
+    import { canvasEphemeral } from "../state.js";
 
     $: themeRng = $canvasEphemeral?.themeRng;
 

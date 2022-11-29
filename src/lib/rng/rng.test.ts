@@ -1,5 +1,5 @@
 import { test } from "vitest";
-import * as Rng from "./rng";
+import * as Rng from "./rng.js";
 
 const seeds: readonly Rng.Seed[] = [
     Rng.XorshiftSeed.create(0),

@@ -1,6 +1,6 @@
 import type * as Color from "color";
-import * as WebGL from "../webgl";
-import { Vec2, Vec4 } from "../util";
+import * as WebGL from "../webgl/index.js";
+import { Vec2, Vec4 } from "../util/index.js";
 
 const INITIAL_VARRAY_SIZE = 5000;
 

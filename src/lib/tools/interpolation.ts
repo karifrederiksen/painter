@@ -1,6 +1,6 @@
-import type * as BrushShader from "../canvas/brushShader";
+import type * as BrushShader from "../canvas/brushShader.js";
 import type * as Color from "color";
-import { lerp, distance, Vec2 } from "../util";
+import { lerp, distance, Vec2 } from "../util/index.js";
 
 export interface Config {
     readonly diameterPx: number;

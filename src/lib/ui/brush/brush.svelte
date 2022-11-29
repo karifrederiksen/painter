@@ -9,10 +9,10 @@
         Slider,
         Switch,
         TextInput,
-    } from "../components";
-    import type * as Brush from "../../tools/brush";
+    } from "../components/index.js";
+    import type * as Brush from "../../tools/brush.js";
     import * as Color from "color";
-    import { ColorMode, colorModeToString, stringToFloat } from "$lib/util";
+    import { ColorMode, colorModeToString, stringToFloat } from "$lib/util/index.js";
     import HsluvSliders from "./hsluv-sliders.svelte";
     import HsvSliders from "./hsv-sliders.svelte";
 

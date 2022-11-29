@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { debuggingGl } from "$lib/ui/state";
+    import { debuggingGl } from "$lib/ui/state.js";
 
     let code = "";
 

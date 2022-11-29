@@ -1,4 +1,10 @@
-import { Observable, fromEvent, map, mergeMap, takeUntil } from "rxjs";
+export interface Unsubscribe {
+    (): void;
+}
+
+export interface Observable<a> {
+    subscribe(f: (val: a) => void): Unsubscribe;
+}
 
 export interface PointerData {
     readonly x: number;
@@ -77,23 +83,71 @@ function uncoalesceAndLocalize(time: number, originalEvent: PointerEvent): Point
     return result;
 }
 
+function fromEvent<key extends keyof HTMLElementEventMap>(
+    canvas: HTMLElement,
+    key: key,
+): Observable<HTMLElementEventMap[key]> {
+    return {
+        subscribe(f) {
+            canvas.addEventListener(key, f, { passive: true });
+            return () => {
+                canvas.removeEventListener(key, f);
+            };
+        },
+    };
+}
+
+function map<a, b>(obs: Observable<a>, trans: (val: a) => b): Observable<b> {
+    return {
+        subscribe(f) {
+            return obs.subscribe((v) => f(trans(v)));
+        },
+    };
+}
+
+function mergeMap<a, b>(obs: Observable<a>, create: (val: a) => Observable<b>): Observable<b> {
+    return {
+        subscribe(f) {
+            let tempUnsub: Unsubscribe | undefined;
+            const unsub = obs.subscribe((v) => {
+                tempUnsub?.();
+                tempUnsub = create(v).subscribe(f);
+            });
+            return () => {
+                tempUnsub?.();
+                unsub();
+            };
+        },
+    };
+}
+
+function takeUntil<a, b>(obsA: Observable<a>, obsB: Observable<b>): Observable<a> {
+    return {
+        subscribe(f) {
+            const unsub = () => {
+                unsubA();
+                unsubB();
+            };
+            const unsubA = obsA.subscribe(f);
+            const unsubB = obsB.subscribe(unsub);
+            return unsub;
+        },
+    };
+}
+
 function listenForPointers(canvas: HTMLCanvasElement): Observables {
-    const click = fromEvent<PointerEvent>(canvas, "pointerdown", { passive: true }).pipe(
-        map((ev) => {
-            checkPressureSupport(ev);
-            return localizePointer(performance.now(), ev, ev);
-        }),
+    const click = map(fromEvent(canvas, "pointerdown"), (ev) => {
+        checkPressureSupport(ev);
+        return localizePointer(performance.now(), ev, ev);
+    });
+    const move = map(fromEvent(document.body, "pointermove"), (ev) => {
+        checkPressureSupport(ev);
+        return uncoalesceAndLocalize(performance.now(), ev);
+    });
+    const release = map(fromEvent(document.body, "pointerup"), (ev) =>
+        localizePointer(performance.now(), ev, ev),
     );
-    const move = fromEvent<PointerEvent>(window, "pointermove", { passive: true }).pipe(
-        map((ev) => {
-            checkPressureSupport(ev);
-            return uncoalesceAndLocalize(performance.now(), ev);
-        }),
-    );
-    const release = fromEvent<PointerEvent>(window, "pointerup", { passive: true }).pipe(
-        map((ev) => localizePointer(performance.now(), ev, ev)),
-    );
-    const drag = click.pipe(mergeMap((_) => move.pipe(takeUntil(release))));
+    const drag = mergeMap(click, (_) => takeUntil(move, release));
     return {
         click,
         move,
@@ -103,16 +157,16 @@ function listenForPointers(canvas: HTMLCanvasElement): Observables {
 }
 
 function listenForMouse(canvas: HTMLCanvasElement): Observables {
-    const click = fromEvent<MouseEvent>(canvas, "mousedown", { passive: true }).pipe(
-        map((ev) => localizeMouse(performance.now(), ev, false)),
+    const click = map(fromEvent(canvas, "mousedown"), (ev) =>
+        localizeMouse(performance.now(), ev, false),
     );
-    const move = fromEvent<MouseEvent>(window, "mousemove", { passive: true }).pipe(
-        map((ev) => [localizeMouse(performance.now(), ev, false)]),
+    const move = map(fromEvent(document.body, "mousemove"), (ev) => [
+        localizeMouse(performance.now(), ev, false),
+    ]);
+    const release = map(fromEvent(document.body, "mouseup"), (ev) =>
+        localizeMouse(performance.now(), ev, true),
     );
-    const release = fromEvent<MouseEvent>(window, "mouseup", { passive: true }).pipe(
-        map((ev) => localizeMouse(performance.now(), ev, true)),
-    );
-    const drag = click.pipe(mergeMap((_) => move.pipe(takeUntil(release))));
+    const drag = mergeMap(click, (_) => takeUntil(move, release));
     return {
         click,
         move,

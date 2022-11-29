@@ -1,4 +1,4 @@
-import type { Vec2, PushOnlyArray } from "../util";
+import type { Vec2, PushOnlyArray } from "../util/index.js";
 
 export interface TextureId {
     __nominal: "TextureId";

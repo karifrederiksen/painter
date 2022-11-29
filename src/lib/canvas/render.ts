@@ -1,7 +1,7 @@
-import type * as Layers from "./layers";
-import type { Vec2, PushOnlyArray } from "../util";
-import { type TextureId, Texture, createTextureWithFramebuffer } from "./texture";
-import type { Shader as TextureShader } from "./textureShader";
+import type * as Layers from "./layers.js";
+import type { Vec2, PushOnlyArray } from "../util/index.js";
+import { type TextureId, Texture, createTextureWithFramebuffer } from "./texture.js";
+import type { Shader as TextureShader } from "./textureShader.js";
 
 /*
  * Bind any new layers to their own textures

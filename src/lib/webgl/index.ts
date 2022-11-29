@@ -1,7 +1,7 @@
-import type { Vec2, Vec3, Vec4 } from "../util";
+import type { Vec2, Vec3, Vec4 } from "../util/index.js";
 
-export * from "./glsl";
-export * as Blend from "./blend";
+export * from "./glsl.js";
+export * as Blend from "./blend.js";
 
 export function createProgram(
     gl: WebGLRenderingContext,

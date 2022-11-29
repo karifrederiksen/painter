@@ -1,4 +1,4 @@
-import { lerp } from "../util";
+import { lerp } from "../util/index.js";
 
 export interface Config {
     readonly duration: number;
