@@ -52,6 +52,7 @@
     "./collections": "./collections/index.js",
     "./collections/stack": "./collections/stack.js",
     "./collections/zipperList": "./collections/zipperList.js",
+    ".": "./index.js",
     "./rng/generators": "./rng/generators.js",
     "./rng": "./rng/index.js",
     "./rng/rng.test": "./rng/rng.test.js",
@@ -142,5 +143,6 @@
     "./webgl/blend": "./webgl/blend.js",
     "./webgl/glsl": "./webgl/glsl.js",
     "./webgl": "./webgl/index.js"
-  }
+  },
+  "svelte": "./index.js"
 }
