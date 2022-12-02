@@ -2,11 +2,12 @@
     import { createEventDispatcher } from "svelte";
 
     export let title: string | undefined = undefined;
+    export let style: string | undefined = undefined;
 
     const dispatch = createEventDispatcher<{ click: undefined }>();
 </script>
 
-<button {title} class="primary" on:click={() => dispatch("click")}>
+<button {title} {style} class="primary" on:click={() => dispatch("click")}>
     <slot />
 </button>
 
@@ -25,7 +26,6 @@
         border-radius: 0.25rem;
         padding: 0.5rem;
         height: 2.25rem;
-        width: 100%;
         min-width: 4rem;
         transition: all 150ms;
         line-height: 1.4em;

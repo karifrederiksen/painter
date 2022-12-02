@@ -23,10 +23,18 @@
     <Surface>
         <div class="layersControlsWrapper">
             <Row spacing={0.25}>
-                <DefaultButton on:click={() => sender.newLayer(current.id)} title="New layer">
+                <DefaultButton
+                    on:click={() => sender.newLayer(current.id)}
+                    title="New layer"
+                    style="width: 100%"
+                >
                     New
                 </DefaultButton>
-                <DefaultButton on:click={() => sender.removeLayer(current.id)} title="Delete layer">
+                <DefaultButton
+                    on:click={() => sender.removeLayer(current.id)}
+                    title="Delete layer"
+                    style="width: 100%"
+                >
                     Delete
                 </DefaultButton>
             </Row>

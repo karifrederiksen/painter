@@ -18,6 +18,7 @@ export type CanvasMsg =
     | Tagged<"OnKeyboard", keymapping.KeyInput>
     | Tagged<"RandomizeTheme">
     | Tagged<"ToggleHighlightRenderBlocks">
+    | Tagged<"ToggleDisplayStats">
     | Tagged<"ToolMsg", Tools.ToolMsg>
     | Tagged<"LayersMsg", Layers.Msg>;
 
@@ -52,6 +53,7 @@ export class Sender {
     onKeyboard = (input: keymapping.KeyInput) => this.sendMessage(tagged("OnKeyboard", input));
     randomizeTheme = () => this.sendMessage(tagged("RandomizeTheme"));
     toggleHighlightRenderBlocks = () => this.sendMessage(tagged("ToggleHighlightRenderBlocks"));
+    toggleDisplayStats = () => this.sendMessage(tagged("ToggleDisplayStats"));
 }
 
 export interface Config {
@@ -59,6 +61,7 @@ export interface Config {
     readonly tool: Tools.Config;
     readonly layers: Layers.State;
     readonly highlightRenderBlocks: boolean;
+    readonly displayStats: boolean;
     readonly keyboard: keymapping.KeyBindingSystem<CanvasMsg>;
 }
 
@@ -78,6 +81,7 @@ export function initState(): [Config, State] {
         tool: Tools.init,
         layers: Layers.State.init(),
         highlightRenderBlocks: false,
+        displayStats: false,
         keyboard: {
             layers: Stack.empty<keymapping.KeyBindLayer<CanvasMsg>>().cons({
                 [createKey({ code: "KeyB" })]: {
@@ -252,6 +256,13 @@ export function update(
             };
             return [nextConfig, state, NOOP_EFFECT];
         }
+        case "ToggleDisplayStats": {
+            const nextConfig: Config = {
+                ...config,
+                displayStats: !config.displayStats,
+            };
+            return [nextConfig, state, NOOP_EFFECT];
+        }
         case "ToolMsg": {
             const nextConfig: Config = { ...config, tool: Tools.update(config.tool, msg.val) };
             return [nextConfig, state, NOOP_EFFECT];
@@ -278,9 +289,7 @@ export class Canvas {
     static create(canvas: HTMLCanvasElement, hooks: Hooks): Canvas | null {
         const context = Context.create(canvas);
         if (context.isOk()) {
-            if (import.meta.env.DEV) {
-                hooks.onWebglContextCreated(context.value[1]);
-            }
+            hooks.onWebglContextCreated(context.value[1]);
             return new Canvas(new Vec2(canvas.width, canvas.height), hooks, context.value[0]);
         }
         console.error("Error in Context setup:", context.value);
