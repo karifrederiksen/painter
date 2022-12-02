@@ -185,13 +185,7 @@ function pointerToBrushInput(input: TransformedPointerInput): BrushDelay.Input {
 
 function createBrushPoint(brush: Config, input: BrushDelay.Input): BrushShader.BrushPoint {
     const alpha = brush.flowPct * input.pressure;
-    const color =
-        alpha === 1
-            ? brush.color.toRgb().toLinear()
-            : brush.color
-                  .toRgb()
-                  .toLinear()
-                  .mix(1 - alpha, Color.RgbLinear.Black);
+    const color = brush.color.toRgb().toLinear();
     const position = new Vec2(input.x, input.y);
     return {
         alpha,
@@ -204,13 +198,7 @@ function createBrushPoint(brush: Config, input: BrushDelay.Input): BrushShader.B
 
 function createInputPoint(brush: Config, input: BrushDelay.Input): Interp.InputPoint {
     const alpha = brush.flowPct * input.pressure;
-    const color =
-        alpha === 1
-            ? brush.color.toRgb().toLinear()
-            : brush.color
-                  .toRgb()
-                  .toLinear()
-                  .mix(1 - alpha, Color.RgbLinear.Black);
+    const color = brush.color.toRgb().toLinear();
     const position = new Vec2(input.x, input.y);
     return {
         alpha,
