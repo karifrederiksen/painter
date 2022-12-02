@@ -3,6 +3,7 @@
     import { Row, DefaultButton, Surface, Labeled, Slider, Switch } from "../components/index.js";
     import { stringToFloat } from "$lib/util/index.js";
     import LayerComponent from "./layer.svelte";
+    import InlineLabeled from "../components/labeled/inline-labeled.svelte";
 
     export let layers: State;
     export let sender: Sender;
@@ -29,12 +30,12 @@
                     Delete
                 </DefaultButton>
             </Row>
-            <Labeled label="Hidden">
+            <InlineLabeled label="Hidden">
                 <Switch
                     checked={current.isHidden}
                     on:change={(ev) => sender.setHidden(current.id, ev.detail)}
                 />
-            </Labeled>
+            </InlineLabeled>
             <Labeled
                 label="Opacity"
                 value={current.opacity.toFixed(2)}

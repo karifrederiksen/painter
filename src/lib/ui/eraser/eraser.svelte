@@ -2,6 +2,7 @@
     import { Surface, Labeled, Slider, Switch } from "../components/index.js";
     import type * as Eraser from "../../tools/brush.js";
     import { stringToFloat } from "$lib/util/index.js";
+    import InlineLabeled from "../components/labeled/inline-labeled.svelte";
 
     export let sender: Eraser.Sender;
     export let brush: Eraser.Config;
@@ -49,18 +50,18 @@
         >
             <Slider value={brush.spacingPct} on:change={(ev) => sender.setSpacing(ev.detail)} />
         </Labeled>
-        <Labeled label="Pressure-Opacity">
+        <InlineLabeled label="Pressure-Opacity">
             <Switch
                 checked={brush.pressureAffectsOpacity}
                 on:change={(ev) => sender.setPressureAffectsOpacity(ev.detail)}
             />
-        </Labeled>
-        <Labeled label="Pressure-Size">
+        </InlineLabeled>
+        <InlineLabeled label="Pressure-Size">
             <Switch
                 checked={brush.pressureAffectsSize}
                 on:change={(ev) => sender.setPressureAffectsSize(ev.detail)}
             />
-        </Labeled>
+        </InlineLabeled>
         <Labeled
             label="Delay"
             valuePostfix="ms"
