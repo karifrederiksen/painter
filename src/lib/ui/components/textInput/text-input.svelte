@@ -8,7 +8,7 @@
     const dispatch = createEventDispatcher<{ change: string; enter: string }>();
 
     let inputRef: HTMLInputElement | null = null;
-    let text: string = initialValue;
+    $: text = initialValue;
 
     function handleChange(ev: Event) {
         dispatch("change", (ev.target as HTMLInputElement).value);

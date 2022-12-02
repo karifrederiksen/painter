@@ -210,6 +210,7 @@
         display: flex;
         justify-content: center;
         width: 100%;
+        height: 160px;
     }
 
     .circleThumb {
