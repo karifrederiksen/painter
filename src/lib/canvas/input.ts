@@ -35,7 +35,7 @@ export function listen(canvas: HTMLCanvasElement): Observables {
 const pointerSupportsPressure: { [pointerId: number]: boolean } = {};
 
 function checkPressureSupport(ev: PointerEvent): void {
-    if (ev.pressure === 0.5) return;
+    if (ev.pressure === 0 || ev.pressure === 0.5) return;
     if (pointerSupportsPressure[ev.pointerId]) return;
 
     pointerSupportsPressure[ev.pointerId] = true;
