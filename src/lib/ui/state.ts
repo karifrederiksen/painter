@@ -48,13 +48,22 @@ export const canvasSender: Readable<Canvas.Sender> = canvasSender_;
 export const canvasInfo: Readable<Canvas.CanvasInfo> = canvasInfo_;
 export const canvasEphemeral: Readable<Canvas.State> = canvasEphemeral_;
 
-export const onPageMount = (getCanvas: () => HTMLCanvasElement | undefined): void => {
+export interface OnPageMountArgs {
+    getCanvas(): HTMLCanvasElement | undefined;
+    getContainer(): HTMLElement | undefined;
+}
+
+export const onPageMount = ({ getCanvas, getContainer }: OnPageMountArgs): void => {
     let canvasInfo: Canvas.CanvasInfo = getCanvasInfo({
         canvasOffset: new Vec2(initialState.tool.camera.offsetX, initialState.tool.camera.offsetY),
         canvasResolution,
     });
     onMount(() => {
         const htmlCanvas = getCanvas();
+        const container = getContainer();
+        if (!container) {
+            throw new Error("Container not found");
+        }
         if (!htmlCanvas) {
             throw new Error("Canvas not found");
         }
@@ -71,6 +80,8 @@ export const onPageMount = (getCanvas: () => HTMLCanvasElement | undefined): voi
         if (canvas === null) {
             throw new Error("Failed to initialize Canvas");
         }
+        const updateTheme = createUpdateThemeEffect(container);
+        updateTheme(initialState.theme);
 
         const store_ = Store.create<Canvas.Config, Canvas.State, Canvas.CanvasMsg, Canvas.Effect>({
             initialState,
@@ -144,18 +155,17 @@ const getCanvasOffset = (canvas: HTMLCanvasElement): Vec2 => {
     return new Vec2(canvas.offsetLeft, canvas.offsetTop);
 };
 
-const createUpdateThemeEffect = () => {
+const createUpdateThemeEffect = (node: HTMLElement) => {
     let prevTheme: Theme.Theme | null = null;
     return (nextTheme: Theme.Theme) => {
         if (prevTheme === null) {
-            Theme.updateAll(nextTheme);
+            Theme.updateAll(node, nextTheme);
         } else {
-            Theme.updateDiff(prevTheme, nextTheme);
+            Theme.updateDiff(node, prevTheme, nextTheme);
         }
         prevTheme = nextTheme;
     };
 };
-const updateTheme = createUpdateThemeEffect();
 
 const onLayoutChange = (onResize: () => void): void => {
     afterUpdate(() => {

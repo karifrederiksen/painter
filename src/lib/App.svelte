@@ -7,19 +7,30 @@
     import PrimaryButton from "./ui/components/buttons/primary-button.svelte";
     import { onBeforeUnload, getCameraTransform } from "./AppUtil.js";
     import { onPageMount, canvasState, canvasInfo, canvasSender } from "$lib/ui/state.js";
+    import { createDeclarations } from "./ui/theme.js";
+    import { initState as initCanvasState } from "./canvas/index.js";
 
+    let containerRef: HTMLDivElement | undefined;
     let canvasRef: HTMLCanvasElement | undefined;
     $: state = $canvasState;
     $: sender = $canvasSender;
 
-    onPageMount(() => canvasRef);
+    onPageMount({
+        getCanvas() {
+            return canvasRef;
+        },
+        getContainer() {
+            return containerRef;
+        },
+    });
 
     if (!import.meta.env.DEV) {
         onBeforeUnload();
     }
+    const [{ theme }] = initCanvasState();
 </script>
 
-<div class="appContainer">
+<div bind:this={containerRef} class="appContainer" style={createDeclarations(theme)}>
     <div class="wrapper">
         {#if sender && state}
             <Toolbar.Toolbar

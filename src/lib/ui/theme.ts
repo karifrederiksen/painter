@@ -47,7 +47,7 @@ const styleMap = {
     "--fonts-normal": (theme: Theme) => theme.fonts.normal,
 } as const;
 
-export function updateDiff(prevTheme: Theme, nextTheme: Theme): void {
+export function updateDiff(node: HTMLElement, prevTheme: Theme, nextTheme: Theme): void {
     for (const propName in styleMap) {
         const toStyle = styleMap[propName as keyof typeof styleMap];
         const prevValue = toStyle(prevTheme);
@@ -57,15 +57,24 @@ export function updateDiff(prevTheme: Theme, nextTheme: Theme): void {
             continue;
         }
 
-        document.body.style.setProperty(propName, nextValue);
+        node.style.setProperty(propName, nextValue);
     }
 }
 
-export function updateAll(theme: Theme): void {
+export function updateAll(node: HTMLElement, theme: Theme): void {
     for (const propName in styleMap) {
         const toStyle = styleMap[propName as keyof typeof styleMap];
-        document.body.style.setProperty(propName, toStyle(theme));
+        node.style.setProperty(propName, toStyle(theme));
     }
+}
+
+export function createDeclarations(theme: Theme): string {
+    const style = [];
+    for (const propName in styleMap) {
+        const toStyle = styleMap[propName as keyof typeof styleMap];
+        style.push(propName + ":" + toStyle(theme));
+    }
+    return style.join("; ");
 }
 
 const hsluvGen = (maxSat: number, luminance: number) =>
