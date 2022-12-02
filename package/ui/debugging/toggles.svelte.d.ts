@@ -10,9 +10,9 @@ declare const __propDef: {
     };
     slots: {};
 };
-export type DebugWindowProps = typeof __propDef.props;
-export type DebugWindowEvents = typeof __propDef.events;
-export type DebugWindowSlots = typeof __propDef.slots;
-export default class DebugWindow extends SvelteComponentTyped<DebugWindowProps, DebugWindowEvents, DebugWindowSlots> {
+export type TogglesProps = typeof __propDef.props;
+export type TogglesEvents = typeof __propDef.events;
+export type TogglesSlots = typeof __propDef.slots;
+export default class Toggles extends SvelteComponentTyped<TogglesProps, TogglesEvents, TogglesSlots> {
 }
 export {};

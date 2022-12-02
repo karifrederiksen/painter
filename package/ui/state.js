@@ -32,13 +32,17 @@ export const canvasState = state_;
 export const canvasSender = canvasSender_;
 export const canvasInfo = canvasInfo_;
 export const canvasEphemeral = canvasEphemeral_;
-export const onPageMount = (getCanvas) => {
+export const onPageMount = ({ getCanvas, getContainer }) => {
     let canvasInfo = getCanvasInfo({
         canvasOffset: new Vec2(initialState.tool.camera.offsetX, initialState.tool.camera.offsetY),
         canvasResolution,
     });
     onMount(() => {
         const htmlCanvas = getCanvas();
+        const container = getContainer();
+        if (!container) {
+            throw new Error("Container not found");
+        }
         if (!htmlCanvas) {
             throw new Error("Canvas not found");
         }
@@ -54,6 +58,8 @@ export const onPageMount = (getCanvas) => {
         if (canvas === null) {
             throw new Error("Failed to initialize Canvas");
         }
+        const updateTheme = createUpdateThemeEffect(container);
+        updateTheme(initialState.theme);
         const store_ = Store.create({
             initialState,
             initialEphemeral,
@@ -118,19 +124,18 @@ export const onPageMount = (getCanvas) => {
 const getCanvasOffset = (canvas) => {
     return new Vec2(canvas.offsetLeft, canvas.offsetTop);
 };
-const createUpdateThemeEffect = () => {
+const createUpdateThemeEffect = (node) => {
     let prevTheme = null;
     return (nextTheme) => {
         if (prevTheme === null) {
-            Theme.updateAll(nextTheme);
+            Theme.updateAll(node, nextTheme);
         }
         else {
-            Theme.updateDiff(prevTheme, nextTheme);
+            Theme.updateDiff(node, prevTheme, nextTheme);
         }
         prevTheme = nextTheme;
     };
 };
-const updateTheme = createUpdateThemeEffect();
 const onLayoutChange = (onResize) => {
     afterUpdate(() => {
         onResize();

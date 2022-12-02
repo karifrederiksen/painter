@@ -4,7 +4,7 @@ export let initialValue;
 export let autoFocus = false;
 const dispatch = createEventDispatcher();
 let inputRef = null;
-let text = initialValue;
+$: text = initialValue;
 function handleChange(ev) {
     dispatch("change", ev.target.value);
 }

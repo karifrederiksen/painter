@@ -1,5 +1,6 @@
 import * as Color from "color";
 import { delay, ColorMode } from "../util/index.js";
+import { rgbToHsluv } from "color";
 export async function setup(canvas, getState, sender) {
     const forceRender = () => sender.onFrame(performance.now());
     const mkPt = (x, y, p) => ({
@@ -30,7 +31,7 @@ export async function setup(canvas, getState, sender) {
     sender.layer.setOpacity(getState().layers.current().id, 0.5);
     sender.layer.newLayer(getState().layers.current().id);
     forceRender();
-    sender.layer.setOpacity(getState().layers.current().id, 0.8);
+    // sender.layer.setOpacity(getState().layers.current().id, 0.8);
     forceRender();
     sender.tool.brush.setColor(new Color.Hsluv(240, 40, 30));
     sender.onClick(mkPt(100, 700, 0.2));
@@ -39,10 +40,11 @@ export async function setup(canvas, getState, sender) {
     forceRender();
     await delay(30);
     sender.onRelease(mkPt(600, 100, 1.0));
-    sender.tool.brush.setDiameter(15);
     sender.tool.brush.setColorMode(ColorMode.Hsv);
+    sender.tool.brush.setColor(rgbToHsluv(new Color.Rgb(0, 0, 1)));
+    sender.tool.brush.setDiameter(200);
     forceRender();
-    sender.toggleHighlightRenderBlocks();
+    // sender.toggleHighlightRenderBlocks();
     // sender.tool.setTool(ToolType.Zoom)
     // forceRender()
 }

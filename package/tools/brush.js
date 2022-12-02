@@ -103,12 +103,7 @@ function pointerToBrushInput(input) {
 }
 function createBrushPoint(brush, input) {
     const alpha = brush.flowPct * input.pressure;
-    const color = alpha === 1
-        ? brush.color.toRgb().toLinear()
-        : brush.color
-            .toRgb()
-            .toLinear()
-            .mix(1 - alpha, Color.RgbLinear.Black);
+    const color = brush.color.toRgb().toLinear();
     const position = new Vec2(input.x, input.y);
     return {
         alpha,
@@ -120,12 +115,7 @@ function createBrushPoint(brush, input) {
 }
 function createInputPoint(brush, input) {
     const alpha = brush.flowPct * input.pressure;
-    const color = alpha === 1
-        ? brush.color.toRgb().toLinear()
-        : brush.color
-            .toRgb()
-            .toLinear()
-            .mix(1 - alpha, Color.RgbLinear.Black);
+    const color = brush.color.toRgb().toLinear();
     const position = new Vec2(input.x, input.y);
     return {
         alpha,

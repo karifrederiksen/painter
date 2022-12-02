@@ -1,6 +1,7 @@
 <script>import { Row, DefaultButton, Surface, Labeled, Slider, Switch } from "../components/index.js";
 import { stringToFloat } from "../../util/index.js";
 import LayerComponent from "./layer.svelte";
+import InlineLabeled from "../components/labeled/inline-labeled.svelte";
 export let layers;
 export let sender;
 $: topLayers = layers.layers.children;
@@ -17,19 +18,27 @@ const sendFloat = (ev, f) => {
     <Surface>
         <div class="layersControlsWrapper">
             <Row spacing={0.25}>
-                <DefaultButton on:click={() => sender.newLayer(current.id)} title="New layer">
+                <DefaultButton
+                    on:click={() => sender.newLayer(current.id)}
+                    title="New layer"
+                    style="width: 100%"
+                >
                     New
                 </DefaultButton>
-                <DefaultButton on:click={() => sender.removeLayer(current.id)} title="Delete layer">
+                <DefaultButton
+                    on:click={() => sender.removeLayer(current.id)}
+                    title="Delete layer"
+                    style="width: 100%"
+                >
                     Delete
                 </DefaultButton>
             </Row>
-            <Labeled label="Hidden">
+            <InlineLabeled label="Hidden">
                 <Switch
                     checked={current.isHidden}
                     on:change={(ev) => sender.setHidden(current.id, ev.detail)}
                 />
-            </Labeled>
+            </InlineLabeled>
             <Labeled
                 label="Opacity"
                 value={current.opacity.toFixed(2)}

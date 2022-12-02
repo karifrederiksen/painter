@@ -18,7 +18,7 @@ const styleMap = {
     "--fonts-monospace": (theme) => theme.fonts.monospace,
     "--fonts-normal": (theme) => theme.fonts.normal,
 };
-export function updateDiff(prevTheme, nextTheme) {
+export function updateDiff(node, prevTheme, nextTheme) {
     for (const propName in styleMap) {
         const toStyle = styleMap[propName];
         const prevValue = toStyle(prevTheme);
@@ -26,14 +26,22 @@ export function updateDiff(prevTheme, nextTheme) {
         if (prevValue === nextValue) {
             continue;
         }
-        document.body.style.setProperty(propName, nextValue);
+        node.style.setProperty(propName, nextValue);
     }
 }
-export function updateAll(theme) {
+export function updateAll(node, theme) {
     for (const propName in styleMap) {
         const toStyle = styleMap[propName];
-        document.body.style.setProperty(propName, toStyle(theme));
+        node.style.setProperty(propName, toStyle(theme));
     }
+}
+export function createDeclarations(theme) {
+    const style = [];
+    for (const propName in styleMap) {
+        const toStyle = styleMap[propName];
+        style.push(propName + ":" + toStyle(theme));
+    }
+    return style.join("; ");
 }
 const hsluvGen = (maxSat, luminance) => Gen.map3(Gen.float(0, 360), Gen.float(0, maxSat), Gen.always(luminance), (h, s, l) => new Color.Hsluv(h, s, l));
 const colorsGen = Gen.object({

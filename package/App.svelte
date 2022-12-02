@@ -6,16 +6,28 @@ import { Debugging } from "./ui/debugging/index.js";
 import PrimaryButton from "./ui/components/buttons/primary-button.svelte";
 import { onBeforeUnload, getCameraTransform } from "./AppUtil.js";
 import { onPageMount, canvasState, canvasInfo, canvasSender } from "./ui/state.js";
+import { createDeclarations } from "./ui/theme.js";
+import { initState as initCanvasState } from "./canvas/index.js";
+import Performance from "./ui/debugging/performance.svelte";
+let containerRef;
 let canvasRef;
 $: state = $canvasState;
 $: sender = $canvasSender;
-onPageMount(() => canvasRef);
+onPageMount({
+    getCanvas() {
+        return canvasRef;
+    },
+    getContainer() {
+        return containerRef;
+    },
+});
 if (!import.meta.env.DEV) {
     onBeforeUnload();
 }
+const [{ theme }] = initCanvasState();
 </script>
 
-<div class="appContainer">
+<div bind:this={containerRef} class="app-container" style={createDeclarations(theme)}>
     <div class="wrapper">
         {#if sender && state}
             <Toolbar.Toolbar
@@ -32,7 +44,7 @@ if (!import.meta.env.DEV) {
             style={!state ? undefined : `transform: ${getCameraTransform(state.tool.camera)}`}
         />
         {#if sender && state}
-            <div class="layersViewContainer">
+            <div class="layers-view-container">
                 <Surface>
                     <MiniMap camera={state.tool.camera} sender={sender.tool.camera} />
                 </Surface>
@@ -41,13 +53,16 @@ if (!import.meta.env.DEV) {
         {/if}
     </div>
     {#if sender && state}
-        <div class="bottomLeft">
-            <PrimaryButton on:click={sender.randomizeTheme}>Next theme</PrimaryButton>
-        </div>
-    {/if}
-    {#if import.meta.env.DEV}
-        <div class="bottomRight">
-            <Debugging />
+        <div class="bottom-left">
+            {#if state.displayStats}
+                <div class="render-stats">
+                    <Performance />
+                </div>
+            {/if}
+            <div class="utility-buttons">
+                <PrimaryButton on:click={sender.randomizeTheme}>Next theme</PrimaryButton>
+                <Debugging {sender} config={state} />
+            </div>
         </div>
     {/if}
 </div>
@@ -72,26 +87,34 @@ if (!import.meta.env.DEV) {
   box-sizing: inherit;
 }
 
-.bottomLeft {
+.bottom-left {
   position: absolute;
   left: 0.5rem;
   bottom: 0.5rem;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.bottomRight {
-  position: absolute;
-  right: 0.5rem;
-  bottom: 0.5rem;
+.render-stats {
+  color: var(--color-onSurface);
 }
 
-.appContainer {
+.utility-buttons {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.app-container {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
   font-family: var(--fonts-normal);
 }
 
-.layersViewContainer {
+.layers-view-container {
   display: flex;
   flex-direction: column;
   gap: 1rem;

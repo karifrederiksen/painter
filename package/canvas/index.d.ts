@@ -6,7 +6,7 @@ import * as Rng from "../rng/index.js";
 import * as Theme from "../ui/theme.js";
 import type { BrushPoint } from "./brushShader.js";
 import { Vec2, PerfTracker, type Tagged } from "../util/index.js";
-export type CanvasMsg = Tagged<"OnFrame", number> | Tagged<"OnClick", Input.PointerData> | Tagged<"OnRelease", Input.PointerData> | Tagged<"OnDrag", readonly Input.PointerData[]> | Tagged<"OnKeyboard", keymapping.KeyInput> | Tagged<"RandomizeTheme"> | Tagged<"ToggleHighlightRenderBlocks"> | Tagged<"ToolMsg", Tools.ToolMsg> | Tagged<"LayersMsg", Layers.Msg>;
+export type CanvasMsg = Tagged<"OnFrame", number> | Tagged<"OnClick", Input.PointerData> | Tagged<"OnRelease", Input.PointerData> | Tagged<"OnDrag", readonly Input.PointerData[]> | Tagged<"OnKeyboard", keymapping.KeyInput> | Tagged<"RandomizeTheme"> | Tagged<"ToggleHighlightRenderBlocks"> | Tagged<"ToggleDisplayStats"> | Tagged<"ToolMsg", Tools.ToolMsg> | Tagged<"LayersMsg", Layers.Msg>;
 export type Effect = Tagged<"NoOp"> | Tagged<"Batch", readonly Effect[]> | Tagged<"RenderFrame", {
     brushPoints: readonly BrushPoint[];
     config: Config;
@@ -23,12 +23,14 @@ export declare class Sender {
     onKeyboard: (input: keymapping.KeyInput) => void;
     randomizeTheme: () => void;
     toggleHighlightRenderBlocks: () => void;
+    toggleDisplayStats: () => void;
 }
 export interface Config {
     readonly theme: Theme.Theme;
     readonly tool: Tools.Config;
     readonly layers: Layers.State;
     readonly highlightRenderBlocks: boolean;
+    readonly displayStats: boolean;
     readonly keyboard: keymapping.KeyBindingSystem<CanvasMsg>;
 }
 export interface State {

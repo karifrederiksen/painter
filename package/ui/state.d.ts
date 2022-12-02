@@ -12,4 +12,8 @@ export declare const canvasState: Readable<Canvas.Config>;
 export declare const canvasSender: Readable<Canvas.Sender>;
 export declare const canvasInfo: Readable<Canvas.CanvasInfo>;
 export declare const canvasEphemeral: Readable<Canvas.State>;
-export declare const onPageMount: (getCanvas: () => HTMLCanvasElement | undefined) => void;
+export interface OnPageMountArgs {
+    getCanvas(): HTMLCanvasElement | undefined;
+    getContainer(): HTMLElement | undefined;
+}
+export declare const onPageMount: ({ getCanvas, getContainer }: OnPageMountArgs) => void;

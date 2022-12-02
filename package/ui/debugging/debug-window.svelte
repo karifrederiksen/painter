@@ -1,46 +1,84 @@
 <script>import DefaultButton from "../components/buttons/default-button.svelte";
 import Surface from "../components/surface/surface.svelte";
 import Performance from "./performance.svelte";
-import Scripting from "./scripting.svelte";
+import Toggles from "./toggles.svelte";
 import { canvasEphemeral } from "../state.js";
+export let config;
+export let sender;
 $: themeRng = $canvasEphemeral?.themeRng;
 let isOpen = false;
-function open() {
-    isOpen = true;
-}
 function close() {
     isOpen = false;
 }
+function toggle() {
+    isOpen = !isOpen;
+}
 </script>
 
-<Surface>
-    {#if isOpen}
-        <div class="container">
-            <DefaultButton on:click={close}>Close</DefaultButton>
-            <div class="contentContainer">
-                RNG: <div class="monospaced">{themeRng.display()}</div>
-                <Performance />
-                <Scripting />
+<DefaultButton on:click={toggle}>Debug</DefaultButton>
+{#if isOpen}
+    <div class="backdrop">
+        <Surface>
+            <div class="container">
+                <div class="header"><h2>Debug info</h2></div>
+                <div class="body">
+                    <div>
+                        <h3>RNG</h3>
+                        <div class="monospaced">{themeRng.display()}</div>
+                    </div>
+                    <div class="options">
+                        <h3>Options</h3>
+                        <Toggles {config} {sender} />
+                    </div>
+                </div>
+                <div class="footer">
+                    <DefaultButton on:click={close}>Close</DefaultButton>
+                </div>
             </div>
-        </div>
-    {:else}
-        <DefaultButton on:click={open}>Debug</DefaultButton>
-    {/if}
-</Surface>
+        </Surface>
+    </div>
+{/if}
 
 <style>/*
  * css variables don't get typechecked, and it's very hard to refactor them, so we prefer
  * to use these scss variables that refer to the css variables, since the scss has to be compiled,
  * and the compilation will fail when scss-variables are undefined.
  */
-.container {
-  z-index: 100;
+.backdrop {
+  pointer-events: none;
+  background-color: rgba(0, 0, 0, 0.2);
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  padding: 12rem;
   display: flex;
-  padding: 0.5rem 1rem;
 }
 
-.contentContainer {
-  padding-left: 1rem;
+.container {
+  padding: 1rem;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.body {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.options {
+  max-width: 20rem;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .monospaced {

@@ -24,6 +24,7 @@ export interface Theme {
         readonly normal: string;
     };
 }
-export declare function updateDiff(prevTheme: Theme, nextTheme: Theme): void;
-export declare function updateAll(theme: Theme): void;
+export declare function updateDiff(node: HTMLElement, prevTheme: Theme, nextTheme: Theme): void;
+export declare function updateAll(node: HTMLElement, theme: Theme): void;
+export declare function createDeclarations(theme: Theme): string;
 export declare const random: Gen.Generators<Theme>;

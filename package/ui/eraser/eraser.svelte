@@ -1,5 +1,6 @@
 <script>import { Surface, Labeled, Slider, Switch } from "../components/index.js";
 import { stringToFloat } from "../../util/index.js";
+import InlineLabeled from "../components/labeled/inline-labeled.svelte";
 export let sender;
 export let brush;
 const sendFloat = (ev, f) => {
@@ -45,18 +46,18 @@ const sendFloat = (ev, f) => {
         >
             <Slider value={brush.spacingPct} on:change={(ev) => sender.setSpacing(ev.detail)} />
         </Labeled>
-        <Labeled label="Pressure-Opacity">
+        <InlineLabeled label="Pressure-Opacity">
             <Switch
                 checked={brush.pressureAffectsOpacity}
                 on:change={(ev) => sender.setPressureAffectsOpacity(ev.detail)}
             />
-        </Labeled>
-        <Labeled label="Pressure-Size">
+        </InlineLabeled>
+        <InlineLabeled label="Pressure-Size">
             <Switch
                 checked={brush.pressureAffectsSize}
                 on:change={(ev) => sender.setPressureAffectsSize(ev.detail)}
             />
-        </Labeled>
+        </InlineLabeled>
         <Labeled
             label="Delay"
             valuePostfix="ms"

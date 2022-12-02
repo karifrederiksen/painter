@@ -3,15 +3,14 @@
   "version": "0.1.0",
   "license": "UNLICENSED",
   "dependencies": {
-    "@types/node": "16.11.1",
     "color": "git+https://github.com/karifrederiksen/color.git",
-    "jsverify": "0.8.4",
     "ordered-collections": "git+https://github.com/karifrederiksen/ordered-collections.git"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^1.0.0-next.48",
     "@sveltejs/kit": "^1.0.0-next.556",
     "@sveltejs/package": "^1.0.0-next.6",
+    "@types/node": "^18.11.10",
     "@typescript-eslint/eslint-plugin": "^5.44.0",
     "@typescript-eslint/parser": "^5.44.0",
     "eslint": "^8.28.0",
@@ -113,6 +112,7 @@
     "./ui/debugging/performance.svelte": "./ui/debugging/performance.svelte",
     "./ui/debugging/samples": "./ui/debugging/samples.js",
     "./ui/debugging/scripting.svelte": "./ui/debugging/scripting.svelte",
+    "./ui/debugging/toggles.svelte": "./ui/debugging/toggles.svelte",
     "./ui/eraser/eraser.svelte": "./ui/eraser/eraser.svelte",
     "./ui/eraser": "./ui/eraser/index.js",
     "./ui/layers": "./ui/layers/index.js",

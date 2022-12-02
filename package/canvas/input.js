@@ -9,7 +9,7 @@ export function listen(canvas) {
 }
 const pointerSupportsPressure = {};
 function checkPressureSupport(ev) {
-    if (ev.pressure === 0.5)
+    if (ev.pressure === 0 || ev.pressure === 0.5)
         return;
     if (pointerSupportsPressure[ev.pointerId])
         return;

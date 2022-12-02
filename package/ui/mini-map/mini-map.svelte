@@ -29,7 +29,7 @@ export let sender;
         <Slider
             value={camera.zoomPct / 4}
             on:change={(ev) => {
-                sender.setRotation(ev.detail * 4);
+                sender.setZoom(ev.detail * 4);
             }}
         />
     </Labeled>

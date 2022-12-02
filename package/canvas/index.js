@@ -30,6 +30,7 @@ export class Sender {
     onKeyboard = (input) => this.sendMessage(tagged("OnKeyboard", input));
     randomizeTheme = () => this.sendMessage(tagged("RandomizeTheme"));
     toggleHighlightRenderBlocks = () => this.sendMessage(tagged("ToggleHighlightRenderBlocks"));
+    toggleDisplayStats = () => this.sendMessage(tagged("ToggleDisplayStats"));
 }
 export function initState() {
     const [theme, themeRng] = Theme.random(Rng.XorshiftSeed.create(145264772));
@@ -39,6 +40,7 @@ export function initState() {
         tool: Tools.init,
         layers: Layers.State.init(),
         highlightRenderBlocks: false,
+        displayStats: false,
         keyboard: {
             layers: Stack.empty().cons({
                 [createKey({ code: "KeyB" })]: {
@@ -159,6 +161,13 @@ export function update(canvasInfo, config, state, msg) {
             };
             return [nextConfig, state, NOOP_EFFECT];
         }
+        case "ToggleDisplayStats": {
+            const nextConfig = {
+                ...config,
+                displayStats: !config.displayStats,
+            };
+            return [nextConfig, state, NOOP_EFFECT];
+        }
         case "ToolMsg": {
             const nextConfig = { ...config, tool: Tools.update(config.tool, msg.val) };
             return [nextConfig, state, NOOP_EFFECT];
@@ -180,9 +189,7 @@ export class Canvas {
     static create(canvas, hooks) {
         const context = Context.create(canvas);
         if (context.isOk()) {
-            if (import.meta.env.DEV) {
-                hooks.onWebglContextCreated(context.value[1]);
-            }
+            hooks.onWebglContextCreated(context.value[1]);
             return new Canvas(new Vec2(canvas.width, canvas.height), hooks, context.value[0]);
         }
         console.error("Error in Context setup:", context.value);
