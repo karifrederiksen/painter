@@ -14,8 +14,8 @@
         "package": "svelte-package"
     },
     "dependencies": {
-        "color": "git+https://github.com/karifrederiksen/color.git",
-        "ordered-collections": "git+https://github.com/karifrederiksen/ordered-collections.git"
+        "color": "github:karifrederiksen/color#18ebbd75afd9519684976486e8e553784fa6cf24",
+        "ordered-collections": "github:karifrederiksen/ordered-collections#43085bdb15e8023582820c231764082d57df8f8a"
     },
     "devDependencies": {
         "@sveltejs/adapter-static": "^1.0.0-next.48",
