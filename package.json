@@ -1,7 +1,13 @@
 {
-    "name": "painter",
+    "name": "paint",
     "version": "0.1.0",
     "license": "UNLICENSED",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"paint": "./dist/index.js"
+		}
+	},
     "scripts": {
         "dev": "vite dev",
         "build": "vite build",
@@ -14,12 +20,12 @@
         "package": "svelte-package"
     },
     "dependencies": {
-        "color": "github:karifrederiksen/color#18ebbd75afd9519684976486e8e553784fa6cf24",
-        "ordered-collections": "github:karifrederiksen/ordered-collections#43085bdb15e8023582820c231764082d57df8f8a"
+        "color": "github:karifrederiksen/color#18ebbd75afd9519684976486e8e553784fa6cf24"
     },
     "devDependencies": {
         "@sveltejs/adapter-static": "^3.0.6",
         "@sveltejs/kit": "^2.5.7",
+        "@sveltejs/package": "^2.3.7",
         "@types/node": "^22.8.7",
         "@typescript-eslint/eslint-plugin": "^6.0.0",
         "@typescript-eslint/parser": "^6.0.0",
