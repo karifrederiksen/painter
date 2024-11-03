@@ -2,12 +2,12 @@
     "name": "paint",
     "version": "0.1.0",
     "license": "UNLICENSED",
-	"exports": {
-		".": {
-			"types": "./dist/index.d.ts",
-			"paint": "./dist/index.js"
-		}
-	},
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "svelte": "./dist/index.js"
+        }
+    },
     "scripts": {
         "dev": "vite dev",
         "build": "vite build",
@@ -20,7 +20,8 @@
         "package": "svelte-package"
     },
     "dependencies": {
-        "color": "github:karifrederiksen/color#18ebbd75afd9519684976486e8e553784fa6cf24"
+        "color": "github:karifrederiksen/color#18ebbd75afd9519684976486e8e553784fa6cf24",
+        "svelte": "^4.2.17"
     },
     "devDependencies": {
         "@sveltejs/adapter-static": "^3.0.6",
@@ -34,7 +35,6 @@
         "prettier": "^3.2.5",
         "prettier-plugin-svelte": "^3.2.3",
         "sass": "^1.77.1",
-        "svelte": "^4.2.17",
         "svelte-check": "^3.7.1",
         "tslib": "^2.4.1",
         "typescript": "^5.4.5",

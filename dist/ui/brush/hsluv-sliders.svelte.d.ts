@@ -1,4 +1,4 @@
-import { SvelteComponentTyped } from "svelte";
+import { SvelteComponent } from "svelte";
 import type * as Brush from "../../tools/brush.js";
 import type { Hsluv } from "color";
 declare const __propDef: {
@@ -10,10 +10,12 @@ declare const __propDef: {
         [evt: string]: CustomEvent<any>;
     };
     slots: {};
+    exports?: {} | undefined;
+    bindings?: string | undefined;
 };
 export type HsluvSlidersProps = typeof __propDef.props;
 export type HsluvSlidersEvents = typeof __propDef.events;
 export type HsluvSlidersSlots = typeof __propDef.slots;
-export default class HsluvSliders extends SvelteComponentTyped<HsluvSlidersProps, HsluvSlidersEvents, HsluvSlidersSlots> {
+export default class HsluvSliders extends SvelteComponent<HsluvSlidersProps, HsluvSlidersEvents, HsluvSlidersSlots> {
 }
 export {};

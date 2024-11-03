@@ -1,4 +1,4 @@
-import { SvelteComponentTyped } from "svelte";
+import { SvelteComponent } from "svelte";
 declare const __propDef: {
     props: {
         title?: string | undefined;
@@ -12,10 +12,12 @@ declare const __propDef: {
     slots: {
         default: {};
     };
+    exports?: {} | undefined;
+    bindings?: string | undefined;
 };
 export type SinkableButtonProps = typeof __propDef.props;
 export type SinkableButtonEvents = typeof __propDef.events;
 export type SinkableButtonSlots = typeof __propDef.slots;
-export default class SinkableButton extends SvelteComponentTyped<SinkableButtonProps, SinkableButtonEvents, SinkableButtonSlots> {
+export default class SinkableButton extends SvelteComponent<SinkableButtonProps, SinkableButtonEvents, SinkableButtonSlots> {
 }
 export {};

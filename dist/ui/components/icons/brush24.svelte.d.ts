@@ -1,7 +1,7 @@
 /** @typedef {typeof __propDef.props}  Brush24Props */
 /** @typedef {typeof __propDef.events}  Brush24Events */
 /** @typedef {typeof __propDef.slots}  Brush24Slots */
-export default class Brush24 extends SvelteComponentTyped<{
+export default class Brush24 extends SvelteComponent<{
     [x: string]: never;
 }, {
     [evt: string]: CustomEvent<any>;
@@ -10,7 +10,7 @@ export default class Brush24 extends SvelteComponentTyped<{
 export type Brush24Props = typeof __propDef.props;
 export type Brush24Events = typeof __propDef.events;
 export type Brush24Slots = typeof __propDef.slots;
-import { SvelteComponentTyped } from "svelte";
+import { SvelteComponent } from "svelte";
 declare const __propDef: {
     props: {
         [x: string]: never;
@@ -19,5 +19,7 @@ declare const __propDef: {
         [evt: string]: CustomEvent<any>;
     };
     slots: {};
+    exports?: undefined;
+    bindings?: undefined;
 };
 export {};

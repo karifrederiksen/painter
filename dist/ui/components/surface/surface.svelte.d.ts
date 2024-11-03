@@ -1,7 +1,7 @@
 /** @typedef {typeof __propDef.props}  SurfaceProps */
 /** @typedef {typeof __propDef.events}  SurfaceEvents */
 /** @typedef {typeof __propDef.slots}  SurfaceSlots */
-export default class Surface extends SvelteComponentTyped<{
+export default class Surface extends SvelteComponent<{
     [x: string]: never;
 }, {
     [evt: string]: CustomEvent<any>;
@@ -12,7 +12,7 @@ export default class Surface extends SvelteComponentTyped<{
 export type SurfaceProps = typeof __propDef.props;
 export type SurfaceEvents = typeof __propDef.events;
 export type SurfaceSlots = typeof __propDef.slots;
-import { SvelteComponentTyped } from "svelte";
+import { SvelteComponent } from "svelte";
 declare const __propDef: {
     props: {
         [x: string]: never;
@@ -23,5 +23,7 @@ declare const __propDef: {
     slots: {
         default: {};
     };
+    exports?: undefined;
+    bindings?: undefined;
 };
 export {};

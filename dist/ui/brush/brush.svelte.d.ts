@@ -1,4 +1,4 @@
-import { SvelteComponentTyped } from "svelte";
+import { SvelteComponent } from "svelte";
 import type * as Brush from "../../tools/brush.js";
 declare const __propDef: {
     props: {
@@ -9,10 +9,12 @@ declare const __propDef: {
         [evt: string]: CustomEvent<any>;
     };
     slots: {};
+    exports?: {} | undefined;
+    bindings?: string | undefined;
 };
 export type BrushProps = typeof __propDef.props;
 export type BrushEvents = typeof __propDef.events;
 export type BrushSlots = typeof __propDef.slots;
-export default class Brush extends SvelteComponentTyped<BrushProps, BrushEvents, BrushSlots> {
+export default class Brush extends SvelteComponent<BrushProps, BrushEvents, BrushSlots> {
 }
 export {};

@@ -1,7 +1,7 @@
 /** @typedef {typeof __propDef.props}  Edit24Props */
 /** @typedef {typeof __propDef.events}  Edit24Events */
 /** @typedef {typeof __propDef.slots}  Edit24Slots */
-export default class Edit24 extends SvelteComponentTyped<{
+export default class Edit24 extends SvelteComponent<{
     [x: string]: never;
 }, {
     [evt: string]: CustomEvent<any>;
@@ -10,7 +10,7 @@ export default class Edit24 extends SvelteComponentTyped<{
 export type Edit24Props = typeof __propDef.props;
 export type Edit24Events = typeof __propDef.events;
 export type Edit24Slots = typeof __propDef.slots;
-import { SvelteComponentTyped } from "svelte";
+import { SvelteComponent } from "svelte";
 declare const __propDef: {
     props: {
         [x: string]: never;
@@ -19,5 +19,7 @@ declare const __propDef: {
         [evt: string]: CustomEvent<any>;
     };
     slots: {};
+    exports?: undefined;
+    bindings?: undefined;
 };
 export {};

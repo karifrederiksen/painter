@@ -1,4 +1,4 @@
-import { SvelteComponentTyped } from "svelte";
+import { SvelteComponent } from "svelte";
 declare const __propDef: {
     props: {
         label: string;
@@ -9,10 +9,12 @@ declare const __propDef: {
     slots: {
         default: {};
     };
+    exports?: {} | undefined;
+    bindings?: string | undefined;
 };
 export type InlineLabeledProps = typeof __propDef.props;
 export type InlineLabeledEvents = typeof __propDef.events;
 export type InlineLabeledSlots = typeof __propDef.slots;
-export default class InlineLabeled extends SvelteComponentTyped<InlineLabeledProps, InlineLabeledEvents, InlineLabeledSlots> {
+export default class InlineLabeled extends SvelteComponent<InlineLabeledProps, InlineLabeledEvents, InlineLabeledSlots> {
 }
 export {};
