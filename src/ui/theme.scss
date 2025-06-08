@@ -1,0 +1,23 @@
+/*
+ * css variables don't get typechecked, and it's very hard to refactor them, so we prefer
+ * to use these scss variables that refer to the css variables, since the scss has to be compiled,
+ * and the compilation will fail when scss-variables are undefined.
+ */
+$color-background: var(--color-background);
+$color-primary: var(--color-primary);
+$color-primaryLight: var(--color-primaryLight);
+$color-primaryDark: var(--color-primaryDark);
+$color-secondary: var(--color-secondary);
+$color-secondaryLight: var(--color-secondaryLight);
+$color-secondaryDark: var(--color-secondaryDark);
+$color-surface: var(--color-surface);
+$color-onPrimary: var(--color-onPrimary);
+$color-onSecondary: var(--color-onSecondary);
+$color-onSurface: var(--color-onSurface);
+
+$shadows-button: var(--shadows-button);
+$shadows-surface: var(--shadows-surface);
+$shadows-menu: var(--shadows-menu);
+
+$fonts-normal: var(--fonts-normal);
+$fonts-monospace: var(--fonts-monospace);
