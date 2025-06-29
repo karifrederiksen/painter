@@ -1,0 +1,5 @@
+{
+    "typescript.format.enable": true,
+    "biome.enabled": true,
+    "editor.defaultFormatter": "biomejs.biome",
+}

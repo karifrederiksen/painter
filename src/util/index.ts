@@ -12,6 +12,8 @@ export * as PerfTracker from "./perfTracker";
 export * as CanvasPool from "./canvasPool";
 export * as Debug from "./debug";
 export * as Bloomfilter from "./bloomFilter";
+export * as opaque from "./opaque";
+export type { Opaque, OpaqueBase, OpaqueBrand } from "./opaque";
 
 export type Tagged<a, v = null> = { readonly tag: a; readonly val: v };
 

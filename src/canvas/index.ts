@@ -4,7 +4,7 @@ import type * as Input from "./input";
 import * as keymapping from "./keymapping";
 import type * as Camera from "~/tools/camera";
 import * as Rng from "~/rng";
-import * as Theme from "~/ui/theme";
+import * as Theme from "~/theme";
 import * as Context from "./context";
 import type { BrushPoint } from "./brushShader";
 import { Stack } from "~/collections";

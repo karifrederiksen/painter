@@ -1,0 +1,13 @@
+import { createPct, type StateAtom } from "~/state/state";
+import { Vec2 } from "./util";
+
+export function devInitialize(atom: StateAtom): void {
+	atom.send("canvas:create", {
+		name: "Painting",
+		width: 800,
+		height: 800,
+	});
+	atom.send("viewport:zoom", createPct(1.5));
+	atom.send("viewport:rotate", createPct(0.4));
+	atom.send("viewport:translate", new Vec2(300, 150));
+}
