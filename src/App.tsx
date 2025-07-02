@@ -6,6 +6,7 @@ import { Skeleton } from "~/components/ui/skeleton";
 import { Label } from "./components/ui/label";
 import { Switch } from "~/components/ui/switch";
 import { Input } from "./components/ui/input";
+import { Separator } from "./components/ui/separator";
 import {
 	EyeIcon,
 	EyeOffIcon,
@@ -36,7 +37,7 @@ import {
 	type UICanvas,
 	type ViewportTransforms,
 } from "./state";
-import { /*useEffect,*/ useMemo, type JSX } from "react";
+import { /*useEffect,*/ useEffect, useMemo, useRef, type JSX } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -50,6 +51,7 @@ import {
 	FormMessage,
 } from "./components/ui/form";
 import { devInitialize } from "./devInitialize";
+import { Vec2 } from "./util";
 
 function App() {
 	const stateAtom = useMemo(createStateAtom, []);
@@ -98,6 +100,7 @@ function App() {
 				className="z-10"
 				layersStream={layersStream}
 				currentLayerStream={currentLayerStream}
+				viewportStream={transformsStream}
 				send={stateAtom.send}
 			/>
 			<CanvasBuilder
@@ -182,8 +185,54 @@ function ToolMenu({ className, brushStream, send }: ToolMenuProps) {
 	);
 }
 
+interface MinimapProps {
+	send: Send;
+}
+
+function Minimap({ send }: MinimapProps): JSX.Element {
+	const skeletonRef = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		function handleTouchMove(ev: PointerEvent) {
+			if (
+				!(ev.target instanceof HTMLElement && ev.target === skeletonRef.current)
+			)
+				return;
+
+			const down = ev.pressure > 0;
+			if (!down) return;
+
+			const tarect = ev.target.getBoundingClientRect();
+			const evPt = new Vec2(ev.x, ev.y);
+			const targetPt = new Vec2(tarect.x, tarect.y);
+			const targetSize = new Vec2(tarect.width, tarect.height);
+			const localPt = evPt.subtract(targetPt);
+			const pct = localPt.divide(targetSize);
+
+			const viewSpace = pct.multiplyScalar(2).subtractScalar(1);
+
+			send("viewport:translate", viewSpace);
+		}
+
+		window.addEventListener("pointermove", handleTouchMove);
+		return () => {
+			window.removeEventListener("pointermove", handleTouchMove);
+		};
+	}, []);
+
+	return (
+		<Skeleton
+			ref={skeletonRef}
+			className="w-full aspect-square"
+			onTouchMove={(ev) => {
+				console.log(ev);
+			}}
+		/>
+	);
+}
+
 interface LayerContentProps {
 	className?: string;
+	viewportStream: Stream<ViewportTransforms>;
 	layersStream: Stream<FolderLayer>;
 	currentLayerStream: Stream<Layer>;
 	send: Send;
@@ -191,11 +240,13 @@ interface LayerContentProps {
 function LayerContent({
 	send,
 	className,
+	viewportStream,
 	layersStream,
 	currentLayerStream,
 }: LayerContentProps) {
 	const layers = useStream(layersStream);
 	const currentLayer = useStream(currentLayerStream);
+	const viewPortTransforms = useStream(viewportStream);
 	return (
 		<Card
 			className={cn(
@@ -203,7 +254,37 @@ function LayerContent({
 				className,
 			)}
 		>
-			<Skeleton className="w-full aspect-square" />
+			<Minimap send={send} />
+
+			<div className="flex flex-row justify-between">
+				<Label htmlFor="viewport-rotate">Rotation</Label>
+				<div className="text-sm">{formatPct(viewPortTransforms.rotation)}</div>
+			</div>
+			<Slider
+				id="viewport-rotate"
+				min={0}
+				max={1}
+				step={0.01}
+				value={[viewPortTransforms.rotation]}
+				onValueChange={([rotation]) =>
+					send("viewport:rotate", createPct(rotation))
+				}
+			/>
+
+			<div className="flex flex-row justify-between">
+				<Label htmlFor="viewport-zoom">Zoom</Label>
+				<div className="text-sm">{formatPct(viewPortTransforms.zoom)}</div>
+			</div>
+			<Slider
+				id="viewport-zoom"
+				min={0.05}
+				max={3}
+				step={0.01}
+				value={[viewPortTransforms.zoom]}
+				onValueChange={([zoom]) => send("viewport:zoom", createPct(zoom))}
+			/>
+
+			<Separator />
 
 			<div className="flex flex-row justify-between">
 				<Label htmlFor="layer-visible">Visible</Label>
@@ -469,7 +550,7 @@ function PlaceholderCanvas({
 				style={{
 					width: canvasSize.x,
 					height: canvasSize.y,
-					transform: `translate(${offset.x}px, ${offset.y}px) scale(${(zoom * 100).toFixed(2)}%) rotate(${(rotation * 360).toFixed(2)}deg)`,
+					transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom * 100}%) rotate(${(rotation * 360).toFixed(2)}deg)`,
 				}}
 			/>
 		</div>

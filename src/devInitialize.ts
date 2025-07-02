@@ -9,5 +9,5 @@ export function devInitialize(atom: StateAtom): void {
 	});
 	atom.send("viewport:zoom", createPct(1.5));
 	atom.send("viewport:rotate", createPct(0.4));
-	atom.send("viewport:translate", new Vec2(300, 150));
+	atom.send("viewport:translate", new Vec2(0.5, 0.25));
 }

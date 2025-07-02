@@ -119,7 +119,7 @@ export class StreamSource<A> {
 	}
 
 	next(val: A): void {
-		if (val === this.#value && !import.meta.hot) return;
+		if (val === this.#value) return;
 
 		this.#subscriber?.(val);
 		this.#value = val;
@@ -134,11 +134,6 @@ export function useStream<A>(stream: Stream<A>): A {
 	const [state, setState] = useState<A>(stream.getValue());
 
 	useEffect(() => stream.subscribe(setState).unsubscribe, [stream]);
-
-	// if (import.meta.hot) {
-	// 	const forceRender = useState(1)[1];
-	// 	import.meta.hot.accept(() => forceRender((n) => n + 1));
-	// }
 
 	return state;
 }
