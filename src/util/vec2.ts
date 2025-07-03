@@ -1,3 +1,5 @@
+import { clamp } from "./functions";
+
 export class Vec2 {
 	static zeroes: Vec2 = new Vec2(0, 0);
 
@@ -54,6 +56,15 @@ export class Vec2 {
 
 	divideScalar(x: number): Vec2 {
 		return new Vec2(this.x / x, this.y / x);
+	}
+
+	clampScalar(min: number, max: number): Vec2 {
+		const x = clamp(this.x, min, max);
+		const y = clamp(this.y, min, max);
+		if (this.x === x && this.y === y) {
+			return this;
+		}
+		return new Vec2(x, y);
 	}
 
 	toString(): string {

@@ -13,6 +13,7 @@ export * as CanvasPool from "./canvasPool";
 export * as Debug from "./debug";
 export * as Bloomfilter from "./bloomFilter";
 export * as opaque from "./opaque";
+export * from "./functions";
 export type { Opaque, OpaqueBase, OpaqueBrand } from "./opaque";
 
 export type Tagged<a, v = null> = { readonly tag: a; readonly val: v };
@@ -59,92 +60,8 @@ export class SetOnce<a> {
 	}
 }
 
-export function orDefault<a>(value: a | undefined, def: a): a {
-	return value !== undefined ? value : def;
-}
-
-export function range(start: number, end: number): readonly number[] {
-	const length = end - start + 1;
-	const arr = new Array<number>(length);
-	for (let i = 0; i < length; i++) {
-		arr[i] = start + i;
-	}
-	return arr;
-}
-
-export function distance(
-	x0: number,
-	y0: number,
-	x1: number,
-	y1: number,
-): number {
-	const x = x1 - x0;
-	const y = y1 - y0;
-	return Math.sqrt(x * x + y * y);
-}
-
-export function lerp(pct: number, start: number, end: number): number {
-	return start + (end - start) * pct;
-}
-
-export function smoothstep(x: number): number {
-	return x * x * (3 - x + x);
-}
-
-export function clamp(value: number, min: number, max: number) {
-	return value < min ? min : value > max ? max : value;
-}
-
-export function delay(ms: number): Promise<void> {
-	return new Promise((res) => {
-		setTimeout(res, ms);
-	});
-}
-
-export function stringToInt(text: string): number | null {
-	const x = parseInt(text, 10);
-	if (isNaN(x)) {
-		return null;
-	}
-	return x;
-}
-
-export function stringToFloat(text: string): number | null {
-	const x = parseFloat(text);
-	if (isNaN(x)) {
-		return null;
-	}
-	return x;
-}
-
 export interface PushOnlyArray<a> extends ReadonlyArray<a> {
 	push(item: a): unknown;
-}
-
-export function arrUpdate<a>(
-	array: readonly a[],
-	index: number,
-	value: a,
-): readonly a[] {
-	const newArr = array.slice();
-	newArr.splice(index, 1, value);
-	return newArr;
-}
-
-export function arrInsert<a>(
-	array: readonly a[],
-	index: number,
-	value: a,
-): readonly a[] {
-	const newArr = array.slice();
-	newArr.splice(index, 0, value);
-	return newArr;
-}
-
-export function arrRemove<a>(array: readonly a[], index: number): readonly a[] {
-	const newArr = array.slice();
-	newArr.splice(index, 1);
-	return newArr;
 }
 
 export enum ColorMode {
@@ -197,61 +114,4 @@ export function turn(turns: number, center: Vec2, point: Vec2): Vec2 {
 		Math.cos(radians) * (point.y - center.y) +
 		center.y;
 	return new Vec2(x, y);
-}
-
-export interface Pct {
-	__nominal: void;
-}
-
-export const Pct = {
-	fromNumber(x: number): Pct {
-		return x as any;
-	},
-	toNumber(pct: Pct): number {
-		return pct as any;
-	},
-};
-
-export interface Px {
-	__nominal: void;
-}
-
-export const Px = {
-	fromNumber(x: number): Px {
-		return x as any;
-	},
-	toNumber(px: Px): number {
-		return px as any;
-	},
-};
-
-export interface Ms {
-	__nominal: void;
-}
-
-export const Ms = {
-	fromNumber(x: number): Px {
-		return x as any;
-	},
-	toNumber(px: Px): number {
-		return px as any;
-	},
-};
-
-export class Position {
-	readonly x: Px;
-	readonly y: Px;
-	constructor(x: Px, y: Px) {
-		this.x = x;
-		this.y = y;
-	}
-}
-
-export class Size {
-	readonly width: Px;
-	readonly height: Px;
-	constructor(width: Px, height: Px) {
-		this.width = width;
-		this.height = height;
-	}
 }

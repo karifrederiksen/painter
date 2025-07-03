@@ -1,7 +1,7 @@
-import { createMs, type Ms, type StateAtom } from "./state";
+import { ms, type Ms, type StateAtom } from "./state";
 
 export function performanceTime(): Ms {
-	return createMs(performance.now());
+	return ms(performance.now());
 }
 
 export function createTicker(stateAtom: StateAtom) {

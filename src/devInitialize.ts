@@ -1,4 +1,4 @@
-import { createPct, type StateAtom } from "~/state/state";
+import { pct, type StateAtom } from "~/state/state";
 import { Vec2 } from "./util";
 
 export function devInitialize(atom: StateAtom): void {
@@ -7,7 +7,7 @@ export function devInitialize(atom: StateAtom): void {
 		width: 800,
 		height: 800,
 	});
-	atom.send("viewport:zoom", createPct(1.5));
-	atom.send("viewport:rotate", createPct(0.4));
+	atom.send("viewport:zoom", pct(1.5));
+	atom.send("viewport:rotate", pct(0.4));
 	atom.send("viewport:translate", new Vec2(0.5, 0.25));
 }

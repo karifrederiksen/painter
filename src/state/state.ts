@@ -1,21 +1,21 @@
 import { type Color, Hsluv } from "color";
-import { opaque, Vec2, type Opaque } from "~/util";
+import { opaque, wrap, Vec2, type Opaque, clamp } from "~/util";
 import { StreamSource, type Stream } from "./stream";
 
 export type Pct = Opaque<number, "Percent">;
-export const createPct = opaque.createConstructor<Pct>();
+export const pct = opaque.createConstructor<Pct>();
 
 export type Ms = Opaque<number, "Ms">;
-export const createMs = opaque.createConstructor<Ms>();
+export const ms = opaque.createConstructor<Ms>();
 
 export type Bitmap = Opaque<unknown, "Bitmap">;
-export const createBitmap = opaque.createConstructor<Bitmap>();
+export const bitmap = opaque.createConstructor<Bitmap>();
 
 export type BrushId = Opaque<number, "BrushId">;
-export const createBrushId = opaque.createConstructor<BrushId>();
+export const brushId = opaque.createConstructor<BrushId>();
 
 export type LayerId = Opaque<number, "LayerId">;
-export const createLayerId = opaque.createConstructor<LayerId>();
+export const layerId = opaque.createConstructor<LayerId>();
 
 export interface Image {
 	readonly width: number;
@@ -74,7 +74,7 @@ function getNextLayerId(root: FolderLayer): LayerId {
 		return max;
 	}
 
-	return createLayerId(findMax(root, -1) + 1);
+	return layerId(findMax(root, -1) + 1);
 }
 
 function insertAfterCurrent(
@@ -384,7 +384,7 @@ export class ConfigureCanvasStateMachine extends BaseStateMachine<
 			canvasSize: new Vec2(args.width, args.height),
 		};
 		const canvas: UICanvas = { name: args.name };
-		const minimap: Image = { width: 100, height: 100, data: createBitmap(0) };
+		const minimap: Image = { width: 100, height: 100, data: bitmap(0) };
 		return new CanvasStateMachine({ ...state, renderer, canvas, minimap });
 	}
 }
@@ -407,28 +407,28 @@ export class CanvasStateMachine extends BaseStateMachine<
 	override "brush:setSize"(size: number) {
 		const nextState = updateCurrentBrush(this.#state, (brush) => ({
 			...brush,
-			size,
+			size: clamp(size, pct(1), pct(500)),
 		}));
 		return new CanvasStateMachine(nextState);
 	}
 	override "brush:setSoftness"(softness: Pct) {
 		const nextState = updateCurrentBrush(this.#state, (brush) => ({
 			...brush,
-			softness,
+			softness: clamp(softness, pct(0), pct(1)),
 		}));
 		return new CanvasStateMachine(nextState);
 	}
 	override "brush:setFlow"(flow: Pct) {
 		const nextState = updateCurrentBrush(this.#state, (brush) => ({
 			...brush,
-			flow,
+			flow: clamp(flow, pct(0.01), pct(1)),
 		}));
 		return new CanvasStateMachine(nextState);
 	}
 	override "brush:setSpacing"(spacing: Pct) {
 		const nextState = updateCurrentBrush(this.#state, (brush) => ({
 			...brush,
-			spacing,
+			spacing: clamp(spacing, pct(0.01), pct(1)),
 		}));
 		return new CanvasStateMachine(nextState);
 	}
@@ -440,7 +440,7 @@ export class CanvasStateMachine extends BaseStateMachine<
 			isHidden: false,
 			isFolder: false,
 			name,
-			opacity: createPct(1.0),
+			opacity: pct(1.0),
 			preview: null,
 		};
 		const nextLayers = insertAfterCurrent(
@@ -466,7 +466,7 @@ export class CanvasStateMachine extends BaseStateMachine<
 	override "layers:setOpacity"(opacity: Pct) {
 		const nextState = updateCurrentLayer(this.#state, (x) => ({
 			...x,
-			opacity,
+			opacity: clamp(opacity, pct(0), pct(1)),
 		}));
 		return new CanvasStateMachine(nextState);
 	}
@@ -494,21 +494,21 @@ export class CanvasStateMachine extends BaseStateMachine<
 		const state = this.#state;
 		return new CanvasStateMachine({
 			...state,
-			viewport: { ...state.viewport, offset },
+			viewport: { ...state.viewport, offset: offset.clampScalar(-1, 1) },
 		});
 	}
 	"viewport:rotate"(rotation: Pct): BaseStateMachine<string> {
 		const state = this.#state;
 		return new CanvasStateMachine({
 			...state,
-			viewport: { ...state.viewport, rotation },
+			viewport: { ...state.viewport, rotation: wrap(rotation, pct(0), pct(1)) },
 		});
 	}
 	"viewport:zoom"(zoom: Pct): BaseStateMachine<string> {
 		const state = this.#state;
 		return new CanvasStateMachine({
 			...state,
-			viewport: { ...state.viewport, zoom },
+			viewport: { ...state.viewport, zoom: clamp(zoom, pct(0.05), pct(3)) },
 		});
 	}
 }
@@ -543,14 +543,14 @@ export interface RendererState {
 }
 
 export function createState(): UIInitialState {
-	const folderId = createLayerId(0);
-	const currentLayerId = createLayerId(1);
+	const folderId = layerId(0);
+	const currentLayerId = layerId(1);
 	const currentLayer: PaintLayer = {
 		id: currentLayerId,
 		name: "",
 		isHidden: false,
 		isFolder: false,
-		opacity: createPct(1),
+		opacity: pct(1),
 		preview: null,
 	};
 	const layers: FolderLayer = {
@@ -559,20 +559,20 @@ export function createState(): UIInitialState {
 		isHidden: false,
 		isClosed: false,
 		isFolder: true,
-		opacity: createPct(1),
+		opacity: pct(1),
 		layers: [currentLayer],
 	};
 	const black = new Hsluv(0, 0, 1);
 	const white = new Hsluv(0, 0, 0);
-	const currentBrushId = createBrushId(1);
+	const currentBrushId = brushId(1);
 	const currentBrush: Brush = {
 		id: currentBrushId,
-		delay: createMs(0),
+		delay: ms(0),
 		eraser: false,
-		flow: createPct(0.05),
+		flow: pct(0.05),
 		size: 14,
-		spacing: createPct(0.05),
-		softness: createPct(0.95),
+		spacing: pct(0.05),
+		softness: pct(0.95),
 		pigment: black,
 	};
 
@@ -589,8 +589,8 @@ export function createState(): UIInitialState {
 		palette: [black, white],
 		viewport: {
 			offset: new Vec2(0, 0),
-			rotation: createPct(0),
-			zoom: createPct(1),
+			rotation: pct(0),
+			zoom: pct(1),
 		},
 	};
 }
