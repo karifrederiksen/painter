@@ -490,9 +490,8 @@ export class CanvasStateMachine extends BaseStateMachine<
 			currentLayerId: nextLayerId,
 		});
 	}
-	"viewport:translate"(offsetPct: Vec2): BaseStateMachine<string> {
+	"viewport:translate"(offset: Vec2): BaseStateMachine<string> {
 		const state = this.#state;
-		const offset = state.renderer.canvasSize.multiply(offsetPct);
 		return new CanvasStateMachine({
 			...state,
 			viewport: { ...state.viewport, offset },

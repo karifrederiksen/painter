@@ -37,7 +37,7 @@ import {
 	type UICanvas,
 	type ViewportTransforms,
 } from "./state";
-import { /*useEffect,*/ useEffect, useMemo, useRef, type JSX } from "react";
+import React, { useMemo, useRef, type JSX } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -89,6 +89,7 @@ function App() {
 
 		return x.state().renderer;
 	});
+
 	return (
 		<div className="relative w-screen h-screen flex justify-center items-center flex-col gap-4 overflow-hidden">
 			<ToolMenu
@@ -111,6 +112,7 @@ function App() {
 			<PlaceholderCanvas
 				transformsStream={transformsStream}
 				rendererStream={rendererStream}
+				send={stateAtom.send}
 			/>
 		</div>
 	);
@@ -190,42 +192,25 @@ interface MinimapProps {
 }
 
 function Minimap({ send }: MinimapProps): JSX.Element {
-	const skeletonRef = useRef<HTMLDivElement>(null);
-	useEffect(() => {
-		function handleTouchMove(ev: PointerEvent) {
-			if (
-				!(ev.target instanceof HTMLElement && ev.target === skeletonRef.current)
-			)
-				return;
+	function handleTouchMove(ev: React.PointerEvent<HTMLElement>) {
+		if (ev.buttons !== 1) return;
 
-			const down = ev.pressure > 0;
-			if (!down) return;
+		const tarect = ev.currentTarget.getBoundingClientRect();
+		const evPt = new Vec2(ev.clientX, ev.clientY);
+		const targetPt = new Vec2(tarect.x, tarect.y);
+		const targetSize = new Vec2(tarect.width, tarect.height);
+		const localPt = evPt.subtract(targetPt);
+		const pct = localPt.divide(targetSize);
 
-			const tarect = ev.target.getBoundingClientRect();
-			const evPt = new Vec2(ev.x, ev.y);
-			const targetPt = new Vec2(tarect.x, tarect.y);
-			const targetSize = new Vec2(tarect.width, tarect.height);
-			const localPt = evPt.subtract(targetPt);
-			const pct = localPt.divide(targetSize);
+		const viewSpace = pct.multiplyScalar(2).subtractScalar(1);
 
-			const viewSpace = pct.multiplyScalar(2).subtractScalar(1);
-
-			send("viewport:translate", viewSpace);
-		}
-
-		window.addEventListener("pointermove", handleTouchMove);
-		return () => {
-			window.removeEventListener("pointermove", handleTouchMove);
-		};
-	}, []);
+		send("viewport:translate", viewSpace);
+	}
 
 	return (
 		<Skeleton
-			ref={skeletonRef}
 			className="w-full aspect-square"
-			onTouchMove={(ev) => {
-				console.log(ev);
-			}}
+			onPointerMove={handleTouchMove}
 		/>
 	);
 }
@@ -264,7 +249,7 @@ function LayerContent({
 				id="viewport-rotate"
 				min={0}
 				max={1}
-				step={0.01}
+				step={0.005}
 				value={[viewPortTransforms.rotation]}
 				onValueChange={([rotation]) =>
 					send("viewport:rotate", createPct(rotation))
@@ -531,26 +516,72 @@ function CanvasBuilder({
 interface PlaceholderCanvasProps {
 	transformsStream: Stream<ViewportTransforms>;
 	rendererStream: Stream<RendererState | null>;
+	send: Send;
 }
 
 function PlaceholderCanvas({
 	transformsStream,
 	rendererStream,
+	send,
 }: PlaceholderCanvasProps) {
-	const { offset, rotation, zoom } = useStream(transformsStream);
+	const trans = useStream(transformsStream);
 	const renderer = useStream(rendererStream);
+	const dragRef = useRef<null | { startCoord: Vec2; startOffset: Vec2 }>(null);
 
 	if (renderer === null) return <></>;
 
 	const { canvasSize } = renderer;
+	const offset = trans.offset.multiply(canvasSize).multiplyScalar(0.5);
+
+	const onWheel = (ev: React.WheelEvent<HTMLElement>) => {
+		if (ev.deltaY === 0) return;
+
+		if (ev.deltaY > 0) {
+			send("viewport:zoom", createPct(trans.zoom + 0.05));
+		} else {
+			send("viewport:zoom", createPct(trans.zoom - 0.05));
+		}
+	};
+
+	const onPointerMove = (ev: React.PointerEvent<HTMLElement>) => {
+		// middle button
+		if (ev.buttons !== 4) {
+			dragRef.current = null;
+			return;
+		}
+
+		const tarect = ev.currentTarget.getBoundingClientRect();
+		const eventCoord = new Vec2(ev.clientX, ev.clientY);
+		const targetCoord = new Vec2(tarect.x, tarect.y);
+		const normalizedCoord = eventCoord
+			.subtract(targetCoord)
+			.divide(canvasSize)
+			.subtractScalar(0.5)
+			.multiplyScalar(2);
+
+		if (!dragRef.current) {
+			dragRef.current = {
+				startCoord: normalizedCoord,
+				startOffset: trans.offset,
+			};
+		} else {
+			const offset = normalizedCoord.subtract(dragRef.current.startCoord);
+			const newOffset = offset.add(dragRef.current.startOffset);
+			send("viewport:translate", newOffset);
+		}
+	};
 	return (
-		<div className="aboslute top-0 bottom-0 left-0 right-0 flex items-center justify-center">
+		<div
+			className="fixed top-0 bottom-0 left-0 right-0 flex items-center justify-center"
+			onWheel={onWheel}
+			onPointerMove={onPointerMove}
+		>
 			<Skeleton
 				className=""
 				style={{
 					width: canvasSize.x,
 					height: canvasSize.y,
-					transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom * 100}%) rotate(${(rotation * 360).toFixed(2)}deg)`,
+					transform: `translate(${offset.x}px, ${offset.y}px) scale(${trans.zoom * 100}%) rotate(${(trans.rotation * 360).toFixed(2)}deg)`,
 				}}
 			/>
 		</div>
