@@ -192,7 +192,8 @@ interface MinimapProps {
 }
 
 function Minimap({ send }: MinimapProps): JSX.Element {
-	function handleTouchMove(ev: React.PointerEvent<HTMLElement>) {
+	function handlePointer(ev: React.PointerEvent<HTMLElement>) {
+		// left click
 		if (ev.buttons !== 1) return;
 
 		const tarect = ev.currentTarget.getBoundingClientRect();
@@ -202,7 +203,7 @@ function Minimap({ send }: MinimapProps): JSX.Element {
 		const localPt = evPt.subtract(targetPt);
 		const pct = localPt.divide(targetSize);
 
-		const viewSpace = pct.multiplyScalar(2).subtractScalar(1);
+		const viewSpace = pct.multiplyScalar(-2).addScalar(1);
 
 		send("viewport:translate", viewSpace);
 	}
@@ -210,7 +211,8 @@ function Minimap({ send }: MinimapProps): JSX.Element {
 	return (
 		<Skeleton
 			className="w-full aspect-square"
-			onPointerMove={handleTouchMove}
+			onPointerDown={handlePointer}
+			onPointerMove={handlePointer}
 		/>
 	);
 }
@@ -543,7 +545,7 @@ function PlaceholderCanvas({
 		}
 	};
 
-	const onPointerMove = (ev: React.PointerEvent<HTMLElement>) => {
+	const handlePointer = (ev: React.PointerEvent<HTMLElement>) => {
 		// middle button
 		if (ev.buttons !== 4) {
 			dragRef.current = null;
@@ -574,7 +576,8 @@ function PlaceholderCanvas({
 		<div
 			className="fixed top-0 bottom-0 left-0 right-0 flex items-center justify-center"
 			onWheel={onWheel}
-			onPointerMove={onPointerMove}
+			onPointerDown={handlePointer}
+			onPointerMove={handlePointer}
 		>
 			<Skeleton
 				className=""
