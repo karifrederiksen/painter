@@ -2,9 +2,9 @@ import { test } from "vitest";
 import type { BrushPoint } from "./brushShader";
 import { RenderBlockSystem } from "./renderBlockSystem";
 import { RgbLinear } from "color";
-import { Vec2 } from "~/util";
+import { v2 } from "~/util";
 
-function createBrushPoint(scaledDiameter: number, position: Vec2): BrushPoint {
+function createBrushPoint(scaledDiameter: number, position: v2): BrushPoint {
 	return {
 		color: RgbLinear.White,
 		alpha: 1,
@@ -33,7 +33,7 @@ test("highlight blocks will be produced after an update() when there is input", 
 	{
 		const system = new RenderBlockSystem(5);
 
-		system.addBrushPoints([createBrushPoint(2, new Vec2(2, 2))]);
+		system.addBrushPoints([createBrushPoint(2, v2.xy(2, 2))]);
 		t.expect(system.getFrameBlocks()).deep.equals([]);
 
 		system.update(1);
@@ -43,10 +43,10 @@ test("highlight blocks will be produced after an update() when there is input", 
 		const system = new RenderBlockSystem(5);
 
 		const brushPoints = [
-			createBrushPoint(2, new Vec2(2, 2)),
-			createBrushPoint(2, new Vec2(123, 2)),
-			createBrushPoint(2, new Vec2(2, 123)),
-			createBrushPoint(2, new Vec2(123, 123)),
+			createBrushPoint(2, v2.xy(2, 2)),
+			createBrushPoint(2, v2.xy(123, 2)),
+			createBrushPoint(2, v2.xy(2, 123)),
+			createBrushPoint(2, v2.xy(123, 123)),
 		];
 
 		system.addBrushPoints(brushPoints);
@@ -63,7 +63,7 @@ test("highlight blocks will be produced after an update() when there is input", 
 
 test("no highlight blocks will be produced when highlightTime is 0", (t) => {
 	const system = new RenderBlockSystem(0);
-	system.addBrushPoints([createBrushPoint(2, new Vec2(2, 2))]);
+	system.addBrushPoints([createBrushPoint(2, v2.xy(2, 2))]);
 	system.update(1);
 	t.expect(system.getStrokeBlocks()).not.deep.equals([]);
 	t.expect(system.getHighlights()).deep.equals([]);
@@ -72,7 +72,7 @@ test("no highlight blocks will be produced when highlightTime is 0", (t) => {
 test("getStrokeBlocks() returns empty after strokeEnded()", (t) => {
 	const system = new RenderBlockSystem(0);
 
-	system.addBrushPoints([createBrushPoint(2, new Vec2(2, 2))]);
+	system.addBrushPoints([createBrushPoint(2, v2.xy(2, 2))]);
 	system.update(1);
 	t.expect(system.getStrokeBlocks()).not.deep.equals([]);
 

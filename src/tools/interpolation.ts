@@ -1,6 +1,6 @@
 import type * as BrushShader from "~/canvas/brushShader.js";
 import type * as Color from "color";
-import { lerp, distance, Vec2 } from "~/util/index.js";
+import { lerp, distance, v2 } from "~/util/index.js";
 
 export interface Config {
 	readonly diameterPx: number;
@@ -10,7 +10,7 @@ export interface Config {
 export interface InputPoint {
 	readonly alpha: number;
 	readonly color: Color.RgbLinear;
-	readonly position: Vec2;
+	readonly position: v2;
 	readonly pressure: number;
 	readonly rotation: number;
 }
@@ -64,7 +64,7 @@ export function interpolate(
 
 		const alpha = alphaIsEq ? start.alpha : lerp(pct, start.alpha, end.alpha);
 		const color = colorIsEq ? start.color : start.color.mix(pct, end.color);
-		const position = Vec2.lerp(pct, start.position, end.position);
+		const position = v2.lerp(pct, start.position, end.position);
 		const scaledDiameter =
 			brush.diameterPx *
 			(pressureIsEq ? start.pressure : lerp(pct, start.pressure, end.pressure));

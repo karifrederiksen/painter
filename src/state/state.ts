@@ -1,5 +1,5 @@
 import { type Color, Hsluv } from "color";
-import { opaque, wrap, Vec2, type Opaque, clamp } from "~/util";
+import { opaque, wrap, v2, type Opaque, clamp } from "~/util";
 import { StreamSource, type Stream } from "./stream";
 
 export type Pct = Opaque<number, "Percent">;
@@ -26,7 +26,7 @@ export interface Image {
 export interface Brush {
 	readonly id: BrushId;
 	readonly eraser: boolean;
-	readonly pigment: Color;
+	readonly pigment: Hsluv;
 	readonly size: number;
 	readonly softness: Pct;
 	readonly flow: Pct;
@@ -37,7 +37,7 @@ export interface Brush {
 export interface ViewportTransforms {
 	readonly zoom: Pct;
 	readonly rotation: Pct;
-	readonly offset: Vec2;
+	readonly offset: v2;
 }
 
 export interface PaintLayer {
@@ -285,7 +285,7 @@ export abstract class BaseStateMachine<Tag extends string> {
 	"layers:delete"(): BaseStateMachine<string> {
 		return this;
 	}
-	"viewport:translate"(offset: Vec2): BaseStateMachine<string> {
+	"viewport:translate"(offset: v2): BaseStateMachine<string> {
 		void offset;
 		return this;
 	}
@@ -381,7 +381,7 @@ export class ConfigureCanvasStateMachine extends BaseStateMachine<
 	override "canvas:create"(args: CreateCanvasArgs): CanvasStateMachine {
 		const state = this.uiState;
 		const renderer: RendererState = {
-			canvasSize: new Vec2(args.width, args.height),
+			canvasSize: v2.xy(args.width, args.height),
 		};
 		const canvas: UICanvas = { name: args.name };
 		const minimap: Image = { width: 100, height: 100, data: bitmap(0) };
@@ -404,6 +404,13 @@ export class CanvasStateMachine extends BaseStateMachine<
 		return this.#state;
 	}
 
+	override "brush:setColor"(pigment: Hsluv) {
+		const nextState = updateCurrentBrush(this.#state, (brush) => ({
+			...brush,
+			pigment,
+		}));
+		return new CanvasStateMachine(nextState);
+	}
 	override "brush:setSize"(size: number) {
 		const nextState = updateCurrentBrush(this.#state, (brush) => ({
 			...brush,
@@ -490,11 +497,11 @@ export class CanvasStateMachine extends BaseStateMachine<
 			currentLayerId: nextLayerId,
 		});
 	}
-	"viewport:translate"(offset: Vec2): BaseStateMachine<string> {
+	"viewport:translate"(offset: v2): BaseStateMachine<string> {
 		const state = this.#state;
 		return new CanvasStateMachine({
 			...state,
-			viewport: { ...state.viewport, offset: offset.clampScalar(-1, 1) },
+			viewport: { ...state.viewport, offset: offset.clampNum(-1, 1) },
 		});
 	}
 	"viewport:rotate"(rotation: Pct): BaseStateMachine<string> {
@@ -518,9 +525,9 @@ export class StrokingStateMachine extends BaseStateMachine<
 > {
 	static readonly tag = "state:stroke";
 	readonly previousStateMachine: StateMachine;
-	readonly currentPos: Vec2;
+	readonly currentPos: v2;
 
-	constructor(previousStateMachine: StateMachine, currentPos: Vec2) {
+	constructor(previousStateMachine: StateMachine, currentPos: v2) {
 		super(StrokingStateMachine.tag);
 		this.previousStateMachine = previousStateMachine;
 		this.currentPos = currentPos;
@@ -538,7 +545,7 @@ export type StateMachine =
 	| StrokingStateMachine;
 
 export interface RendererState {
-	readonly canvasSize: Vec2;
+	readonly canvasSize: v2;
 	// TODO: webgpu state and cached derived state
 }
 
@@ -588,7 +595,7 @@ export function createState(): UIInitialState {
 		minimap: null,
 		palette: [black, white],
 		viewport: {
-			offset: new Vec2(0, 0),
+			offset: v2.xy(0, 0),
 			rotation: pct(0),
 			zoom: pct(1),
 		},

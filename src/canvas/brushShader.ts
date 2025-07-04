@@ -1,6 +1,6 @@
 import type * as Color from "color";
 import * as WebGL from "~/webgl";
-import { Vec2, Vec4 } from "~/util";
+import { v2, Vec4 } from "~/util";
 
 const INITIAL_VARRAY_SIZE = 5000;
 
@@ -44,7 +44,7 @@ void main() {
 export interface BrushPoint {
 	readonly color: Color.RgbLinear;
 	readonly alpha: number;
-	readonly position: Vec2;
+	readonly position: v2;
 	readonly scaledDiameter: number;
 	readonly rotation: number;
 }

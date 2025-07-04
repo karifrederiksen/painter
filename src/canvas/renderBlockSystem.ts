@@ -1,5 +1,5 @@
 import type { BrushPoint } from "./brushShader";
-import { Vec2, clamp } from "~/util";
+import { v2, clamp } from "~/util";
 
 export const PX_PER_BLOCK_X = 32;
 export const PX_PER_BLOCK_Y = 32;
@@ -28,7 +28,7 @@ export class Block {
 		return hash;
 	}
 
-	contains(position: Vec2): boolean {
+	contains(position: v2): boolean {
 		return (
 			position.x >= this.x0 &&
 			position.x <= this.x1 &&
@@ -188,7 +188,7 @@ export class RenderBlockSystem {
 	/**
 	 * Mark entire canvas as needing re-rendering.
 	 */
-	fillAll(currentTime: number, resolution: Vec2): void {
+	fillAll(currentTime: number, resolution: v2): void {
 		const xBlockMax = (resolution.x / PX_PER_BLOCK_X) | 0;
 		const yBlockMax = (resolution.y / PX_PER_BLOCK_Y) | 0;
 		const renderBlocks = this._renderBlocks;

@@ -1,5 +1,5 @@
 import type * as Layers from "./layers";
-import type { Vec2, PushOnlyArray } from "~/util";
+import type { v2, PushOnlyArray } from "~/util";
 import {
 	type TextureId,
 	Texture,
@@ -79,7 +79,7 @@ function layersAreDifferent(
 
 export interface CombineLayersArgs {
 	readonly gl: WebGLRenderingContext;
-	readonly resolution: Vec2;
+	readonly resolution: v2;
 	readonly allTextures: PushOnlyArray<Texture>;
 	readonly layersToRender: LayersToCombine;
 	readonly textureShader: TextureShader;

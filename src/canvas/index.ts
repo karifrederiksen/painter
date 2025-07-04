@@ -8,7 +8,7 @@ import * as Theme from "~/theme";
 import * as Context from "./context";
 import type { BrushPoint } from "./brushShader";
 import { Stack } from "~/collections";
-import { Vec2, PerfTracker, turn, type Tagged, tagged } from "~/util";
+import { v2, PerfTracker, turn, type Tagged, tagged } from "~/util";
 
 export type CanvasMsg =
 	| Tagged<"OnFrame", number>
@@ -138,9 +138,9 @@ export function initState(): [Config, State] {
 }
 
 export interface CanvasInfo {
-	readonly offset: Vec2;
-	readonly resolution: Vec2;
-	readonly halfResoution: Vec2;
+	readonly offset: v2;
+	readonly resolution: v2;
+	readonly halfResoution: v2;
 }
 
 export interface TransformedPointerInput {
@@ -157,13 +157,14 @@ function pointerToBrushInput(
 	camera: Camera.Config,
 	input: Input.PointerData,
 ): TransformedPointerInput {
-	const point = new Vec2(input.x, input.y)
-		.subtract(canvasInfo.offset)
-		.subtractScalars(camera.offsetX, camera.offsetY)
-		.subtract(canvasInfo.halfResoution)
-		.multiplyScalar(1 / camera.zoomPct);
+	const point = v2
+		.xy(input.x, input.y)
+		.sub(canvasInfo.offset)
+		.sub(v2.xy(camera.offsetX, camera.offsetY))
+		.sub(canvasInfo.halfResoution)
+		.mulNum(1 / camera.zoomPct);
 
-	const { x, y } = turn(-camera.rotateTurns, Vec2.zeroes, point).add(
+	const { x, y } = turn(-camera.rotateTurns, v2.zero(), point).add(
 		canvasInfo.halfResoution,
 	);
 
@@ -325,7 +326,7 @@ export class Canvas {
 		if (context.isOk()) {
 			hooks.onWebglContextCreated(context.value[1]);
 			return new Canvas(
-				new Vec2(canvas.width, canvas.height),
+				v2.xy(canvas.width, canvas.height),
 				hooks,
 				context.value[0],
 			);
@@ -337,7 +338,7 @@ export class Canvas {
 	private readonly perfTracker: PerfTracker.PerfTracker;
 
 	private constructor(
-		private readonly resolution: Vec2,
+		private readonly resolution: v2,
 		private readonly hooks: Hooks,
 		private readonly context: Context.Context,
 	) {

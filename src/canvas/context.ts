@@ -7,7 +7,7 @@ import * as BrushShader from "./brushShader";
 import type * as Layers from "./layers";
 import * as BlockRender from "./renderBlockSystem";
 import { Blend } from "~/webgl";
-import { type Result, Ok, Err, Vec2, Vec4 } from "~/util";
+import { type Result, Ok, Err, v2, Vec4 } from "~/util";
 import { RgbLinear } from "color";
 import {
 	Texture,
@@ -111,7 +111,7 @@ export function create(
 		textureRenderer,
 		clearBlocksRenderer,
 		blockHighlightShader,
-		resolution: new Vec2(canvas.width, canvas.height),
+		resolution: v2.xy(canvas.width, canvas.height),
 	});
 	return new Ok([context, gl] as const);
 }
@@ -124,12 +124,12 @@ interface CreationArgs {
 	readonly blockHighlightShader: BlockHighlightShader.Shader;
 	readonly outputRenderer: OutputShader.Shader;
 	readonly drawpointBatch: BrushShader.Shader;
-	readonly resolution: Vec2;
+	readonly resolution: v2;
 }
 
 export interface RenderArgs {
 	readonly currentTime: number;
-	readonly resolution: Vec2;
+	readonly resolution: v2;
 	readonly blendMode: Blend.Mode;
 	readonly brush: {
 		readonly softness: number;
@@ -149,7 +149,7 @@ export class Context {
 	private readonly allTextures: Texture[];
 	private readonly textureBindings: (readonly [TextureId | null, number])[];
 	private readonly layerTextureMap: Map<Layers.Id, Texture>;
-	private internalCanvasSize: Vec2;
+	private internalCanvasSize: v2;
 	private stroke: Texture | null;
 	private renderBlockSystem: BlockRender.RenderBlockSystem;
 	private prevLayers: Layers.SplitLayers;
@@ -181,7 +181,7 @@ export class Context {
 			current: null,
 		};
 		{
-			const size = new Vec2(128, 128);
+			const size = v2.xy(128, 128);
 			this.brushTexture = createTextureWithFramebuffer(
 				this.gl,
 				this.allTextures,
@@ -336,7 +336,7 @@ export class Context {
 
 				brushTextureGenerator.generateBrushTexture(gl, {
 					framebuffer: brushTexture.framebuffer,
-					size: new Vec2(128, 128),
+					size: v2.xy(128, 128),
 					uniforms: {
 						u_softness: Math.max(brush.softness, 0.000001),
 					},

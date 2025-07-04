@@ -5,7 +5,7 @@ import * as Interp from "./interpolation";
 import * as BrushDelay from "./brushDelay";
 import type * as Camera from "./camera";
 import * as Color from "color";
-import { Vec2, ColorMode, clamp, type Tagged, tagged } from "~/util";
+import { v2, ColorMode, clamp, type Tagged, tagged } from "~/util";
 
 export type Msg =
 	| Tagged<"SetDiameter", { diameterPx: number }>
@@ -208,7 +208,7 @@ function createBrushPoint(
 ): BrushShader.BrushPoint {
 	const alpha = brush.flowPct * input.pressure;
 	const color = brush.color.toRgb().toLinear();
-	const position = new Vec2(input.x, input.y);
+	const position = v2.xy(input.x, input.y);
 	return {
 		alpha,
 		color,
@@ -224,7 +224,7 @@ function createInputPoint(
 ): Interp.InputPoint {
 	const alpha = brush.flowPct * input.pressure;
 	const color = brush.color.toRgb().toLinear();
-	const position = new Vec2(input.x, input.y);
+	const position = v2.xy(input.x, input.y);
 	return {
 		alpha,
 		color,

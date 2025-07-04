@@ -1,5 +1,5 @@
 import * as WebGL from "~/webgl";
-import type { Vec2 } from "~/util";
+import type { v2 } from "~/util";
 
 const VERT_SRC = `
 precision highp float;
@@ -43,7 +43,7 @@ const Uniforms = {
 export interface Args {
 	readonly uniforms: WebGL.UniformArgs<typeof Uniforms>;
 	readonly framebuffer: WebGLFramebuffer;
-	readonly size: Vec2;
+	readonly size: v2;
 }
 
 export class Generator {

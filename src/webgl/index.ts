@@ -1,4 +1,4 @@
-import type { Vec2, Vec3, Vec4 } from "~/util";
+import type { v2, Vec3, Vec4 } from "~/util";
 
 export * from "./glsl";
 export * as Blend from "./blend";
@@ -127,7 +127,7 @@ export class Uniform {
 export interface UniformArgMap {
 	readonly [UniformType.I1]: number;
 	readonly [UniformType.F1]: number;
-	readonly [UniformType.F2]: Vec2;
+	readonly [UniformType.F2]: v2;
 	readonly [UniformType.F3]: Vec3;
 	readonly [UniformType.F4]: Vec4;
 }
@@ -193,7 +193,7 @@ export function updateUniforms<a extends UniformNames<a>>(
 				break;
 			}
 			case UniformType.F2: {
-				const arg = args[propName] as Vec2;
+				const arg = args[propName] as v2;
 				gl.uniform2f(uniform.location, arg.x, arg.y);
 				break;
 			}

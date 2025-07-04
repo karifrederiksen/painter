@@ -1,4 +1,4 @@
-import { Vec2 } from "./vec2";
+import { v2 } from "./vec2";
 
 export * as Store from "./store";
 export * as Decode from "./decode";
@@ -103,7 +103,7 @@ export function turnsFromDegrees(degrees: Degrees): Turns {
 	return Turns.fromNumber(Degrees.toNumber(degrees) / 360);
 }
 
-export function turn(turns: number, center: Vec2, point: Vec2): Vec2 {
+export function turn(turns: number, center: v2, point: v2): v2 {
 	const radians = turns * 360 * (Math.PI / 180);
 	const x =
 		Math.cos(radians) * (point.x - center.x) -
@@ -113,5 +113,5 @@ export function turn(turns: number, center: Vec2, point: Vec2): Vec2 {
 		Math.sin(radians) * (point.x - center.x) +
 		Math.cos(radians) * (point.y - center.y) +
 		center.y;
-	return new Vec2(x, y);
+	return v2.xy(x, y);
 }

@@ -1,6 +1,6 @@
 import React from "react";
 import type { Send } from "~/state";
-import { Vec2 } from "~/util";
+import { v2 } from "~/util";
 
 export interface MinimapProps {
 	send: Send;
@@ -12,13 +12,13 @@ export function Minimap({ send }: MinimapProps): React.JSX.Element {
 		if (ev.buttons !== 1) return;
 
 		const tarect = ev.currentTarget.getBoundingClientRect();
-		const evPt = new Vec2(ev.clientX, ev.clientY);
-		const targetPt = new Vec2(tarect.x, tarect.y);
-		const targetSize = new Vec2(tarect.width, tarect.height);
-		const localPt = evPt.subtract(targetPt);
-		const pct = localPt.divide(targetSize);
+		const evPt = v2.xy(ev.clientX, ev.clientY);
+		const targetPt = v2.xy(tarect.x, tarect.y);
+		const targetSize = v2.xy(tarect.width, tarect.height);
+		const localPt = evPt.sub(targetPt);
+		const pct = localPt.div(targetSize);
 
-		const viewSpace = pct.multiplyScalar(-2).addScalar(1);
+		const viewSpace = pct.mulNum(-2).addNum(1);
 
 		send("viewport:translate", viewSpace);
 	}

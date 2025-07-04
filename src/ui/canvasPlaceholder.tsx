@@ -7,7 +7,7 @@ import {
 	type Stream,
 	type ViewportTransforms,
 } from "~/state";
-import { Vec2 } from "~/util";
+import { v2 } from "~/util";
 import { useRef } from "react";
 
 export interface CanvasPlaceholderProps {
@@ -23,12 +23,12 @@ export function CanvasPlaceholder({
 }: CanvasPlaceholderProps): React.JSX.Element {
 	const trans = useStream(transformsStream);
 	const renderer = useStream(rendererStream);
-	const dragRef = useRef<null | { startCoord: Vec2; startOffset: Vec2 }>(null);
+	const dragRef = useRef<null | { startCoord: v2; startOffset: v2 }>(null);
 
 	if (renderer === null) return <></>;
 
 	const { canvasSize } = renderer;
-	const offset = trans.offset.multiply(canvasSize).multiplyScalar(0.5);
+	const offset = trans.offset.mul(canvasSize).mulNum(0.5);
 
 	const onWheel = (ev: React.WheelEvent<HTMLElement>) => {
 		if (ev.deltaY === 0) return;
@@ -48,13 +48,13 @@ export function CanvasPlaceholder({
 		}
 
 		const tarect = ev.currentTarget.getBoundingClientRect();
-		const eventCoord = new Vec2(ev.clientX, ev.clientY);
-		const targetCoord = new Vec2(tarect.x, tarect.y);
+		const eventCoord = v2.xy(ev.clientX, ev.clientY);
+		const targetCoord = v2.xy(tarect.x, tarect.y);
 		const normalizedCoord = eventCoord
-			.subtract(targetCoord)
-			.divide(canvasSize)
-			.subtractScalar(0.5)
-			.multiplyScalar(2);
+			.sub(targetCoord)
+			.div(canvasSize)
+			.subNum(0.5)
+			.mulNum(2);
 
 		if (!dragRef.current) {
 			dragRef.current = {
@@ -62,7 +62,7 @@ export function CanvasPlaceholder({
 				startOffset: trans.offset,
 			};
 		} else {
-			const offset = normalizedCoord.subtract(dragRef.current.startCoord);
+			const offset = normalizedCoord.sub(dragRef.current.startCoord);
 			const newOffset = offset.add(dragRef.current.startOffset);
 			send("viewport:translate", newOffset);
 		}

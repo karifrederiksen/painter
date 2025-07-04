@@ -1,4 +1,4 @@
-import type { Vec2, PushOnlyArray } from "~/util";
+import type { v2, PushOnlyArray } from "~/util";
 
 export interface TextureId {
 	__nominal: "TextureId";
@@ -22,7 +22,7 @@ export function createTextureWithFramebuffer(
 	gl: WebGLRenderingContext,
 	allTextures: PushOnlyArray<Texture>,
 	textureBindings: (readonly [TextureId | null, number])[],
-	size: Vec2,
+	size: v2,
 ): Texture {
 	const texture = new Texture(
 		gl.createTexture() as WebGLTexture,
