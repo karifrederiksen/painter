@@ -263,6 +263,10 @@ export abstract class BaseStateMachine<Tag extends string> {
 		void softness;
 		return this;
 	}
+	"brush:setDelay"(delay: Ms): BaseStateMachine<string> {
+		void delay;
+		return this;
+	}
 	"layers:create"(name: string): BaseStateMachine<string> {
 		void name;
 		return this;
@@ -436,6 +440,13 @@ export class CanvasStateMachine extends BaseStateMachine<
 		const nextState = updateCurrentBrush(this.#state, (brush) => ({
 			...brush,
 			spacing: clamp(spacing, pct(0.01), pct(1)),
+		}));
+		return new CanvasStateMachine(nextState);
+	}
+	override "brush:setDelay"(delay: Ms) {
+		const nextState = updateCurrentBrush(this.#state, (brush) => ({
+			...brush,
+			delay: clamp(delay, ms(0), ms(500)),
 		}));
 		return new CanvasStateMachine(nextState);
 	}

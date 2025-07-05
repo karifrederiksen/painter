@@ -1,8 +1,15 @@
 import type React from "react";
 import { Label } from "~/components/ui/label";
 import { Slider } from "~/components/ui/slider";
-import { pct, useStream, type Brush, type Send, type Stream } from "~/state";
-import { formatPct, formatPx } from "./util";
+import {
+	ms,
+	pct,
+	useStream,
+	type Brush,
+	type Send,
+	type Stream,
+} from "~/state";
+import { formatMs, formatPct, formatPx } from "./util";
 
 export interface BrushSettingsSectionProps {
 	brush$: Stream<Brush>;
@@ -64,6 +71,18 @@ export function BrushSettingsSection({
 				step={0.01}
 				value={[brush.spacing]}
 				onValueChange={([size]) => send("brush:setSpacing", pct(size))}
+			/>
+			<div className="flex flex-row justify-between">
+				<Label htmlFor="brush-delay">Delay</Label>
+				<div className="text-sm">{formatMs(brush.delay)}</div>
+			</div>
+			<Slider
+				id="brush-delay"
+				min={0}
+				max={500}
+				step={1}
+				value={[brush.delay]}
+				onValueChange={([delay]) => send("brush:setDelay", ms(delay))}
 			/>
 		</>
 	);

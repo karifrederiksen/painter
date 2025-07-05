@@ -48,12 +48,16 @@ function LayerCard({ layer, currentLayerId, send }: LayerCardProps) {
 					<div className="">{layer.name || `Layer ${layer.id}`}</div>
 					<div className="flex flex-row items-center gap-2">
 						{layer.isHidden ? (
-							<EyeOffIcon className="size-4" />
+							<>
+								<EyeOffIcon className="size-4" />
+								<div className="text-xs">Hidden</div>
+							</>
 						) : (
-							<EyeIcon className="size-4" />
+							<>
+								<EyeIcon className="size-4" />
+								<div className="text-xs">{formatPct(layer.opacity)}</div>
+							</>
 						)}
-
-						<div className="text-xs">{formatPct(layer.opacity)}</div>
 					</div>
 				</div>
 			</div>

@@ -86,8 +86,6 @@ export function ColorWheel({
 		};
 	}, [colorMode$, color$]);
 
-	if (canvasRef.current) {
-	}
 	const canvasRect = canvasRef.current?.getBoundingClientRect();
 	const thumbData = canvasRect
 		? getThumbPositions(canvasRect, colorMode, color)
