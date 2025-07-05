@@ -613,12 +613,12 @@ export function createState(): UIInitialState {
 	};
 }
 
-type Args<T> = T extends (...rest: infer R) => unknown ? R : never;
+export type MsgArgs<T> = T extends (...rest: infer R) => unknown ? R : never;
 
 export interface StateAtom {
 	send<MsgTag extends keyof Omit<BaseStateMachine<string>, "tag" | "state">>(
 		msgTag: MsgTag,
-		...x: Args<BaseStateMachine<string>[MsgTag]>
+		...x: MsgArgs<BaseStateMachine<string>[MsgTag]>
 	): void;
 	stream: Stream<StateMachine>;
 }
@@ -634,10 +634,6 @@ export function createStateAtom(): StateAtom {
 		let next: undefined | readonly any[] = undefined;
 		while ((next = queue.shift())) {
 			const [msgTag, ...args] = next;
-			if (msgTag !== "tick") {
-				console.debug("Msg", msgTag, ...args);
-			}
-
 			const handlerFunc = handler[msgTag as keyof BaseStateMachine<string>];
 			if (typeof handlerFunc !== "function") {
 				console.warn("Invalid message");
