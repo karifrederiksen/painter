@@ -1,19 +1,14 @@
 import type React from "react";
-import {
-	pct,
-	useStream,
-	type RendererState,
-	type Send,
-	type Stream,
-	type ViewportTransforms,
-} from "~/state";
+import { pct, useStream, type Send, type Stream } from "~/state";
 import { v2 } from "~/util";
 import { useRef } from "react";
+import type { Renderer } from "~/state/renderer";
+import type { DoViewportThings, ViewportTransforms } from "~/state/viewport";
 
 export interface CanvasPlaceholderProps {
 	transformsStream: Stream<ViewportTransforms>;
-	rendererStream: Stream<RendererState | null>;
-	send: Send;
+	rendererStream: Stream<Renderer | null>;
+	send: Send<DoViewportThings>;
 }
 
 export function CanvasPlaceholder({

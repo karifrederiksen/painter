@@ -1,10 +1,11 @@
 import type { Color } from "color";
 import type React from "react";
 import { useStream, type Send, type Stream } from "~/state";
+import type { DoBrushThings } from "~/state/brushes";
 
 export interface ColorSelectorProps {
 	color$: Stream<Color>;
-	send: Send;
+	send: Send<DoBrushThings>;
 }
 
 export function ColorSelector({

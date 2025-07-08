@@ -6,15 +6,7 @@ import {
 	SquarePlusIcon,
 } from "lucide-react";
 import { cn } from "~/lib/utils";
-import {
-	pct,
-	useStream,
-	type FolderLayer,
-	type Layer,
-	type LayerId,
-	type Send,
-	type Stream,
-} from "~/state";
+import { pct, useStream, type LayerId, type Send, type Stream } from "~/state";
 import { formatPct } from "./util";
 import type React from "react";
 import { Label } from "~/components/ui/label";
@@ -26,11 +18,12 @@ import {
 	TooltipTrigger,
 } from "~/components/ui/tooltip";
 import { Button } from "~/components/ui/button";
+import type { DoLayerThings, FolderLayer, Layer } from "~/state/layers";
 
 interface LayerCardProps {
 	layer: Layer;
 	currentLayerId: LayerId;
-	send: Send;
+	send: Send<DoLayerThings>;
 }
 
 function LayerCard({ layer, currentLayerId, send }: LayerCardProps) {
@@ -81,7 +74,7 @@ function LayerCard({ layer, currentLayerId, send }: LayerCardProps) {
 export interface LayersSectionProps {
 	layers$: Stream<FolderLayer>;
 	currentLayer$: Stream<Layer>;
-	send: Send;
+	send: Send<DoLayerThings>;
 }
 
 export function LayersSection({
@@ -131,7 +124,7 @@ export function LayersSection({
 							<Button
 								variant="secondary"
 								role="button"
-								onClick={() => send("layers:create", "")}
+								onClick={() => send("layers:createLayer", "")}
 							>
 								<SquarePlusIcon />
 							</Button>

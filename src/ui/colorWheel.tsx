@@ -10,11 +10,12 @@ import type React from "react";
 import { useStream, type Send, type Stream } from "~/state";
 import { useEffect, useRef } from "react";
 import { useDoubleInitialRender } from "./util";
+import type { DoBrushThings } from "~/state/brushes";
 
 export interface ColorWheelProps {
 	color$: Stream<Color.Hsluv>;
 	colorMode$: Stream<ColorMode>;
-	send: Send;
+	send: Send<DoBrushThings>;
 }
 
 export function ColorWheel({
@@ -146,7 +147,7 @@ type WithClientXY = Readonly<{
 function signalOuter(
 	ev: WithClientXY,
 	container: HTMLElement,
-	send: Send,
+	send: Send<DoBrushThings>,
 	colorMode: ColorMode,
 	color: Color.Hsluv,
 ) {
@@ -177,7 +178,7 @@ function signalOuter(
 const onDown = (
 	ev: WithClientXY,
 	container: HTMLElement,
-	send: Send,
+	send: Send<DoBrushThings>,
 	colorMode: ColorMode,
 	color: Color.Hsluv,
 	setPointerState: (state: PointerState) => void,
@@ -205,7 +206,7 @@ const onDown = (
 function signalInner(
 	ev: WithClientXY,
 	container: HTMLElement,
-	send: Send,
+	send: Send<DoBrushThings>,
 	colorMode: ColorMode,
 	color: Color.Hsluv,
 ) {
@@ -219,7 +220,6 @@ function signalInner(
 	const x = clamp(ev.clientX - bounds.left - marginX, 0, width);
 	const y = clamp(ev.clientY - bounds.top - marginY, 0, height);
 
-	console.log(x, y);
 	const pctX = x / width;
 	const pctY = 1 - y / height;
 

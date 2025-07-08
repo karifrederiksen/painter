@@ -1,9 +1,10 @@
 import React from "react";
 import type { Send } from "~/state";
+import type { DoViewportThings } from "~/state/viewport";
 import { v2 } from "~/util";
 
 export interface MinimapProps {
-	send: Send;
+	send: Send<DoViewportThings>;
 }
 
 export function Minimap({ send }: MinimapProps): React.JSX.Element {

@@ -1,13 +1,15 @@
 import {
-	ConfigureCanvasStateMachine,
 	createStateAtom,
-	getLayerById,
+	isBuildingCanvas,
+	isCanvas,
 	StreamSource,
+	WhenStream,
+	type DoAny,
 	type Send,
-	type StateMachine,
+	type State,
 	type Stream,
-	// createTicker,
 } from "./state";
+import { getLayerById } from "./state/layers";
 import { useEffect, useReducer, useRef, useState } from "react";
 import { devInitialize } from "./devInitialize";
 import { Panel } from "./ui/panel";
@@ -29,37 +31,13 @@ function App() {
 		devInitialize(stateAtom);
 	}
 
-	// useEffect(() => {
-	// 	const ticker = createTicker(stateAtom);
-	// 	ticker.start();
-	// 	return () => {
-	// 		ticker.stop();
-	// 	};
-	// }, [stateAtom]);
-
-	const state = stateAtom.stream.map((x) => x.state());
-	const brush$ = state.map(
+	const brush$ = stateAtom.stream.map(
 		({ brushes, currentBrushId }) =>
 			brushes.find((b) => b.id === currentBrushId)!,
 	);
-	const layers$ = state.map(({ layers }) => layers);
-	const currentLayer$ = state.map(
-		({ layers, currentLayerId }) => getLayerById(layers, currentLayerId)!,
-	);
-	const canvasBuilder$ = stateAtom.stream.map((x) => {
-		if (x.tag === ConfigureCanvasStateMachine.tag) {
-			return x.uiState.canvas;
-		}
-		return null;
-	});
-	const viewport$ = state.map(({ viewport }) => viewport);
-	const renderer$ = stateAtom.stream.map((x) => {
-		if (x.tag === ConfigureCanvasStateMachine.tag) {
-			return null;
-		}
-		return x.state().renderer;
-	});
 	const color$ = brush$.map((x) => x.pigment);
+
+	// TODO: get rid of this or add it to the state
 	const colorMode$ = new StreamSource<ColorMode>(ColorMode.Hsluv).stream();
 
 	const { msg$, send } = createMessageSource(stateAtom.send);
@@ -70,24 +48,48 @@ function App() {
 				<ColorWheel color$={color$} colorMode$={colorMode$} send={send} />
 				<BrushSettingsSection brush$={brush$} send={send} />
 			</Panel>
-			<Panel className="fixed right-2 top-2 z-10">
-				<MinimapSection viewport$={viewport$} send={send} />
-				<Separator className="my-2" />
-				<LayersSection
-					currentLayer$={currentLayer$}
-					layers$={layers$}
-					send={send}
-				/>
-			</Panel>
-			<CanvasBuilder
-				className="z-20"
-				canvasBuilderStream={canvasBuilder$}
-				send={send}
+			<WhenStream
+				stream={stateAtom.stream}
+				cond={isBuildingCanvas}
+				render={(st) => (
+					<CanvasBuilder
+						className="z-20"
+						canvasBuilderStream={st.map(({ canvasBuilder }) => canvasBuilder)}
+						send={send}
+					/>
+				)}
 			/>
-			<CanvasPlaceholder
-				transformsStream={viewport$}
-				rendererStream={renderer$}
-				send={send}
+			<WhenStream
+				stream={stateAtom.stream}
+				cond={isCanvas}
+				render={(st) => {
+					const viewport$ = st.map(({ viewport }) => viewport);
+					const layers$ = st.map(({ layers }) => layers);
+					const currentLayer$ = st.map(
+						({ layers, currentLayerId }) =>
+							getLayerById(layers, currentLayerId)!,
+					);
+
+					const renderer$ = st.map(({ renderer }) => renderer);
+					return (
+						<>
+							<Panel className="fixed right-2 top-2 z-10">
+								<MinimapSection viewport$={viewport$} send={send} />
+								<Separator className="my-2" />
+								<LayersSection
+									currentLayer$={currentLayer$}
+									layers$={layers$}
+									send={send}
+								/>
+							</Panel>
+							<CanvasPlaceholder
+								transformsStream={viewport$}
+								rendererStream={renderer$}
+								send={send}
+							/>
+						</>
+					);
+				}}
 			/>
 			{import.meta.env.DEV && (
 				<DebugView msg$={msg$} state$={stateAtom.stream} />
@@ -98,12 +100,12 @@ function App() {
 
 interface MessageThing {
 	readonly msg: readonly [string, ...(readonly unknown[])];
-	readonly resultingState: StateMachine;
+	readonly resultingState: State;
 	readonly timestamp: Date;
 }
 
 interface DebugViewProps {
-	state$: Stream<StateMachine>;
+	state$: Stream<State>;
 	msg$: Stream<readonly [string, ...(readonly unknown[])]>;
 }
 
@@ -192,9 +194,9 @@ function DebugView({ state$, msg$ }: DebugViewProps) {
 	);
 }
 
-function createMessageSource(send: Send): {
+function createMessageSource(send: Send<DoAny>): {
 	msg$: Stream<readonly [string, ...(readonly unknown[])]>;
-	send: Send;
+	send: Send<DoAny>;
 } {
 	const msgSource = new StreamSource<
 		readonly [string, ...(readonly unknown[])]
@@ -206,9 +208,9 @@ function createMessageSource(send: Send): {
 		};
 	}
 
-	const wrappedSend: Send = (...args) => {
-		setTimeout(() => msgSource.next(args), 0);
-		return send(...args);
+	const wrappedSend: Send<DoAny> = (key, ...args) => {
+		setTimeout(() => msgSource.next([key, ...args]), 0);
+		send(key, ...args);
 	};
 
 	return {

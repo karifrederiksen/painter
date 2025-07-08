@@ -1,19 +1,14 @@
 import type React from "react";
-import {
-	pct,
-	useStream,
-	type Send,
-	type Stream,
-	type ViewportTransforms,
-} from "~/state";
+import { pct, useStream, type Send, type Stream } from "~/state";
 import { Minimap } from "./minimap";
 import { Label } from "~/components/ui/label";
 import { formatPct } from "./util";
 import { Slider } from "~/components/ui/slider";
+import type { DoViewportThings, ViewportTransforms } from "~/state/viewport";
 
 export interface MinimapSectionProps {
 	viewport$: Stream<ViewportTransforms>;
-	send: Send;
+	send: Send<DoViewportThings>;
 }
 
 export function MinimapSection({

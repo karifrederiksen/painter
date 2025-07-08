@@ -1,19 +1,13 @@
 import type React from "react";
 import { Label } from "~/components/ui/label";
 import { Slider } from "~/components/ui/slider";
-import {
-	ms,
-	pct,
-	useStream,
-	type Brush,
-	type Send,
-	type Stream,
-} from "~/state";
+import { ms, pct, useStream, type Send, type Stream } from "~/state";
 import { formatMs, formatPct, formatPx } from "./util";
+import type { Brush, DoBrushThings } from "~/state/brushes";
 
 export interface BrushSettingsSectionProps {
 	brush$: Stream<Brush>;
-	send: Send;
+	send: Send<DoBrushThings>;
 }
 
 export function BrushSettingsSection({

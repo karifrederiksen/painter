@@ -1,49 +1,15 @@
-import React from "react";
-import { useForm } from "react-hook-form";
-import { useStream, type Send, type Stream, type UICanvas } from "~/state";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import {
-	Form,
-	FormControl,
-	FormDescription,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
-} from "~/components/ui/form";
+import React, { type FormEvent } from "react";
+import { useStream, type Send, type Stream } from "~/state";
 import { Input } from "~/components/ui/input";
 import { cn } from "~/lib/utils";
 import { Card } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
-
-const formSchema = z.object({
-	name: z.string().min(2, {
-		message: "Username must be at least 2 characters.",
-	}),
-	width: z.string().refine(canvasSizeCheck, {
-		message: canvasSizeFailure("width"),
-	}),
-	height: z.string().refine(canvasSizeCheck, {
-		message: canvasSizeFailure("height"),
-	}),
-});
-
-function canvasSizeCheck(s: string): boolean {
-	const n = Number(s);
-	if (Number.isNaN(n)) return false;
-
-	return n > 64 && n < 10_000;
-}
-
-function canvasSizeFailure(dimension: string) {
-	return `Canvas ${dimension} must be between 64 and 10,000 pixels`;
-}
+import type { CanvasBuilder, DoCanvasBuilderThings } from "~/state/canvas";
 
 export interface CanvasBuilderProps {
 	className?: string;
-	canvasBuilderStream: Stream<null | UICanvas>;
-	send: Send;
+	canvasBuilderStream: Stream<null | CanvasBuilder>;
+	send: Send<DoCanvasBuilderThings>;
 }
 
 export function CanvasBuilder({
@@ -52,21 +18,10 @@ export function CanvasBuilder({
 	send,
 }: CanvasBuilderProps): React.JSX.Element {
 	const canvasBuilder = useStream(canvasBuilderStream);
-	const form = useForm<z.infer<typeof formSchema>>({
-		resolver: zodResolver(formSchema),
-		defaultValues: {
-			name: "Painting",
-			width: "800",
-			height: "800",
-		},
-	});
 
-	function onSubmit(data: z.infer<typeof formSchema>) {
-		send("canvas:create", {
-			name: data.name,
-			width: Number(data.width),
-			height: Number(data.height),
-		});
+	function onSubmit(ev: FormEvent) {
+		ev.preventDefault();
+		send("canvas:create");
 	}
 
 	if (canvasBuilder === null) return <></>;
@@ -79,58 +34,55 @@ export function CanvasBuilder({
 		>
 			<div className="-z-10 absolute left-0 right-0 top-0 bottom-0 bg-accent opacity-85"></div>
 			<Card className="p-4">
-				<Form {...form}>
-					<form
-						onSubmit={form.handleSubmit(onSubmit)}
-						className="w-2/3 space-y-6"
-					>
-						<FormField
-							control={form.control}
-							name="name"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Name</FormLabel>
-									<FormControl>
-										<Input placeholder="Mona Lisa" {...field} />
-									</FormControl>
-									<FormDescription>
-										This is the name of the canvas in your library and the name
-										of the file when downloaded.
-									</FormDescription>
-									<FormMessage />
-								</FormItem>
-							)}
+				<form onSubmit={onSubmit} className="w-2/3 space-y-6">
+					<div>
+						<label htmlFor="name">Name</label>
+						<Input
+							id="name"
+							placeholder="Mona Lisa"
+							value={canvasBuilder.name}
+							onInput={(ev) => send("canvas:setName", ev.currentTarget.value)}
 						/>
-						<FormField
-							control={form.control}
-							name="width"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Width</FormLabel>
-									<FormControl>
-										<Input placeholder="2400" {...field} />
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
+						<div>
+							This is the name of the canvas in your library and the name of the
+							file when downloaded.
+						</div>
+						{canvasBuilder.nameValidation && (
+							<div className="text-destructive">
+								{canvasBuilder.nameValidation}
+							</div>
+						)}
+					</div>
+					<div>
+						<label htmlFor="width">Width</label>
+						<Input
+							id="width"
+							placeholder="1920"
+							value={canvasBuilder.width}
+							onInput={(ev) => send("canvas:setWidth", ev.currentTarget.value)}
 						/>
-						<FormField
-							control={form.control}
-							name="height"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Height</FormLabel>
-									<FormControl>
-										<Input placeholder="3000" {...field} />
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
+						{canvasBuilder.widthValidation && (
+							<div className="text-destructive">
+								{canvasBuilder.widthValidation}
+							</div>
+						)}
+					</div>
+					<div>
+						<label htmlFor="height">Height</label>
+						<Input
+							id="height"
+							placeholder="1080"
+							value={canvasBuilder.height}
+							onInput={(ev) => send("canvas:setHeight", ev.currentTarget.value)}
 						/>
-						<Button type="submit">Create</Button>
-					</form>
-					<div className=""></div>
-				</Form>
+						{canvasBuilder.heightValidation && (
+							<div className="text-destructive">
+								{canvasBuilder.heightValidation}
+							</div>
+						)}
+					</div>
+					<Button type="submit">Create</Button>
+				</form>
 			</Card>
 		</div>
 	);
